@@ -1,0 +1,35 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/Highlighting/HighlightingSourceSnapshotLocation/@EntryValue">C:\Users\rvino\AppData\Local\JetBrains\Rider2021.3\resharper-host\temp\Rider\vAny\CoverageData\_.19\Snapshot\snapshot.utdcvr</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=5220844a_002Dc265_002D4e2f_002D871f_002D45a7c5218b73/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="scrape members of a community #3" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=65738a8c_002Dbdfc_002D49f7_002Db99b_002De103b3c5542f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="scrape members of a community" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=6c90673f_002D0fe2_002D40cb_002Da470_002Dc4f80a006e75/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="scrape subscriber count of a particular user" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape subscriber count of a particular user&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape google search&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=78c6f747_002D04cf_002D41c2_002D968d_002Ddabb4987500f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="scrape members of a community #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a7f4aaa6_002D6717_002D435c_002Dbed4_002D8990f296f6f2/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="scrape subscriber count of a particular user #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape subscriber count of a particular user&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=b120bcc4_002D6e25_002D4aba_002D9d4c_002D58cb315a4a3c/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="scrape members of a community #4" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Housekeeping/UnitTestingMru/UnitTestRunner/SpawnedProcessesKnownList/=chromedriver_002Eexe/@EntryIndexedValue">KillOrphaned</s:String></wpf:ResourceDictionary>

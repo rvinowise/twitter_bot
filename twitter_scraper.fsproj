@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="twitter_settings.fs" />
+    <Compile Include="login_to_twitter.fs" />
+    <Compile Include="post_on_twitter.fs" />
+    <Compile Include="read_subscribers.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--unit testing  -->
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
+    <PackageReference Include="canopy" Version="2.1.5" />
+    <PackageReference Include="Fparsec" Version="1.1.1" />
+    <PackageReference Include="FSharp.Data" Version="6.2.0" />
+    <PackageReference Include="FsHttp" Version="11.0.0" />
+    <PackageReference Include="fsunit" Version="5.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="115.0.5790.17000" />
+    <PackageReference Include="xunit" Version="2.5.0" />
+  </ItemGroup>
+
+</Project>
