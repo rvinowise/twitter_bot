@@ -9,20 +9,32 @@
     <Compile Include="twitter_settings.fs" />
     <Compile Include="login_to_twitter.fs" />
     <Compile Include="post_on_twitter.fs" />
-    <Compile Include="read_subscribers.fs" />
+    <Compile Include="read_followers.fs" />
+
+    <None Update="App.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <!--unit testing  -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
+    <PackageReference Include="xunit" Version="2.5.0" />
+    <PackageReference Include="fsunit" Version="5.4.0" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
+    
+    <!--app  -->
     <PackageReference Include="canopy" Version="2.1.5" />
     <PackageReference Include="Fparsec" Version="1.1.1" />
     <PackageReference Include="FSharp.Data" Version="6.2.0" />
     <PackageReference Include="FsHttp" Version="11.0.0" />
-    <PackageReference Include="fsunit" Version="5.4.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="115.0.5790.17000" />
-    <PackageReference Include="xunit" Version="2.5.0" />
+
+    <!--configuration  -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
+    <PackageReference Include="FSharp.Configuration" Version="2.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
   </ItemGroup>
 
 </Project>

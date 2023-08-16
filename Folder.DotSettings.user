@@ -5,6 +5,11 @@
     &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=54081b83_002D9cb7_002D4573_002D974b_002D71deb1213b74/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="scrape members of a community #6" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=65738a8c_002Dbdfc_002D49f7_002Db99b_002De103b3c5542f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="scrape members of a community" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
@@ -32,4 +37,10 @@
     &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_subscribers.scrape members of a community&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Housekeeping/UnitTestingMru/UnitTestRunner/SpawnedProcessesKnownList/=chromedriver_002Eexe/@EntryIndexedValue">KillOrphaned</s:String></wpf:ResourceDictionary>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=fbb18866_002D13f4_002D4418_002Db625_002D67d39734bff4/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="scrape members of a community #5" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::B5276F65-8834-75A8-BB71-88BAB635CC41::net7.0::rvinowise.twitter.Read_followers.scrape members of a community&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Housekeeping/UnitTestingMru/UnitTestRunner/SpawnedProcessesKnownList/=chromedriver_002Eexe/@EntryIndexedValue">KillOrphaned</s:String>
+	<s:String x:Key="/Default/Housekeeping/UnitTestingMru/UnitTestRunner/SpawnedProcessesKnownList/=conhost_002Eexe/@EntryIndexedValue">KillOrphaned</s:String></wpf:ResourceDictionary>

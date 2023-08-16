@@ -4,6 +4,7 @@ open OpenQA.Selenium
 open Xunit
 open canopy.classic
 open System
+open rvinowise.twitter
 
 
 module Post_on_twitter =
@@ -35,11 +36,14 @@ module Post_on_twitter =
         element "[data-testid='tweetButton']" |>click
 
 
-    let score_line_as_text score_line =
-        (fst score_line+": "+(score_line|>snd|>string))+"\n\r"
+    let score_line_as_text
+        (score_line: int*Twitter_user*int)
+        =
+        let place,user,score = score_line
+        (string place)+") "+(user.name+" @"+user.handle+": ")+(string score)+"\n\r"
 
     let split_score_into_text_chunks
-        (score_lines: (string*int)seq )
+        (score_lines: (int*Twitter_user*int)seq )
         =
         score_lines
         |>Seq.fold (
@@ -62,7 +66,7 @@ module Post_on_twitter =
                 last_chunk::previous_chunks
         )
             (
-                (string DateTime.Now + "\n\r")
+                (DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\n\r")
                 ,
                 []
             )
@@ -78,11 +82,20 @@ module Post_on_twitter =
             |>List.rev
             |>post_chunks 
 
-    let post_subscribers_score
-        (score: (string*int)seq ) 
+    let add_place 
+        (score_lines: (Twitter_user*int) list)
         =
-        score
+        score_lines
+        |>List.mapi(fun place (user, score) ->
+            (place+1),user,score
+        )
+
+    let post_followers_score_of_users
+        (user_scores: (Twitter_user*int)seq ) 
+        =
+        user_scores
         |>List.ofSeq
         |>List.sortByDescending snd
+        |>add_place
         |>split_score_into_text_chunks
         |>post_thread_or_single_post
