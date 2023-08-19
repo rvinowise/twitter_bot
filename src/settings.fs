@@ -1,4 +1,4 @@
-namespace rvinowise.twitter
+﻿namespace rvinowise.twitter
 
 open System
 open Microsoft.Extensions.Configuration
@@ -8,7 +8,7 @@ open canopy.classic
 open FSharp.Configuration
 
 
-//type Settings = AppSettings<"appsettings.json">
+//type Config = AppSettings<"app.config">
 
 module Settings = 
     open System.Configuration
@@ -19,15 +19,8 @@ module Settings =
     let Password = configuration_root["Password"]
     let auth_token = configuration_root["auth_token"]
     let transhumanist_community = configuration_root["transhumanist_community"]
+    let transhumanist_list = configuration_root["transhumanist_list"]
+    let headless =  (configuration_root["headless"]) = "true"
+    let db_connection_string = configuration_root["db_connection_string"]
+    let scores_export_path = configuration_root["scores_export_path"]
 
-type Twitter_user = {
-    handle: string;
-    name: string
-    url: Uri
-}
-
-module Twitter_settings =
-
-    let base_url = "https://twitter.com"
-
-    

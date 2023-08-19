@@ -6,11 +6,6 @@ open FSharp.Configuration
 
 module Login_to_twitter =
     
-    //let user_token = "18de3f465940bbd477eb025a1347819b75b4c2f9" //victor_rybin
-    // let user_token = "87ff0490c374881eed1bc94f7882287acf55d3ff" //Announcer693221
-    // let username = "Announcer693221"
-    // let password = "SayForever"
-
 
     let find_login_button_with_text text = 
         let buttons = 

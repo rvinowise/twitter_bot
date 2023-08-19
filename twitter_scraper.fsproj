@@ -6,35 +6,66 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="twitter_settings.fs" />
-    <Compile Include="login_to_twitter.fs" />
-    <Compile Include="post_on_twitter.fs" />
-    <Compile Include="read_followers.fs" />
-
-    <None Update="App.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="app.config" />
+    <Compile Include="src\settings.fs" />
+    <Compile Include="src\twitter_interface\twitter_settings.fs" />
+    
+    <Compile Include="src\types.fs" />
+    <Compile Include="src\database.fs" />
+    
+    <Compile Include="src\web_interface\scroll_wheel.fs" />
+    
+    <Compile Include="src\twitter_interface\login_to_twitter.fs" />
+    <Compile Include="src\twitter_interface\Scrape_followers.fs" />
+    <Compile Include="src\twitter_interface\post_on_twitter.fs" />
+    
+    <Compile Include="src\remarks\Remark_score_changes.fs" />
+    <Compile Include="src\remarks\Format_score_for_twitter.fs" />
+    
+    <Compile Include="src\file_interface\Export_scores_to_csv.fs" />
+    
+    <Compile Include="src\anounce_score.fs" />
+    
+    
+    
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <!--database access-->
+    <PackageReference Include="Dapper" Version="2.0.143" />
+    <PackageReference Include="Dapper.FSharp" Version="4.6.1" />
+    <PackageReference Include="Npgsql" Version="7.0.4" />
+
+
     <!--unit testing  -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
+    
     <PackageReference Include="xunit" Version="2.5.0" />
     <PackageReference Include="fsunit" Version="5.4.0" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
     
     <!--app  -->
-    <PackageReference Include="canopy" Version="2.1.5" />
     <PackageReference Include="Fparsec" Version="1.1.1" />
     <PackageReference Include="FSharp.Data" Version="6.2.0" />
     <PackageReference Include="FsHttp" Version="11.0.0" />
+    
+    <!-- web scraping   -->
+    <PackageReference Include="canopy" Version="2.1.5" />
+    <PackageReference Include="Selenium.Support" Version="4.11.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.11.0" />
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="115.0.5790.17000" />
+    <PackageReference Include="Selenium.WebDriver.GeckoDriver" Version="0.33.0" />
+    <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
+<!--    <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />-->
 
     <!--configuration  -->
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
     <PackageReference Include="FSharp.Configuration" Version="2.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
+
+
   </ItemGroup>
 
 </Project>
