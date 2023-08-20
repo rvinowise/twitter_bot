@@ -20,7 +20,7 @@ module Post_on_twitter =
     let list_without_last elements =
         elements|>List.rev|>List.tail|>List.rev
 
-    let post_chunks 
+    let post_posts_as_thread 
         (chunks:string list) 
         =
         printfn "posting as a thread..."
@@ -37,25 +37,17 @@ module Post_on_twitter =
         element "[data-testid='tweetButton']" |>click
 
 
-    let score_line_as_text
-        (score_line: int*Twitter_user*int)
-        =
-        let place,user,score = score_line
-        sprintf "%d) %s %s: %d\n\r"
-            place user.name (user.handle|>User_handle.value) score
     
-    
-
     let post_thread_or_single_post (
         last_text: string,
-        previous_chunks: string list
+        previous_posts: string list
         )=
-        match previous_chunks with
+        match previous_posts with
         |[]->post_text last_text
         |previous_chunks->
             last_text::previous_chunks
             |>List.rev
-            |>post_chunks 
+            |>post_posts_as_thread 
 
     
         

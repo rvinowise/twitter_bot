@@ -49,18 +49,7 @@ module Export_scores_to_csv =
             score-growth
         )
     
-    let calculate_total_score_of_team
-        (scores: (int*int) list )
-        =
-        let total_growth=
-            scores
-            |>List.map (fun (_,growth) -> growth)
-            |>List.sum
-        let total_score=
-            scores
-            |>List.map (fun (score,_) -> score)
-            |>List.sum
-        total_score,total_growth
+    
         
     let export_score_changes
         (start_time: DateTime)
@@ -75,7 +64,7 @@ module Export_scores_to_csv =
         let csv_scores_with_total = new Score_changes(
             (scores
             |>List.map(fun (_,_,score,growth) -> score,growth)
-            |>calculate_total_score_of_team
+            |>Format_score_for_twitter.calculate_total_score_of_team
             ||>total_score_as_csv_row)
             ::csv_score_lines
         )

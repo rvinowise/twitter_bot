@@ -6,14 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="app.config" />
     <Compile Include="src\settings.fs" />
     <Compile Include="src\twitter_interface\twitter_settings.fs" />
     
     <Compile Include="src\types.fs" />
     <Compile Include="src\database.fs" />
-    
-    <Compile Include="src\web_interface\scroll_wheel.fs" />
     
     <Compile Include="src\twitter_interface\login_to_twitter.fs" />
     <Compile Include="src\twitter_interface\Scrape_followers.fs" />
@@ -26,6 +23,8 @@
     
     <Compile Include="src\anounce_score.fs" />
     
+    <Compile Include="src\googlesheet_interface\Export_scores_to_googlesheet.fs" />
+    
     
     
     <Compile Include="Program.fs" />
@@ -35,11 +34,13 @@
     <!--database access-->
     <PackageReference Include="Dapper" Version="2.0.143" />
     <PackageReference Include="Dapper.FSharp" Version="4.6.1" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.61.0.3141" />
     <PackageReference Include="Npgsql" Version="7.0.4" />
 
 
     <!--unit testing  -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
+    <PackageReference Include="octokit" Version="7.1.0" />
     
     <PackageReference Include="xunit" Version="2.5.0" />
     <PackageReference Include="fsunit" Version="5.4.0" />

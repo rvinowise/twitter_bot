@@ -23,9 +23,10 @@ module Format_score_for_twitter =
         =
         let place,user,new_score,score_change = score_change_line
         sprintf
-            "%d) %s %s: %d (%s)\n\r" 
+            "%d. %s: %d | %s\n\r" 
             place
-            user.name (user.handle|>User_handle.value)
+            user.name
+            //(user.handle|>User_handle.value)
             new_score
             (int_to_string_signed score_change)
 
@@ -33,42 +34,21 @@ module Format_score_for_twitter =
     let get_score_header_with_timespan
         (start_time:DateTime)
         (end_time:DateTime)
+        total_score
+        score_change
         =
         sprintf
-            "followers on %s (change from %s)"
+            """
+            followers on %s (change from %s)
+            Total: %d | %s
+            """
             (end_time.ToString("yyyy-MM-dd HH:mm"))
             (start_time.ToString("yyyy-MM-dd HH:mm"))
+            total_score
+            (int_to_string_signed(score_change))
              
-    let split_score_change_into_text_chunks
-        (header_text:string)
-        (score_change_lines: (int*Twitter_user*int*int)seq )
-        =
-        score_change_lines
-        |>Seq.fold (
-            fun 
-                (last_chunk:string, previous_chunks:string list)
-                score_line
-                ->
-            let textual_score_line = score_change_line_as_text score_line
-            let increased_length = 
-                last_chunk
-                |>String.length
-                |>(+) (String.length textual_score_line)
-            if increased_length <= Twitter_settings.max_post_length then
-                last_chunk+textual_score_line
-                ,
-                previous_chunks
-            else
-                textual_score_line
-                ,
-                last_chunk::previous_chunks
-        )
-            (
-                (header_text + "\n\r")
-                ,
-                []
-            )
-    
+
+         
     
     let arrange_by_places_in_competition 
         (score_change_lines: (Twitter_user*int*int) list)
@@ -101,7 +81,54 @@ module Format_score_for_twitter =
             |>Option.defaultValue 0)
         )
     
-    let score_as_text_chunks
+    let calculate_total_score_of_team
+        (scores: (int*int) list )
+        =
+        let total_growth=
+            scores
+            |>List.map (fun (_,growth) -> growth)
+            |>List.sum
+        let total_score=
+            scores
+            |>List.map (fun (score,_) -> score)
+            |>List.sum
+        total_score,total_growth
+    
+    
+    let score_line_as_text
+        (score_line: int*Twitter_user*int)
+        =
+        let place,user,score = score_line
+        sprintf "%d) %s %s: %d\n\r"
+            place user.name (user.handle|>User_handle.value) score
+    
+    
+    let arrange_unsplittable_texts_into_post_thread
+        (unsplittables: string list)
+        =
+        unsplittables
+        |>Seq.fold (
+            fun 
+                (last_post:string, previous_posts:string list)
+                unsplittable
+                ->
+            let increased_length = 
+                last_post
+                |>String.length
+                |>(+) (String.length unsplittable)
+            if increased_length <= Twitter_settings.max_post_length then
+                last_post+unsplittable
+                ,
+                previous_posts
+            else
+                unsplittable
+                ,
+                last_post::previous_posts
+        )
+            ("",[])
+        
+    
+    let scoreboard_as_unsplittable_chunks
         start_datetime end_datetime
         score_changes
         =
@@ -111,7 +138,7 @@ module Format_score_for_twitter =
         
         
         score_changes
-        |>split_score_change_into_text_chunks header
+        |>List.map score_change_line_as_text
         
     
     

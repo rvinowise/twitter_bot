@@ -75,7 +75,7 @@ module Anounce_score =
         
         long_scores
         |>Format_score_for_twitter.arrange_by_places_in_competition
-        |>Format_score_for_twitter.score_as_text_chunks
+        |>Format_score_for_twitter.scoreboard_as_unsplittable_chunks
             (DateTime.Now-TimeSpan.FromDays(1))
             DateTime.Now
         |>Post_on_twitter.post_thread_or_single_post
@@ -96,7 +96,7 @@ module Anounce_score =
             |>Format_score_for_twitter.arrange_by_places_in_competition
                 
         let current_time = DateTime.Now
-        Format_score_for_twitter.score_as_text_chunks
+        Format_score_for_twitter.scoreboard_as_unsplittable_chunks
             start_time
             current_time
             score_changes

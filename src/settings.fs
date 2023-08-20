@@ -23,4 +23,4 @@ module Settings =
     let headless =  (configuration_root["headless"]) = "true"
     let db_connection_string = configuration_root["db_connection_string"]
     let scores_export_path = configuration_root["scores_export_path"]
-
+    let googlesheet_twitter_score  = configuration_root["googlesheet_twitter_score"]
