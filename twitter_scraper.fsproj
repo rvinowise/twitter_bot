@@ -21,6 +21,7 @@
     
     <Compile Include="src\file_interface\Export_scores_to_csv.fs" />
     <Compile Include="src\googlesheet_interface\Export_scores_to_googlesheet.fs" />
+    <Compile Include="src\googlesheet_interface\Import_scores_from_googlesheet.fs" />
     
     <Compile Include="src\anounce_score.fs" />
     

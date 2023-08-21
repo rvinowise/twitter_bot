@@ -23,22 +23,31 @@ module Scores_database =
     
     let write_score_to_db 
         (datetime: DateTime)
-        (user: Twitter_user)
+        (user: User_handle)
         (score: int)
         =
-        open_db_connection.Query<Twitter_user>(
+        if
+            datetime.Date = DateTime(2023,08,19)
+            &&
+            user = User_handle "yangranat"
+        then
+            printfn "test"
+        else()
+        
+        open_db_connection.Query<User_handle>(
             @"insert into score_line (datetime, user_handle, score)
-            values (@datetime, @user_handle, @score)",
+            values (@datetime, @user_handle, @score)
+            on conflict (datetime, user_handle) do update set score = @score",
             {|
                 datetime = datetime
-                user_handle = (user.handle|>User_handle.value).ToCharArray(); 
+                user_handle = (user|>User_handle.value).ToCharArray(); 
                 score = score; 
             |}
         ) |> ignore
 
     let write_scores_to_db
         (datetime:DateTime)
-        (users_with_scores: (Twitter_user*int)seq )
+        (users_with_scores: (User_handle*int)seq )
         =
         printfn "writing scores to DB on %s" (datetime.ToString("yyyy-MM-dd HH:mm"))
         users_with_scores
@@ -80,7 +89,7 @@ module Scores_database =
     
     let read_last_score_time() =
         open_db_connection.Query<DateTime>(
-            @"select COALESCE(max(datetime),make_date(1,1,1)) from score_line"
+            @"select COALESCE(max(datetime),make_date(1000,1,1)) from score_line"
         )|>Seq.head
     let read_scores_for_datetime datetime =
         open_db_connection.Query<Score_line>(

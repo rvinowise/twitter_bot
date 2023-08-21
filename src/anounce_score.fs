@@ -99,6 +99,7 @@ module Anounce_score =
 //        |>Post_on_twitter.post_thread_or_single_post
         
         new_scores
+        |>Seq.map(fun (user,score)->user.handle,score)
         |>Scores_database.write_scores_to_db current_time
         new_scores
         |>List.map fst

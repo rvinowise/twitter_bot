@@ -2,22 +2,13 @@
 
 open System
 open System.Collections.Generic
-open System.Configuration
 open System.IO
-open System.Text.RegularExpressions
 open Google.Apis.Auth.OAuth2
 open Google.Apis.Services
 open Google.Apis.Sheets.v4.Data
-open Microsoft.Extensions.Configuration
-open OpenQA.Selenium
-open SeleniumExtras.WaitHelpers
 open Xunit
-open canopy.classic
-open Dapper
-open FSharp.Data
 
 open Google.Apis.Sheets.v4
-open rvinowise.twitter
 
 
 
@@ -85,17 +76,41 @@ module Export_scores_to_googlesheet =
             requestBody, sheet.doc_id
         ).Execute()
     
+    let lists_to_google_obj
+        (lists: string list list)
+        =
+        lists
+        |>List.map (fun inner_list ->
+            inner_list
+            |>List.map (fun value -> value :> obj)
+            |>List :> IList<_>
+        )
+        |>List :> IList<_>
+    
+    
+    [<Fact>]
+    let ``try input_into_sheet``()=
+        input_into_sheet
+            {
+                Google_spreadsheet.doc_id="1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
+                page_id=293721268
+                page_name="test"
+            }
+            ([
+                ["test";"123"]
+            ]|>lists_to_google_obj)
+    
+    
+        
     let clean_sheet
         (sheet: Google_spreadsheet)
         =
         let clean_row = 
             sheet_row_clean
-            |>List.map (fun value -> value :> obj)
-            |>List :> IList<obj>
         
         let clean_sheet =
             [ for _ in 0 .. 4000 -> clean_row]
-            |>List
+            |>lists_to_google_obj
         
         input_into_sheet sheet clean_sheet
 
@@ -251,7 +266,7 @@ module Export_scores_to_googlesheet =
                 |>Option.defaultValue ""
         }
             
-    let input_scores_to_sheet
+    let input_all_scores_to_sheet
         (sheet:Google_spreadsheet)
         =
         printfn "inputting fields into google spread sheet..."
@@ -283,18 +298,21 @@ module Export_scores_to_googlesheet =
         input_into_sheet sheet all_rows
     
     
-    [<Fact>]
-    let ``try input_scores_to_sheet``() =
-        input_scores_to_sheet
-            Settings.score_table
-    
     let update_googlesheet_with_last_scores
         (sheet:Google_spreadsheet)
         =
         printfn "updating google sheet, page '%s'" sheet.page_name
-        //clean_sheet sheet|>ignore test
-        input_scores_to_sheet sheet
+        clean_sheet sheet|>ignore
+        input_all_scores_to_sheet sheet
     
+    [<Fact>]
+    let ``try input_scores_to_sheet``() =
+        update_googlesheet_with_last_scores
+            {
+                Google_spreadsheet.doc_id = "1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
+                page_id=293721268
+                page_name="test"
+            }
     
     let score_changes = [
         {Twitter_user.name="name1"; handle=User_handle "handle1"}, 10,0;
@@ -302,8 +320,3 @@ module Export_scores_to_googlesheet =
         {Twitter_user.name="name3"; handle=User_handle "handle3"}, 32,2;
         {Twitter_user.name="name4"; handle=User_handle "handle4"}, 43,3;
     ]
-    
-    [<Fact>]
-    let ``try update_googlesheet_with_last_scores``() =
-        update_googlesheet_with_last_scores
-            Settings.score_table

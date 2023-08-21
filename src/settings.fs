@@ -36,3 +36,8 @@ module Settings =
         page_id = int configuration_root["googlesheet_page_id"]
         page_name = configuration_root["googlesheet_page_name"]
     }
+    let score_table_for_import = {
+        Google_spreadsheet.doc_id = configuration_root["googlesheet_doc_id_for_import"]
+        page_id = int configuration_root["googlesheet_page_id_for_import"]
+        page_name = configuration_root["googlesheet_page_name_for_import"]
+    }
