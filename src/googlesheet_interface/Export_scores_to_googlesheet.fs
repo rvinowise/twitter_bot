@@ -62,7 +62,7 @@ module Export_scores_to_googlesheet =
     
     
     let sheet_row_clean = [
-        "";"";"";"";"";""
+        for empty in 0 .. 50 -> ""
     ]
         
     let input_into_sheet
@@ -94,7 +94,7 @@ module Export_scores_to_googlesheet =
             |>List :> IList<obj>
         
         let clean_sheet =
-            [ for _ in 0 .. 40000 -> clean_row]
+            [ for _ in 0 .. 4000 -> clean_row]
             |>List
         
         input_into_sheet sheet clean_sheet
@@ -292,7 +292,7 @@ module Export_scores_to_googlesheet =
         (sheet:Google_spreadsheet)
         =
         printfn "updating google sheet, page '%s'" sheet.page_name
-        delete_rows sheet|>ignore
+        //clean_sheet sheet|>ignore test
         input_scores_to_sheet sheet
     
     

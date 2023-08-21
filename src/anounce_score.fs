@@ -84,7 +84,8 @@ module Anounce_score =
         let new_scores =
             scrape_followers_of_competitors Settings.transhumanist_list
             |>List.ofSeq
-            
+        browser.Quit()
+    
 //        let score_changes =
 //            Format_score_for_twitter.score_change_from_two_moments
 //                new_scores previous_scores
@@ -110,8 +111,7 @@ module Anounce_score =
 //        Export_scores_to_csv.export_score_changes
 //            start_time current_time
 //            score_changes
-        printfn "all done."
-        browser.Quit()
+        printfn "finish scraping and announcing scores."
         ()
 
         

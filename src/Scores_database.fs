@@ -119,7 +119,12 @@ module Scores_database =
         
     let read_user_names_from_handles () =
         open_db_connection.Query<Db_twitter_user>(
-            @"select (handle,name) from twitter_user"
+            @"select * from twitter_user"
         )
         |>Seq.map(fun user->User_handle user.handle, user.name)
         |>Map.ofSeq
+    
+    [<Fact>]
+    let ``try read_user_names_from_handles``()=
+        let test = read_user_names_from_handles()
+        ()

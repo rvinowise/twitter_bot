@@ -175,7 +175,7 @@ module Scrape_followers =
         |None->
             printfn "Timeline: List members didn't appear, can't read users... "
             Set.empty
-        //|>Seq.take 3
+        //|>Seq.take 3 //
 
     let remove_commas (number:string) =
         number.Replace(",", "")
