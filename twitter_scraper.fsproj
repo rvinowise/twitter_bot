@@ -10,7 +10,7 @@
     <Compile Include="src\twitter_interface\twitter_settings.fs" />
     
     <Compile Include="src\types.fs" />
-    <Compile Include="src\database.fs" />
+    <Compile Include="src\Scores_database.fs" />
     
     <Compile Include="src\twitter_interface\login_to_twitter.fs" />
     <Compile Include="src\twitter_interface\Scrape_followers.fs" />
@@ -20,10 +20,10 @@
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
     <Compile Include="src\file_interface\Export_scores_to_csv.fs" />
+    <Compile Include="src\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     
     <Compile Include="src\anounce_score.fs" />
     
-    <Compile Include="src\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     
     
     

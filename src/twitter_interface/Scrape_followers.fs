@@ -100,7 +100,6 @@ module Scrape_followers =
         =
         let actions = Actions(browser)
         actions.SendKeys(Keys.Tab).Perform()
-        //let mutable wait = 5
         let rec skim_and_scroll_iteration
             table_with_elements
             (skimmed_sofar_elements: Twitter_user Set)
@@ -119,7 +118,6 @@ module Scrape_followers =
                     .Perform()
                 sleep 1
                 let progress_bar_css = "div[role='progressbar']"
-                //let progress_bar_css = "div[aria-label='Timeline: List members']"
                 WebDriverWait(browser, TimeSpan.FromSeconds(20)).
                     Until(ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector(progress_bar_css)))
                 |>ignore
@@ -147,7 +145,7 @@ module Scrape_followers =
         
         printfn "list has %i members... " (Seq.length users)
         users
-        //|>Seq.take 4 //test
+        |>Seq.take 3 //test
 
     let parse_followers_qty_from_string number =
         let letter_multiplier =
@@ -235,16 +233,7 @@ module Scrape_followers =
     
     
 
-    let get_previous_score = 
-        let unroll_all_last_posts = 
-            element "[data-testid='cellInnerDiv'] div[role='button']"
-        click unroll_all_last_posts 
-
-
-
-    let read_previous_score =
-        url (Twitter_settings.base_url+"/"+Settings.Username)
-        element "article[data-testid='tweet']" |>click
+  
 
 
     

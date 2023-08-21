@@ -9,9 +9,16 @@ open FSharp.Configuration
 
 
 //type Config = AppSettings<"app.config">
+type Google_spreadsheet = {
+    doc_id: string
+    page_id: int
+    page_name: string
+}
 
 module Settings = 
     open System.Configuration
+    
+    
     
     let configuration_builder = (ConfigurationBuilder()).AddJsonFile("appsettings.json", false, true);
     let configuration_root = configuration_builder.Build()
@@ -23,4 +30,9 @@ module Settings =
     let headless =  (configuration_root["headless"]) = "true"
     let db_connection_string = configuration_root["db_connection_string"]
     let scores_export_path = configuration_root["scores_export_path"]
-    let googlesheet_twitter_score  = configuration_root["googlesheet_twitter_score"]
+    
+    let score_table = {
+        Google_spreadsheet.doc_id = configuration_root["googlesheet_doc_id"]
+        page_id = int configuration_root["googlesheet_page_id"]
+        page_name = configuration_root["googlesheet_page_name"]
+    }

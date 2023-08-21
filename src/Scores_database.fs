@@ -11,7 +11,7 @@ open canopy.classic
 open Dapper
 open Npgsql
 
-module Database =
+module Scores_database =
     open System.Data.Common
 
     let open_db_connection =
@@ -45,18 +45,30 @@ module Database =
             write_score_to_db datetime user score
         )
         
+    [<CLIMutable>]
+    type Db_twitter_user = {
+        handle: string
+        name: string
+    }
     
-    let test_scores = [
-        {Twitter_user.name="Batin1";handle=User_handle "Batin";},14;
-        {Twitter_user.name="Batin2";handle=User_handle "Batin2";},35;
-        {Twitter_user.name="Rybin1";handle=User_handle "Rybin";},67;
-    ]
     
-    [<Fact>]
-    let ``write scores to db``()=
-        test_scores
-        |>write_scores_to_db DateTime.Now
+    let write_user_names_to_db
+        (users: Twitter_user list)
+        =
+        users
+        |>List.iter(fun user->
+            open_db_connection.Query<Db_twitter_user>(
+                @"insert into twitter_user (handle, name)
+                values (@handle, @name)
+                on conflict (handle) do update set name = @name",
+                {|
+                    handle = (User_handle.value user.handle).ToCharArray()
+                    name = user.name
+                |}
+            ) |> ignore
+        )
         
+    
     [<CLIMutable>]
     type Score_line = {
         datetime: DateTime
@@ -68,7 +80,7 @@ module Database =
         open_db_connection.Query<DateTime>(
             @"select COALESCE(max(datetime),make_date(1,1,1)) from score_line"
         )|>Seq.head
-    let read_scores_for_time datetime =
+    let read_scores_for_datetime datetime =
         open_db_connection.Query<Score_line>(
             @"select * from score_line
             where datetime = @datetime",
@@ -77,9 +89,35 @@ module Database =
         |>Seq.map (fun score_line->
             User_handle score_line.user_handle, score_line.score
         )
+    
+    let read_last_datetime_on_day (day:DateTime) =
+        open_db_connection.Query<DateTime>(
+            @"select COALESCE(max(datetime),make_time(23,59,0)) from score_line
+            where cast(datetime as date) = @day",
+            {|day=day|}
+        )
+    
+    [<Fact>]
+    let ``try read_last_datetime_on_day``()=
+        let test = read_last_datetime_on_day (DateTime(2023,8,19))
+        ()
+    
+    let read_last_scores_on_day
+        day
+        =
+        day
+        |>read_last_datetime_on_day
+        |>read_scores_for_datetime
         
     let read_last_scores () =
         let last_time = read_last_score_time()
-        let score_lines = read_scores_for_time last_time
+        let score_lines = read_scores_for_datetime last_time
         
         last_time, score_lines
+        
+    let read_user_names_from_handles () =
+        open_db_connection.Query<Db_twitter_user>(
+            @"select (handle,name) from twitter_user"
+        )
+        |>Seq.map(fun user->User_handle user.handle, user.name)
+        |>Map.ofSeq

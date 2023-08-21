@@ -42,12 +42,6 @@ module Anounce_score =
         |>Scrape_followers.scrape_followers_of_users    
     
     
-    let score_board_with_changes
-        (scores1: (User_handle*int)list)
-        (scores2: (User_handle*int)list)
-        =
-        ()
-    
     
     [<Fact>]
     let ``try post long scoreboard as a thread on twitter``()=
@@ -80,9 +74,10 @@ module Anounce_score =
             DateTime.Now
         |>Post_on_twitter.post_thread_or_single_post
     
+    
     [<Fact>]
     let ``scrape and announce score``()=
-        let start_time,previous_scores = Database.read_last_scores ()
+        //let start_time,previous_scores = Scores_database.read_last_scores ()
         
         prepare_for_scraping ()
         
@@ -90,25 +85,31 @@ module Anounce_score =
             scrape_followers_of_competitors Settings.transhumanist_list
             |>List.ofSeq
             
-        let score_changes =
-            Format_score_for_twitter.score_change_from_two_moments
-                new_scores previous_scores
-            |>Format_score_for_twitter.arrange_by_places_in_competition
+//        let score_changes =
+//            Format_score_for_twitter.score_change_from_two_moments
+//                new_scores previous_scores
+//            |>Format_score_for_twitter.arrange_by_places_in_competition
                 
         let current_time = DateTime.Now
-        Format_score_for_twitter.scoreboard_as_unsplittable_chunks
-            start_time
-            current_time
-            score_changes
-        |>Post_on_twitter.post_thread_or_single_post
+//        Format_score_for_twitter.scoreboard_as_unsplittable_chunks
+//            start_time
+//            current_time
+//            score_changes
+//        |>Post_on_twitter.post_thread_or_single_post
         
         new_scores
-        |>Database.write_scores_to_db current_time
+        |>Scores_database.write_scores_to_db current_time
+        new_scores
+        |>List.map fst
+        |>Scores_database.write_user_names_to_db
         
+        Export_scores_to_googlesheet.update_googlesheet_with_last_scores
+            Settings.score_table
+            |>ignore
         
-        Export_scores_to_csv.export_score_changes
-            start_time current_time
-            score_changes
+//        Export_scores_to_csv.export_score_changes
+//            start_time current_time
+//            score_changes
         
         ()
 

@@ -25,3 +25,5 @@ module Twitter_user =
     let url user =
         $"{Twitter_settings.base_url}/{user.handle|>User_handle.value}"
 
+    let url_from_handle handle =
+        $"{Twitter_settings.base_url}/{User_handle.value handle}"

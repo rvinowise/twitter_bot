@@ -100,10 +100,10 @@ module Export_scores_to_csv =
     
     [<Fact>]
     let ``try export_score_changes``()=
-        let last_time,last_scores = Database.read_last_scores()
+        let last_time,last_scores = Scores_database.read_last_scores()
         let previous_time = DateTime.Parse("2023-08-17 22:41:52.616493")
         let previous_scores =
-            Database.read_scores_for_time previous_time
+            Scores_database.read_scores_for_datetime previous_time
         
         let last_scores =
             last_scores

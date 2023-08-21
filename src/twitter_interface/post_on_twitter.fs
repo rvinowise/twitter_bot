@@ -38,14 +38,13 @@ module Post_on_twitter =
 
 
     
-    let post_thread_or_single_post (
-        last_text: string,
-        previous_posts: string list
-        )=
-        match previous_posts with
-        |[]->post_text last_text
-        |previous_chunks->
-            last_text::previous_chunks
+    let post_thread_or_single_post 
+        (posts: string list)
+        =
+        match posts with
+        |[single_post]->post_text single_post
+        |many_posts->
+            many_posts
             |>List.rev
             |>post_posts_as_thread 
 
