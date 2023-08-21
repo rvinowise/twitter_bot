@@ -110,7 +110,7 @@ module Anounce_score =
 //        Export_scores_to_csv.export_score_changes
 //            start_time current_time
 //            score_changes
-        
+        printf "all done."
         ()
 
         

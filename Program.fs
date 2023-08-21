@@ -8,4 +8,5 @@ module Program =
     let main args =
         //printfn "Arguments passed to function : %A" args
         Anounce_score.scrape_and_announce_score()
+        printf "bot finished execution."
         0

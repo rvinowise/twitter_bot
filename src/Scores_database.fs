@@ -37,9 +37,10 @@ module Scores_database =
         ) |> ignore
 
     let write_scores_to_db
-        datetime
+        (datetime:DateTime)
         (users_with_scores: (Twitter_user*int)seq )
         =
+        printf "writing scores to DB on %s" (datetime.ToString("yyyy-MM-dd HH:mm"))
         users_with_scores
         |>Seq.iter(fun (user, score)-> 
             write_score_to_db datetime user score
@@ -55,6 +56,7 @@ module Scores_database =
     let write_user_names_to_db
         (users: Twitter_user list)
         =
+        printf "writing %d user names to DB" (List.length users)
         users
         |>List.iter(fun user->
             open_db_connection.Query<Db_twitter_user>(
