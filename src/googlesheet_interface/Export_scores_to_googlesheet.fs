@@ -254,7 +254,7 @@ module Export_scores_to_googlesheet =
     let input_scores_to_sheet
         (sheet:Google_spreadsheet)
         =
-        printf "inputting fields into google spread sheet..."
+        printfn "inputting fields into google spread sheet..."
         let days_in_past = 100
         
         let last_datetime,current_scores,score_hisory =
@@ -291,7 +291,7 @@ module Export_scores_to_googlesheet =
     let update_googlesheet_with_last_scores
         (sheet:Google_spreadsheet)
         =
-        printf "updating google sheet, page '%s'" sheet.page_name
+        printfn "updating google sheet, page '%s'" sheet.page_name
         delete_rows sheet|>ignore
         input_scores_to_sheet sheet
     
