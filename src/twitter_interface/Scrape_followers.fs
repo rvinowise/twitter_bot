@@ -145,7 +145,7 @@ module Scrape_followers =
         
         printfn "list has %i members... " (Seq.length users)
         users
-        |>Seq.take 3 //test
+        //|>Seq.take 3
 
     let parse_followers_qty_from_string number =
         let letter_multiplier =
