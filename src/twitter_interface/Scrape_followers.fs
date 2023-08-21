@@ -18,6 +18,31 @@ module Scrape_followers =
 
     let wait = WebDriverWait(browser, TimeSpan.FromSeconds(3));
     
+    let element_exists selector =
+        let old_wait = browser.Manage().Timeouts().ImplicitWait
+        browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromMilliseconds(0));
+        let elements =
+            browser.FindElements(By.XPath(
+                selector
+            ))
+        browser.Manage().Timeouts().ImplicitWait <- old_wait
+        elements.Count > 0
+    
+    let wait_for_element
+        seconds
+        css_selector
+        =
+        let old_wait = browser.Manage().Timeouts().ImplicitWait
+        browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(seconds))
+        let elements =
+            browser.FindElements(By.CssSelector(
+                css_selector
+            ))
+        browser.Manage().Timeouts().ImplicitWait <- old_wait
+        elements
+        |>Seq.tryHead
+    
+    
     let read_community_members community_id = 
         printfn "reading members of community %s ... " community_id
         let community_members_url = 
@@ -140,11 +165,16 @@ module Scrape_followers =
             $"{Twitter_settings.base_url}/i/lists/{list_id}/members"
         url members_url
         
-        let table_with_members = element "div[aria-label='Timeline: List members']"
-        let users = consume_all_elements_of_dynamic_list table_with_members
+        let table_with_members = wait_for_element 180 "div[aria-label='Timeline: List members']"
         
-        printfn "list has %i members... " (Seq.length users)
-        users
+        match table_with_members with
+        |Some table_with_members ->
+            let users = consume_all_elements_of_dynamic_list table_with_members
+            printfn "list has %i members... " (Seq.length users)
+            users
+        |None->
+            printfn "Timeline: List members didn't appear, can't read users... "
+            Set.empty
         //|>Seq.take 3
 
     let remove_commas (number:string) =
@@ -179,29 +209,7 @@ module Scrape_followers =
             0
     
     
-    let element_exists selector =
-        let old_wait = browser.Manage().Timeouts().ImplicitWait
-        browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromMilliseconds(0));
-        let elements =
-            browser.FindElements(By.XPath(
-                selector
-            ))
-        browser.Manage().Timeouts().ImplicitWait <- old_wait
-        elements.Count > 0
     
-    let wait_for_element
-        seconds
-        css_selector
-        =
-        let old_wait = browser.Manage().Timeouts().ImplicitWait
-        browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(seconds))
-        let elements =
-            browser.FindElements(By.CssSelector(
-                css_selector
-            ))
-        browser.Manage().Timeouts().ImplicitWait <- old_wait
-        elements
-        |>Seq.tryHead
     
     let page_isnt_showing () =
         element_exists "//*[text()='Something went wrong. Try reloading.']"
