@@ -95,7 +95,7 @@ module Scores_database =
             @"select COALESCE(max(datetime),@day+make_time(23,59,0)) from score_line
             where cast(datetime as date) = @day",
             {|day=day|}
-        )
+        )|>Seq.head
     
     [<Fact>]
     let ``try read_last_datetime_on_day``()=
