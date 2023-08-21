@@ -92,7 +92,7 @@ module Scores_database =
     
     let read_last_datetime_on_day (day:DateTime) =
         open_db_connection.Query<DateTime>(
-            @"select COALESCE(max(datetime),make_time(23,59,0)) from score_line
+            @"select COALESCE(max(datetime),@day+make_time(23,59,0)) from score_line
             where cast(datetime as date) = @day",
             {|day=day|}
         )
