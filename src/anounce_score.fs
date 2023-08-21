@@ -75,8 +75,8 @@ module Anounce_score =
         |>Post_on_twitter.post_thread_or_single_post
     
     
-    [<Fact>]
-    let ``scrape and announce score``()=
+    
+    let scrape_and_announce_score()=
         //let start_time,previous_scores = Scores_database.read_last_scores ()
         
         prepare_for_scraping ()
@@ -113,3 +113,7 @@ module Anounce_score =
         
         ()
 
+        
+    [<Fact>]
+    let ``try scrape_and_announce_score``()=
+        scrape_and_announce_score ()

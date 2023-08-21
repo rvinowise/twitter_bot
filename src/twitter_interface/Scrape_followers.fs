@@ -147,6 +147,9 @@ module Scrape_followers =
         users
         //|>Seq.take 3
 
+    let remove_commas (number:string) =
+        number.Replace(",", "")
+        
     let parse_followers_qty_from_string number =
         let letter_multiplier =
             anyString 1
@@ -167,6 +170,7 @@ module Scrape_followers =
             )
             
         number
+        |>remove_commas
         |>run number_with_letter
         |>function
         |Success (number,_,_) -> number
