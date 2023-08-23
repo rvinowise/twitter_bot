@@ -44,7 +44,7 @@ module Scrape_followers =
     
     
     let read_community_members community_id = 
-        printfn "reading members of community %s ... " community_id
+        Log.info $"reading members of community {community_id} ..." 
         let community_members_url = 
             $"{Twitter_settings.base_url}/i/communities/{community_id}/members"
         url community_members_url
@@ -60,7 +60,7 @@ module Scrape_followers =
                 let user_handle = User_handle (Uri(user_url).Segments|>Array.last)
                 {Twitter_user.name=user_name; handle=user_handle}
             )
-        printfn "community has %i members... " (List.length users)
+        Log.important $"community has {List.length users} members... "
         users
         //|>List.take 4
         
@@ -160,7 +160,7 @@ module Scrape_followers =
             Set.empty
             
     let scrape_twitter_list_members list_id = 
-        printfn "reading members of list %s ... " list_id
+        Log.info $"reading members of list {list_id} ... " 
         let members_url = 
             $"{Twitter_settings.base_url}/i/lists/{list_id}/members"
         url members_url
@@ -170,10 +170,10 @@ module Scrape_followers =
         match table_with_members with
         |Some table_with_members ->
             let users = consume_all_elements_of_dynamic_list table_with_members
-            printfn "list has %i members... " (Seq.length users)
+            Log.important $"list has {Seq.length users} members... "
             users
         |None->
-            printfn "Timeline: List members didn't appear, can't read users... "
+            Log.error "Timeline: List members didn't appear, can't read users... "
             Set.empty
         //|>Seq.take 3 //
 
@@ -188,7 +188,7 @@ module Scrape_followers =
                 |"K"->1000
                 |"M"->1000000
                 |strange_letter->
-                    printfn $"parsing a number with a letter encountered a weird letter: {strange_letter}"
+                    Log.error $"parsing a number with a letter encountered a weird letter: {strange_letter}"
                     1
             )
         
@@ -205,7 +205,7 @@ module Scrape_followers =
         |>function
         |Success (number,_,_) -> number
         |Failure (error,_,_) -> 
-            printfn $"error while parsing number of followers: \n\r{error}"
+            Log.error $"error while parsing number of followers: \n\r{error}"
             0
     
     
@@ -221,7 +221,9 @@ module Scrape_followers =
         followers_qty_field
         |>wait_for_element 3
         |>function
-        |None-> None
+        |None->
+            Log.error $"url '{Twitter_user.url}' doesn't show the Followers field"
+            None
         |Some followers_qty_field->
             followers_qty_field
             |>read|>parse_followers_qty_from_string
@@ -230,7 +232,7 @@ module Scrape_followers =
     let scrape_followers_of_users 
         (users: Twitter_user seq) 
         =
-        printfn "reading amounts of followers of members... "
+        Log.info "reading amounts of followers of members... "
         users
         |>Seq.map (fun twitter_user ->
             twitter_user

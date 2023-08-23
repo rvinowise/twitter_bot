@@ -34,7 +34,7 @@ module Anounce_score =
         browser.Manage().Cookies.AddCookie(authorisation_cookie)
         //Login_to_twitter.login_to_twitter
         
-        printfn "browser is open... "
+        Log.info "browser is open... "
     
     let scrape_followers_of_competitors member_list_id =
         member_list_id
@@ -112,7 +112,7 @@ module Anounce_score =
 //        Export_scores_to_csv.export_score_changes
 //            start_time current_time
 //            score_changes
-        printfn "finish scraping and announcing scores."
+        Log.info "finish scraping and announcing scores."
         ()
 
         

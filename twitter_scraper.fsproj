@@ -8,9 +8,9 @@
   <ItemGroup>
     <Compile Include="src\settings.fs" />
     <Compile Include="src\twitter_interface\twitter_settings.fs" />
+    <Compile Include="src\Logger.fs" />
     
     <Compile Include="src\types.fs" />
-    <Compile Include="src\Scores_database.fs" />
     
     <Compile Include="src\twitter_interface\login_to_twitter.fs" />
     <Compile Include="src\twitter_interface\Scrape_followers.fs" />
@@ -19,13 +19,15 @@
     <Compile Include="src\remarks\Remark_score_changes.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
-    <Compile Include="src\file_interface\Export_scores_to_csv.fs" />
+    <Compile Include="src\database\Database.fs" />
+    <Compile Include="src\database\Scores_database.fs" />
+
     <Compile Include="src\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     <Compile Include="src\googlesheet_interface\Import_scores_from_googlesheet.fs" />
     
+    <Compile Include="src\file_interface\Export_scores_to_csv.fs" />
+    
     <Compile Include="src\anounce_score.fs" />
-    
-    
     
     
     <Compile Include="Program.fs" />
@@ -43,6 +45,12 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
     <PackageReference Include="octokit" Version="7.1.0" />
     
+    <!-- Logging -->
+    <PackageReference Include="Serilog" Version="3.0.1" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    
     <PackageReference Include="xunit" Version="2.5.0" />
     <PackageReference Include="fsunit" Version="5.4.0" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
@@ -59,7 +67,6 @@
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="115.0.5790.17000" />
     <PackageReference Include="Selenium.WebDriver.GeckoDriver" Version="0.33.0" />
     <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
-<!--    <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />-->
 
     <!--configuration  -->
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />

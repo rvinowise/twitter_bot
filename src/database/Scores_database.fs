@@ -12,13 +12,6 @@ open Dapper
 open Npgsql
 
 module Scores_database =
-    open System.Data.Common
-
-    let open_db_connection =
-        let connection_string = """Host=127.0.0.1:5432;Username=postgres;Password=" ";Database=web_bot"""
-        let dataSource = NpgsqlDataSource.Create(connection_string)
-        let db_connection = dataSource.OpenConnection()
-        db_connection
 
     
     let write_score_to_db 
@@ -26,15 +19,7 @@ module Scores_database =
         (user: User_handle)
         (score: int)
         =
-        if
-            datetime.Date = DateTime(2023,08,19)
-            &&
-            user = User_handle "yangranat"
-        then
-            printfn "test"
-        else()
-        
-        open_db_connection.Query<User_handle>(
+        Database.open_connection.Query<User_handle>(
             @"insert into score_line (datetime, user_handle, score)
             values (@datetime, @user_handle, @score)
             on conflict (datetime, user_handle) do update set score = @score",
@@ -49,7 +34,7 @@ module Scores_database =
         (datetime:DateTime)
         (users_with_scores: (User_handle*int)seq )
         =
-        printfn "writing scores to DB on %s" (datetime.ToString("yyyy-MM-dd HH:mm"))
+        Log.info $"""writing scores to DB on {datetime.ToString("yyyy-MM-dd HH:mm")}"""
         users_with_scores
         |>Seq.iter(fun (user, score)-> 
             write_score_to_db datetime user score
@@ -65,10 +50,10 @@ module Scores_database =
     let write_user_names_to_db
         (users: Twitter_user list)
         =
-        printfn "writing %d user names to DB" (List.length users)
+        Log.info $"writing {List.length users} user names to DB"
         users
         |>List.iter(fun user->
-            open_db_connection.Query<Db_twitter_user>(
+            Database.open_connection.Query<Db_twitter_user>(
                 @"insert into twitter_user (handle, name)
                 values (@handle, @name)
                 on conflict (handle) do update set name = @name",
@@ -88,11 +73,11 @@ module Scores_database =
     }
     
     let read_last_score_time() =
-        open_db_connection.Query<DateTime>(
+        Database.open_connection.Query<DateTime>(
             @"select COALESCE(max(datetime),make_date(1000,1,1)) from score_line"
         )|>Seq.head
     let read_scores_for_datetime datetime =
-        open_db_connection.Query<Score_line>(
+        Database.open_connection.Query<Score_line>(
             @"select * from score_line
             where datetime = @datetime",
             {|datetime=datetime|}
@@ -102,7 +87,7 @@ module Scores_database =
         )
     
     let read_last_datetime_on_day (day:DateTime) =
-        open_db_connection.Query<DateTime>(
+        Database.open_connection.Query<DateTime>(
             @"select COALESCE(max(datetime),@day+make_time(23,59,0)) from score_line
             where cast(datetime as date) = @day",
             {|day=day|}
@@ -127,7 +112,7 @@ module Scores_database =
         last_time, score_lines
         
     let read_user_names_from_handles () =
-        open_db_connection.Query<Db_twitter_user>(
+        Database.open_connection.Query<Db_twitter_user>(
             @"select * from twitter_user"
         )
         |>Seq.map(fun user->User_handle user.handle, user.name)

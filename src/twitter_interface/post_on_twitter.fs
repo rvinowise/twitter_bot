@@ -11,7 +11,7 @@ module Post_on_twitter =
 
 
     let post_text text =
-        printfn "posting as a single message..."
+        Log.info "posting as a single message..."
         url (Twitter_settings.base_url+"/compose/tweet")
         element "[aria-label='Tweet text']" << text
         element "[data-testid='tweetButton']" |>click
@@ -23,7 +23,7 @@ module Post_on_twitter =
     let post_posts_as_thread 
         (chunks:string list) 
         =
-        printfn "posting as a thread..."
+        Log.info "posting as a thread..."
         url (Twitter_settings.base_url+"/compose/tweet")
 
         chunks

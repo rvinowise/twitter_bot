@@ -193,18 +193,6 @@ module Export_scores_to_googlesheet =
                     |>Option.defaultValue 0
                 score_on_that_day::score_history
             )
-            
-//            scores_on_day
-//            |>Seq.fold (fun map_user_to_full_score_history (user,score) ->
-//                let user_score_history =
-//                    map_user_to_full_score_history
-//                    |>Map.tryFind user
-//                    |>Option.defaultValue []
-//                
-//                map_user_to_full_score_history
-//                |>Map.add user (score::user_score_history)
-//            )
-//                map_user_to_full_score_history
         )   
             map_user_to_score
         |>Map.map (fun _ score_history ->
@@ -212,22 +200,11 @@ module Export_scores_to_googlesheet =
             |>List.rev    
         )
     
-    let get_current_scores =
-        Scores_database.read_last_scores()
-            
-            
     let sheet_row_of_competitor
         (place:int)
         (competitor:Twitter_user)
         (score_history: int list)
         =
-//        let growth_today =
-//            (score_history
-//            |>List.head)
-//            -
-//            (score_history
-//            |>List.tryItem(1)
-//            |>Option.defaultValue 0)
         let user_row_index = place+2
         let current_growth_formula = $"=E{user_row_index}-F{user_row_index}"
         [
@@ -265,16 +242,22 @@ module Export_scores_to_googlesheet =
                 |>Map.tryFind handle
                 |>Option.defaultValue ""
         }
+    
+    [<Fact>]
+    let ``try date as text``()=
+        let datetime = DateTime.Now
+        let str = $"last day of scores is {datetime}"
+        ()
             
     let input_all_scores_to_sheet
         (sheet:Google_spreadsheet)
         =
-        printfn "inputting fields into google spread sheet..."
         let days_in_past = 100
         
         let last_datetime,current_scores,score_hisory =
             get_history_of_user_scores days_in_past
         
+        Log.info $"inputting fields into google spread sheet for {days_in_past} days in the past since {last_datetime}..."
         let constant_data =
             [
                 sheet_row_of_total_score;
@@ -294,14 +277,19 @@ module Export_scores_to_googlesheet =
             constant_data
             @user_scores
             |>List
-            
+        Log.info $"""
+        inputting into google sheet:
+        {sheet}
+        rows:
+        {user_scores}
+        """    
         input_into_sheet sheet all_rows
     
     
     let update_googlesheet_with_last_scores
         (sheet:Google_spreadsheet)
         =
-        printfn "updating google sheet, page '%s'" sheet.page_name
+        Log.info $"updating google sheet, page '{sheet.page_name}'" 
         clean_sheet sheet|>ignore
         input_all_scores_to_sheet sheet
     
@@ -309,9 +297,9 @@ module Export_scores_to_googlesheet =
     let ``try input_scores_to_sheet``() =
         update_googlesheet_with_last_scores
             {
-                Google_spreadsheet.doc_id = "1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
-                page_id=293721268
-                page_name="test"
+                Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
+                page_id=0
+                page_name="test_scores"
             }
     
     let score_changes = [
