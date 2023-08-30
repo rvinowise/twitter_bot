@@ -6,8 +6,8 @@ Bot ranks competitors according to their amount of followers and posts, results 
 e.g. here: https://docs.google.com/spreadsheets/d/1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU/edit#gid=1892937278
 ## Usage
 Bot can be scheduled for an automatic launch every hour or so by Task Scheduler on windows.
-Edited file appsettings.json should exist in the folder with bot's executable. 
-In that file, these parameters should be provided:
+The file appsettings.json should be edited and put in the folder with bot's executable. 
+In that file, the following parameters should be provided:
 
 **auth_token**: a cookie with the same name for www.twitter.com, from a browser which is authorised on twitter under some acount. 
 Bot will log in via this account. this cookie can be seen e.g., in the developer panel of the chrome browser (F12) -> Application -> Cookies.
