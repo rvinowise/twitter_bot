@@ -32,9 +32,10 @@ module Log =
     
     let error message =
         logger.Error message
-        printfn $"%s{message}"    
+        printfn $"%s{message}"
+        message
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try logging``()=
         for i in 0..1000 do
             info <| sprintf "%s : %i" "hello" 3

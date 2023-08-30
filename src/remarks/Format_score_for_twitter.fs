@@ -13,11 +13,7 @@ open Dapper
 module Format_score_for_twitter =
     
     
-    let int_to_string_signed int =
-        if int>=0 then
-           "+"+string int
-        else
-           string int
+    
     let score_change_line_as_text
         (score_change_line: int*Twitter_user*int*int)
         =
@@ -28,7 +24,7 @@ module Format_score_for_twitter =
             user.name
             //(user.handle|>User_handle.value)
             new_score
-            (int_to_string_signed score_change)
+            (Utils.int_to_string_signed score_change)
 
     
     let get_score_header_with_timespan
@@ -45,7 +41,7 @@ module Format_score_for_twitter =
             (end_time.ToString("yyyy-MM-dd HH:mm"))
             (start_time.ToString("yyyy-MM-dd HH:mm"))
             total_score
-            (int_to_string_signed(score_change))
+            (Utils.int_to_string_signed(score_change))
              
 
          

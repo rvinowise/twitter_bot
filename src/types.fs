@@ -15,7 +15,9 @@ module User_handle =
     let value (handle:User_handle) =
         let (User_handle value) = handle
         value
-    
+    let db_value (handle:User_handle) =
+        (value handle).ToCharArray()
+        
     let trim_atsign (value:string) =
         if Seq.head value = '@' then
             value[1..]
@@ -32,3 +34,6 @@ module Twitter_user =
 
     let url_from_handle handle =
         $"{Twitter_settings.base_url}/{User_handle.value handle}"
+        
+    let handle user =
+        user.handle

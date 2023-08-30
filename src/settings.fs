@@ -31,13 +31,23 @@ module Settings =
     let db_connection_string = configuration_root["db_connection_string"]
     let scores_export_path = configuration_root["scores_export_path"]
     
-    let score_table = {
-        Google_spreadsheet.doc_id = configuration_root["googlesheet_doc_id"]
-        page_id = int configuration_root["googlesheet_page_id"]
-        page_name = configuration_root["googlesheet_page_name"]
-    }
-    let score_table_for_import = {
-        Google_spreadsheet.doc_id = configuration_root["googlesheet_doc_id_for_import"]
-        page_id = int configuration_root["googlesheet_page_id_for_import"]
-        page_name = configuration_root["googlesheet_page_name_for_import"]
-    }
+    module Google_sheets =
+        let followers_amount_section =
+            configuration_root.GetSection("google_tables").GetSection("followers_amount")
+        let followers_amount = {
+            Google_spreadsheet.doc_id = followers_amount_section["doc_id"]
+            page_id = int followers_amount_section["page_id"]
+            page_name = followers_amount_section["page_name"]
+        }
+        let posts_amount_section =
+            configuration_root.GetSection("google_tables").GetSection("posts_amount")
+        let posts_amount = {
+            Google_spreadsheet.doc_id = posts_amount_section["doc_id"]
+            page_id = int posts_amount_section["page_id"]
+            page_name = posts_amount_section["page_name"]
+        }
+        let score_table_for_import = {
+            Google_spreadsheet.doc_id = configuration_root["googlesheet_doc_id_for_import"]
+            page_id = int configuration_root["googlesheet_page_id_for_import"]
+            page_name = configuration_root["googlesheet_page_name_for_import"]
+        }

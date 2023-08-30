@@ -12,20 +12,22 @@
     
     <Compile Include="src\types.fs" />
     
+    <Compile Include="src\utils.fs" />
+    
+    <Compile Include="src\twitter_interface\Scraping.fs" />
     <Compile Include="src\twitter_interface\login_to_twitter.fs" />
-    <Compile Include="src\twitter_interface\Scrape_followers.fs" />
+    <Compile Include="src\twitter_interface\Scrape_user_states.fs" />
+    <Compile Include="src\twitter_interface\Scrape_list_members.fs" />
     <Compile Include="src\twitter_interface\post_on_twitter.fs" />
     
     <Compile Include="src\remarks\Remark_score_changes.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
     <Compile Include="src\database\Database.fs" />
-    <Compile Include="src\database\Scores_database.fs" />
+    <Compile Include="src\database\Social_database.fs" />
 
     <Compile Include="src\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     <Compile Include="src\googlesheet_interface\Import_scores_from_googlesheet.fs" />
-    
-    <Compile Include="src\file_interface\Export_scores_to_csv.fs" />
     
     <Compile Include="src\anounce_score.fs" />
     

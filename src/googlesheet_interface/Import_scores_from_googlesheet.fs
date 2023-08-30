@@ -90,10 +90,10 @@ module Import_scores_from_googlesheet =
                     |>Option.defaultValue 0
                 user,score
             )
-        
-        Scores_database.write_scores_to_db
-            last_moment_of_that_date
-            users_scores
+        ()
+//        Social_database.write_scores_to_db
+//            last_moment_of_that_date
+//            users_scores
             
     let import_scores_on_days
         (sheet:Google_spreadsheet)
@@ -114,7 +114,7 @@ module Import_scores_from_googlesheet =
             sheet
             [start_column..end_column]
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try import_scores_from_googlesheet``() =
         let test =
             import_scores_on_days

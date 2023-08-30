@@ -14,18 +14,28 @@ open Google.Apis.Sheets.v4
 
 module Export_scores_to_googlesheet =
     
-    let stream = new FileStream(
-        "google_api_secret.json", 
-        FileMode.Open, FileAccess.Read
-    ) 
-        
-    let credential = GoogleCredential.FromStream(stream).CreateScoped([SheetsService.Scope.Spreadsheets])
-    let googlesheet_service = new SheetsService(
-        BaseClientService.Initializer(
-            HttpClientInitializer = credential, ApplicationName = "web-bot" 
-        )
-    )
     
+    let mutable (googlesheet_service:SheetsService) = null
+    
+    try 
+        let stream = new FileStream(
+            "google_api_secret.json", 
+            FileMode.Open, FileAccess.Read
+        )
+        let credential = GoogleCredential.FromStream(stream).CreateScoped([SheetsService.Scope.Spreadsheets])
+        googlesheet_service <- new SheetsService(
+            BaseClientService.Initializer(
+                HttpClientInitializer = credential, ApplicationName = "web-bot" 
+            )
+        )
+    with
+    | exc ->
+        $"""can't read file with google credential:
+           {exc}
+        """
+        |>Log.important
+        reraise ()
+        
     
     let delete_rows
         (sheet: Google_spreadsheet)
@@ -53,7 +63,7 @@ module Export_scores_to_googlesheet =
     
     
     let sheet_row_clean = [
-        for empty in 0 .. 50 -> ""
+        for empty in 0 .. 20 -> ""
     ]
         
     let input_into_sheet
@@ -88,7 +98,7 @@ module Export_scores_to_googlesheet =
         |>List :> IList<_>
     
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try input_into_sheet``()=
         input_into_sheet
             {
@@ -109,16 +119,16 @@ module Export_scores_to_googlesheet =
             sheet_row_clean
         
         let clean_sheet =
-            [ for _ in 0 .. 4000 -> clean_row]
+            [ for _ in 0 .. 500 -> clean_row]
             |>lists_to_google_obj
         
         input_into_sheet sheet clean_sheet
 
         
-    [<Fact>]
+    [<Fact>]//(Skip="manual")
     let ``try clean_sheet``() =
         clean_sheet
-            Settings.score_table
+            Settings.Google_sheets.followers_amount
             
     let sheet_row_of_total_score
         =
@@ -129,7 +139,7 @@ module Export_scores_to_googlesheet =
         ]@
         [
             for letter in 'D' .. 'Z' ->
-                $"=SUM({letter}3:{letter}4000)" :>obj
+                $"=SUM({letter}3:{letter}1000)" :>obj
         ]|>List :> IList<obj>
         
     
@@ -156,19 +166,30 @@ module Export_scores_to_googlesheet =
             (Twitter_user.url_from_handle handle)
             (handle|>User_handle.value)
     
-    
-    let get_history_of_user_scores
+    let get_history_of_amounts_for_users
+        (amount_of_what: Social_database.Table_with_amounts)
         days_from_today
         =
-        let last_datetime,last_scores = Scores_database.read_last_scores ()
-        let map_user_to_score =
-            last_scores
-            |>Seq.map (fun (user,score) -> user,[score])
-            |>Map.ofSeq//<User_handle,int list>
+        let last_datetime = Social_database.read_last_followers_amount_time()
+        let competitors =
+            Social_database.read_last_competitors
+                (last_datetime - TimeSpan.FromDays(20))
+            |>Set.ofSeq
+
+        let last_amounts =
+            Social_database.read_last_amounts_closest_to_moment_for_users
+                    amount_of_what
+                    last_datetime
+                    competitors
+        
+        let map_user_to_amounts =
+            last_amounts
+            |>Map.map (fun _ amount -> [amount])
         
         last_datetime
         ,
-        last_scores
+        last_amounts
+        |>Map.toSeq
         |>Seq.sortByDescending snd
         |>Seq.mapi(fun place (user,score) ->
             (place+1),user,score          
@@ -176,13 +197,16 @@ module Export_scores_to_googlesheet =
         ,
         [
             for day_from_today in 1 .. days_from_today ->
-                let historical_day = last_datetime.Date.AddDays(-day_from_today).Date //todo take date or no?
-                Scores_database.read_last_scores_on_day historical_day
+                let historical_day = last_datetime.AddDays(-day_from_today)
+                Social_database.read_amounts_closest_to_the_end_of_day
+                    amount_of_what
+                    historical_day
         ]
         |>List.fold(fun map_user_to_full_score_history scores_on_day ->
             
             let user_to_score_on_that_day =
                 scores_on_day
+                |>Seq.map(fun row -> User_handle row.user_handle,row.amount)
                 |>Map.ofSeq
             
             map_user_to_full_score_history
@@ -194,7 +218,7 @@ module Export_scores_to_googlesheet =
                 score_on_that_day::score_history
             )
         )   
-            map_user_to_score
+            map_user_to_amounts
         |>Map.map (fun _ score_history ->
             score_history
             |>List.rev    
@@ -243,19 +267,22 @@ module Export_scores_to_googlesheet =
                 |>Option.defaultValue ""
         }
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try date as text``()=
         let datetime = DateTime.Now
         let str = $"last day of scores is {datetime}"
         ()
             
-    let input_all_scores_to_sheet
+    let input_history_of_amounts_to_sheet
+        (table_with_amounts)
         (sheet:Google_spreadsheet)
         =
-        let days_in_past = 100
+        let days_in_past = 20
         
         let last_datetime,current_scores,score_hisory =
-            get_history_of_user_scores days_in_past
+            get_history_of_amounts_for_users
+                table_with_amounts
+                days_in_past
         
         Log.info $"inputting fields into google spread sheet for {days_in_past} days in the past since {last_datetime}..."
         let constant_data =
@@ -263,7 +290,7 @@ module Export_scores_to_googlesheet =
                 sheet_row_of_total_score;
                 (sheet_row_of_header last_datetime days_in_past)
             ]
-        let user_handles_to_names = Scores_database.read_user_names_from_handles()
+        let user_handles_to_names = Social_database.read_user_names_from_handles()
         let user_scores=
             current_scores
             |>Seq.map(fun (place,user_handle,_) ->
@@ -287,24 +314,35 @@ module Export_scores_to_googlesheet =
     
     
     let update_googlesheet_with_last_scores
+        table_with_amounts
         (sheet:Google_spreadsheet)
         =
         Log.info $"updating google sheet, page '{sheet.page_name}'" 
-        clean_sheet sheet|>ignore
-        input_all_scores_to_sheet sheet
+        //clean_sheet sheet|>ignore
+        input_history_of_amounts_to_sheet
+            table_with_amounts
+            sheet
     
-    [<Fact>]
-    let ``try input_scores_to_sheet``() =
+    let update_googlesheets () =
+        input_history_of_amounts_to_sheet
+            Social_database.Table_with_amounts.Followers
+            Settings.Google_sheets.followers_amount
+            |>ignore
+        input_history_of_amounts_to_sheet
+            Social_database.Table_with_amounts.Posts
+            Settings.Google_sheets.posts_amount
+    
+    [<Fact>]//(Skip="manual")
+    let ``try update_googlesheets``() =
+        update_googlesheets()
+    
+   
+    [<Fact>]//(Skip="manual")
+    let ``try input_posts_amount_to_sheet``() =
         update_googlesheet_with_last_scores
+            Social_database.Table_with_amounts.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
-                page_id=0
-                page_name="test_scores"
+                page_id=1445243022
+                page_name="posts_amount"
             }
-    
-    let score_changes = [
-        {Twitter_user.name="name1"; handle=User_handle "handle1"}, 10,0;
-        {Twitter_user.name="name2"; handle=User_handle "handle2"}, 21,1;
-        {Twitter_user.name="name3"; handle=User_handle "handle3"}, 32,2;
-        {Twitter_user.name="name4"; handle=User_handle "handle4"}, 43,3;
-    ]

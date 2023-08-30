@@ -1,46 +1,14 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open System.Collections.ObjectModel
-open System.Configuration
-open Microsoft.Extensions.Configuration
 open OpenQA.Selenium
+open OpenQA.Selenium.Interactions
+open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
-open Xunit
 open canopy.classic
 open rvinowise.twitter
-open Dapper
-open FParsec
 
-module Scrape_followers =
-    open OpenQA.Selenium.Interactions
-    open OpenQA.Selenium.Support.UI
-
-    let wait = WebDriverWait(browser, TimeSpan.FromSeconds(3));
-    
-    let element_exists selector =
-        let old_wait = browser.Manage().Timeouts().ImplicitWait
-        browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromMilliseconds(0));
-        let elements =
-            browser.FindElements(By.XPath(
-                selector
-            ))
-        browser.Manage().Timeouts().ImplicitWait <- old_wait
-        elements.Count > 0
-    
-    let wait_for_element
-        seconds
-        css_selector
-        =
-        let old_wait = browser.Manage().Timeouts().ImplicitWait
-        browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(seconds))
-        let elements =
-            browser.FindElements(By.CssSelector(
-                css_selector
-            ))
-        browser.Manage().Timeouts().ImplicitWait <- old_wait
-        elements
-        |>Seq.tryHead
+module Scrape_list_members =
     
     
     let read_community_members community_id = 
@@ -165,7 +133,7 @@ module Scrape_followers =
             $"{Twitter_settings.base_url}/i/lists/{list_id}/members"
         url members_url
         
-        let table_with_members = wait_for_element 180 "div[aria-label='Timeline: List members']"
+        let table_with_members = Scraping.try_element "div[aria-label='Timeline: List members']"
         
         match table_with_members with
         |Some table_with_members ->
@@ -173,80 +141,11 @@ module Scrape_followers =
             Log.important $"list has {Seq.length users} members... "
             users
         |None->
-            Log.error "Timeline: List members didn't appear, can't read users... "
+            Log.error "Timeline: List members didn't appear, can't read users... "|>ignore
             Set.empty
         //|>Seq.take 3 //
 
-    let remove_commas (number:string) =
-        number.Replace(",", "")
-        
-    let parse_followers_qty_from_string number =
-        let letter_multiplier =
-            anyString 1
-            |>> (fun multiplier_letter ->
-                match multiplier_letter with
-                |"K"->1000
-                |"M"->1000000
-                |strange_letter->
-                    Log.error $"parsing a number with a letter encountered a weird letter: {strange_letter}"
-                    1
-            )
-        
-        let number_with_letter =
-            pfloat .>>. (letter_multiplier <|>% 1)
-            |>> (fun (first_number,last_multiplier) ->
-                (first_number * float last_multiplier)
-                |> int
-            )
-            
-        number
-        |>remove_commas
-        |>run number_with_letter
-        |>function
-        |Success (number,_,_) -> number
-        |Failure (error,_,_) -> 
-            Log.error $"error while parsing number of followers: \n\r{error}"
-            0
     
-    
-    
-    
-    let page_isnt_showing () =
-        element_exists "//*[text()='Something went wrong. Try reloading.']"
-    
-    let scrape_followers_of_user twitter_user =
-        url (Twitter_user.url twitter_user)
-        
-        let followers_qty_field = $"a[href='/{twitter_user.handle|>User_handle.value}/followers'] span span"
-        followers_qty_field
-        |>wait_for_element 3
-        |>function
-        |None->
-            Log.error $"url '{Twitter_user.url}' doesn't show the Followers field"
-            None
-        |Some followers_qty_field->
-            followers_qty_field
-            |>read|>parse_followers_qty_from_string
-            |>Some
-            
-    let scrape_followers_of_users 
-        (users: Twitter_user seq) 
-        =
-        Log.info "reading amounts of followers of members... "
-        users
-        |>Seq.map (fun twitter_user ->
-            twitter_user
-            ,
-            scrape_followers_of_user twitter_user
-        )|>Seq.map (fun (user,score)->
-            match score with
-            |None->None
-            |Some number->Some (user,number)
-        )|>Seq.choose id
-
-    
-    
-
   
 
 
