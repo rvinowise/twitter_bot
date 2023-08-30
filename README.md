@@ -23,3 +23,5 @@ Bot will log in via this account. this cookie can be seen e.g., in the developer
 **"page_id"**: (after gid=) *"1892937278"*,
 
 **"page_name"**: (the words on the tab page) *"SF Network 𝕏 Score"*
+
+The file with a google-api-secret for accessing spreadsheets should be obtained by registering the bot in the google console. this file should be put together with the executable.
