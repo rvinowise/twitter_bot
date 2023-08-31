@@ -3,9 +3,9 @@
 open System
 open OpenQA.Selenium
 open canopy.classic
+open OpenQA.Selenium.Support.UI
 
 module Scraping =
-    open OpenQA.Selenium.Support.UI
 
     let wait = WebDriverWait(browser, TimeSpan.FromSeconds(3));
     

@@ -173,7 +173,7 @@ module Export_scores_to_googlesheet =
         let last_datetime = Social_database.read_last_followers_amount_time()
         let competitors =
             Social_database.read_last_competitors
-                (last_datetime - TimeSpan.FromDays(20))
+                (last_datetime - TimeSpan.FromHours(Settings.Competitors.include_from_past))
             |>Set.ofSeq
 
         let last_amounts =

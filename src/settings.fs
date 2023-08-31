@@ -25,7 +25,15 @@ module Settings =
     let auth_token = configuration_root["auth_token"]
     let login = configuration_root["login"]
     let password = configuration_root["password"]
-    let competitors_list = configuration_root["competitors_list"]
+    
+    let competitors_section =
+            configuration_root.GetSection("competitors")
+    module Competitors =
+        let list = competitors_section["list"]
+        (*bot can't recognise whether a participant is removed from the list, or the list didn't load fully.
+        to avoid disappearance of participants due to twitter malfunctioning,
+        they are included from the recent past*) 
+        let include_from_past = int (competitors_section["include_from_past_hours"])
     let headless =  (configuration_root["headless"]) = "true"
     let db_connection_string = configuration_root["db_connection_string"]
     

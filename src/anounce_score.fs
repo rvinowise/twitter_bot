@@ -59,7 +59,7 @@ module Anounce_score =
     
     let scrape_and_announce_user_state()=
         let new_state =
-            scrape_state_of_competitors Settings.competitors_list
+            scrape_state_of_competitors Settings.Competitors.list
         
         let current_time = DateTime.Now
         

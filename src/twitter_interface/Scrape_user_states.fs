@@ -25,7 +25,6 @@ module Lettered_number_parser =
         (pstring "K"|>>fun _-> 1000) <|>
         (pstring "M"|>>fun _->1000000) <|>
         (spaces|>>fun _->1)
-        //(eof|>>fun _->1) 
         
     let number_with_letter =
         pfloat .>>. final_multiplier
@@ -40,9 +39,6 @@ module Scrape_user_states =
     let remove_commas (number:string) =
         number.Replace(",", "")
         
-    let page_isnt_showing () =
-        Scraping.element_exists "//*[text()='Something went wrong. Try reloading.']"
-    
     
     let parse_number_with_multiplier_letter text =
         text
@@ -91,7 +87,10 @@ module Scrape_user_states =
         
         posts_qty_field
         |>function
-        |None->Result.Error "posts_qty_field isn't on the page"
+        |None->
+            "posts_qty_field isn't on the page"
+            |>Log.error
+            |>Result.Error
         |Some posts_qty_field->
             posts_qty_field
             |>read
