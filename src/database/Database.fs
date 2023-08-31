@@ -51,7 +51,7 @@ module Database =
         let db_connection = dataSource.OpenConnection()
         
         set_timezone_of_this_machine db_connection
-        SqlMapper.AddTypeHandler(Timestamp_mapper());
+        //SqlMapper.AddTypeHandler(Timestamp_mapper()); //sometimes it works, sometimes - not
         
         db_connection
 
