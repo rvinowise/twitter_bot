@@ -313,22 +313,22 @@ module Export_scores_to_googlesheet =
         input_into_sheet sheet all_rows
     
     
-    let update_googlesheet_with_last_scores
+    let update_googlesheet
         table_with_amounts
         (sheet:Google_spreadsheet)
         =
         Log.info $"updating google sheet, page '{sheet.page_name}'" 
-        //clean_sheet sheet|>ignore
+        clean_sheet sheet|>ignore
         input_history_of_amounts_to_sheet
             table_with_amounts
             sheet
     
     let update_googlesheets () =
-        input_history_of_amounts_to_sheet
+        update_googlesheet
             Social_database.Table_with_amounts.Followers
             Settings.Google_sheets.followers_amount
             |>ignore
-        input_history_of_amounts_to_sheet
+        update_googlesheet
             Social_database.Table_with_amounts.Posts
             Settings.Google_sheets.posts_amount
     
@@ -339,7 +339,7 @@ module Export_scores_to_googlesheet =
    
     [<Fact>]//(Skip="manual")
     let ``try input_posts_amount_to_sheet``() =
-        update_googlesheet_with_last_scores
+        update_googlesheet
             Social_database.Table_with_amounts.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
