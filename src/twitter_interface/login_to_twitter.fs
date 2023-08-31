@@ -20,12 +20,12 @@ module Login_to_twitter =
 
     let login_to_twitter =
        url (Twitter_settings.base_url+"/i/flow/login")
-       element "input[name='text']" << Settings.Username
+       element "input[name='text']" << Settings.login
        let button_1 = find_login_button_with_text "Next"
        button_1 |> click
        
        let password_field = element "input[name='password']"
-       password_field << Settings.Password
+       password_field << Settings.password
        //password_field.SendKeys(Keys.Enter)
 //       let button_2 = element "div[role='button'] div[dir='ltr']"
 //       
