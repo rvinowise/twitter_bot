@@ -28,15 +28,6 @@ module Import_scores_from_googlesheet =
         )
     )
     
-    let google_column_as_array
-        (google_column:IList<IList<obj>>)
-        =
-        google_column
-        |>Seq.map(fun inner_list->
-            inner_list
-            |>Seq.tryHead
-            |>Option.defaultValue null
-        )|>Array.ofSeq
     
     let row_to_user_correspondence
         (sheet:Google_spreadsheet)
@@ -45,11 +36,12 @@ module Import_scores_from_googlesheet =
             sheet.doc_id,
             $"{sheet.page_name}!B3:B4000"
         ).Execute().Values
-        |>google_column_as_array
+        |>Googlesheets.google_column_as_array
         |>Array.map (string>>User_handle.trim_atsign>>User_handle)
     
     
     let import_scores_on_day
+        (social_database: Social_competition_database)
         (sheet:Google_spreadsheet)
         (row_to_user_correspondence: User_handle array)
         (column_of_day: char)
@@ -59,7 +51,7 @@ module Import_scores_from_googlesheet =
                 sheet.doc_id,
                 $"{sheet.page_name}!{column_of_day}2:{column_of_day}4000"
             ).Execute().Values
-            |>google_column_as_array
+            |>Googlesheets.google_column_as_array
         
         let string_datetime_of_scores =
             date_and_scores
@@ -69,7 +61,7 @@ module Import_scores_from_googlesheet =
         let is_date_parsed =
             DateTime.TryParseExact(
                 string_datetime_of_scores,
-                "dd.MM.yyyy",
+                "yyyy-MM-dd",
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.None,
                 &datetime_of_scores
@@ -90,19 +82,20 @@ module Import_scores_from_googlesheet =
                     |>Option.defaultValue 0
                 user,score
             )
-        ()
-//        Social_database.write_scores_to_db
-//            last_moment_of_that_date
-//            users_scores
+        
+        social_database.write_followers_amounts_to_db
+            last_moment_of_that_date
+            users_scores
             
     let import_scores_on_days
         (sheet:Google_spreadsheet)
         columns_of_days
         =
+        use social_database = new Social_competition_database()
         let sorted_users = row_to_user_correspondence sheet
         columns_of_days
         |>List.iter (
-            import_scores_on_day sheet sorted_users
+            import_scores_on_day social_database sheet sorted_users
         )
     
     let import_scores_between_two_date_columns
@@ -114,14 +107,14 @@ module Import_scores_from_googlesheet =
             sheet
             [start_column..end_column]
     
-    [<Fact(Skip="manual")>]
+    [<Fact>]//(Skip="manual")
     let ``try import_scores_from_googlesheet``() =
         let test =
             import_scores_on_days
                 {
-                    Google_spreadsheet.doc_id = "1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
-                    page_id=2000980006
-                    page_name="import"
+                    Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
+                    page_id=0
+                    page_name="followers_amount"
                 }
-                ['E' .. 'O']
+                ['F' .. 'N']
         ()

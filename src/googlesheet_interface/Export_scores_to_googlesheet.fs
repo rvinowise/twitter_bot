@@ -9,34 +9,13 @@ open Google.Apis.Sheets.v4.Data
 open Xunit
 
 open Google.Apis.Sheets.v4
+open rvinowise.twitter
 
 
 
 module Export_scores_to_googlesheet =
-    
-    
-    let mutable (googlesheet_service:SheetsService) = null
-    
-    try 
-        let stream = new FileStream(
-            "google_api_secret.json", 
-            FileMode.Open, FileAccess.Read
-        )
-        let credential = GoogleCredential.FromStream(stream).CreateScoped([SheetsService.Scope.Spreadsheets])
-        googlesheet_service <- new SheetsService(
-            BaseClientService.Initializer(
-                HttpClientInitializer = credential, ApplicationName = "web-bot" 
-            )
-        )
-    with
-    | exc ->
-        $"""can't read file with google credential:
-           {exc}
-        """
-        |>Log.important
-        reraise ()
         
-    
+        
     let delete_rows
         (sheet: Google_spreadsheet)
         =
@@ -57,7 +36,7 @@ module Export_scores_to_googlesheet =
 
         let deletion =
             SpreadsheetsResource.BatchUpdateRequest(
-                googlesheet_service, deleteRequest, sheet.doc_id
+                Googlesheets.create_googlesheet_service(), deleteRequest, sheet.doc_id
             );
         deletion.Execute();
     
@@ -82,7 +61,7 @@ module Export_scores_to_googlesheet =
             Data = List<ValueRange>[dataValueRange]
         )
 
-        googlesheet_service.Spreadsheets.Values.BatchUpdate(
+        Googlesheets.create_googlesheet_service().Spreadsheets.Values.BatchUpdate(
             requestBody, sheet.doc_id
         ).Execute()
     
@@ -159,70 +138,11 @@ module Export_scores_to_googlesheet =
         ]
         |>List :> IList<obj>
     
-    
     let hyperlink_to_twitter_user handle =
         sprintf
             """=HYPERLINK("%s", "@%s")"""
             (Twitter_user.url_from_handle handle)
             (handle|>User_handle.value)
-    
-    let get_history_of_amounts_for_users
-        (amount_of_what: Social_database.Table_with_amounts)
-        days_from_today
-        =
-        let last_datetime = Social_database.read_last_followers_amount_time()
-        let competitors =
-            Social_database.read_last_competitors
-                (last_datetime - TimeSpan.FromHours(Settings.Competitors.include_from_past))
-            |>Set.ofSeq
-
-        let last_amounts =
-            Social_database.read_last_amounts_closest_to_moment_for_users
-                    amount_of_what
-                    last_datetime
-                    competitors
-        
-        let map_user_to_amounts =
-            last_amounts
-            |>Map.map (fun _ amount -> [amount])
-        
-        last_datetime
-        ,
-        last_amounts
-        |>Map.toSeq
-        |>Seq.sortByDescending snd
-        |>Seq.mapi(fun place (user,score) ->
-            (place+1),user,score          
-        )
-        ,
-        [
-            for day_from_today in 1 .. days_from_today ->
-                let historical_day = last_datetime.AddDays(-day_from_today)
-                Social_database.read_amounts_closest_to_the_end_of_day
-                    amount_of_what
-                    historical_day
-        ]
-        |>List.fold(fun map_user_to_full_score_history scores_on_day ->
-            
-            let user_to_score_on_that_day =
-                scores_on_day
-                |>Seq.map(fun row -> User_handle row.user_handle,row.amount)
-                |>Map.ofSeq
-            
-            map_user_to_full_score_history
-            |>Map.map(fun user score_history ->
-                let score_on_that_day =
-                    user_to_score_on_that_day
-                    |>Map.tryFind user
-                    |>Option.defaultValue 0
-                score_on_that_day::score_history
-            )
-        )   
-            map_user_to_amounts
-        |>Map.map (fun _ score_history ->
-            score_history
-            |>List.rev    
-        )
     
     let sheet_row_of_competitor
         (place:int)
@@ -253,7 +173,68 @@ module Export_scores_to_googlesheet =
         |>sheet_row_of_competitor
             place
             competitor
+    
+    let get_history_of_amounts_for_users
+        (social_database: Social_competition_database)
+        (amount_of_what: social_database.Table_with_amounts)
+        days_from_today
+        =
+        let last_datetime = social_database.read_last_followers_amount_time()
+        let competitors =
+            social_database.read_last_competitors
+                (last_datetime - TimeSpan.FromHours(Settings.Competitors.include_from_past))
+            |>Set.ofSeq
+
+        let last_amounts =
+            social_database.read_last_amounts_closest_to_moment_for_users
+                    amount_of_what
+                    last_datetime
+                    competitors
         
+        let map_user_to_amounts =
+            last_amounts
+            |>Map.map (fun _ amount -> [amount])
+        
+        last_datetime
+        ,
+        last_amounts
+        |>Map.toSeq
+        |>Seq.sortByDescending snd
+        |>Seq.mapi(fun place (user,score) ->
+            (place+1),user,score          
+        )
+        ,
+        [
+            for day_from_today in 1 .. days_from_today ->
+                let historical_day = last_datetime.AddDays(-day_from_today)
+                social_database.read_amounts_closest_to_the_end_of_day
+                    amount_of_what
+                    historical_day
+        ]
+        |>List.fold(fun map_user_to_full_score_history scores_on_day ->
+            
+            let user_to_score_on_that_day =
+                scores_on_day
+                |>Seq.map(fun row -> User_handle row.user_handle,row.amount)
+                |>Map.ofSeq
+            
+            map_user_to_full_score_history
+            |>Map.map(fun user score_history ->
+                let score_on_that_day =
+                    user_to_score_on_that_day
+                    |>Map.tryFind user
+                    |>Option.defaultValue 0
+                score_on_that_day::score_history
+            )
+        )   
+            map_user_to_amounts
+        |>Map.map (fun _ score_history ->
+            score_history
+            |>List.rev    
+        )
+    
+    
+ 
     
     let twitter_user_from_handle
         handle
@@ -274,13 +255,15 @@ module Export_scores_to_googlesheet =
         ()
             
     let input_history_of_amounts_to_sheet
+        social_database
         (table_with_amounts)
         (sheet:Google_spreadsheet)
         =
-        let days_in_past = 20
+        let days_in_past = 100
         
         let last_datetime,current_scores,score_hisory =
             get_history_of_amounts_for_users
+                social_database
                 table_with_amounts
                 days_in_past
         
@@ -290,7 +273,7 @@ module Export_scores_to_googlesheet =
                 sheet_row_of_total_score;
                 (sheet_row_of_header last_datetime days_in_past)
             ]
-        let user_handles_to_names = Social_database.read_user_names_from_handles()
+        let user_handles_to_names = social_database.read_user_names_from_handles()
         let user_scores=
             current_scores
             |>Seq.map(fun (place,user_handle,_) ->
@@ -314,33 +297,39 @@ module Export_scores_to_googlesheet =
     
     
     let update_googlesheet
+        social_database
         table_with_amounts
         (sheet:Google_spreadsheet)
         =
         Log.info $"updating google sheet, page '{sheet.page_name}'" 
         clean_sheet sheet|>ignore
         input_history_of_amounts_to_sheet
+            social_database
             table_with_amounts
             sheet
     
-    let update_googlesheets () =
+    let update_googlesheets social_database_connection =
         update_googlesheet
-            Social_database.Table_with_amounts.Followers
+            social_database_connection
+            social_database.Table_with_amounts.Followers
             Settings.Google_sheets.followers_amount
             |>ignore
         update_googlesheet
-            Social_database.Table_with_amounts.Posts
+            social_database_connection
+            social_database.Table_with_amounts.Posts
             Settings.Google_sheets.posts_amount
     
     [<Fact>]//(Skip="manual")
     let ``try update_googlesheets``() =
-        update_googlesheets()
+        new Social_competition_database()
+        |>update_googlesheets
     
    
     [<Fact>]//(Skip="manual")
     let ``try input_posts_amount_to_sheet``() =
         update_googlesheet
-            Social_database.Table_with_amounts.Posts
+            (new Social_competition_database())
+            social_database.Table_with_amounts.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
                 page_id=1445243022
