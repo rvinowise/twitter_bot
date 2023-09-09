@@ -80,7 +80,7 @@ module Import_referrals_from_googlesheet =
                     //link_referral
                     Array.tryItem 0 row
                     |>Option.defaultValue "" :?>string
-                    |>User_handle.trim_potential_atsign
+                    |>Parse_social_user.user_from_raw_text
                     |>User_handle,
                     //recruit
                     Array.tryItem 1 row
