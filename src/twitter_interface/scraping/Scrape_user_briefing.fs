@@ -69,7 +69,7 @@ module Scrape_user_briefing =
             
             
     let scrape_user_page user_handle =
-        url (Twitter_user.url_from_handle user_handle)
+        url (User_handle.url_from_handle user_handle)
         {
             User_briefing.handle = user_handle
             name = Scrape_user_elements.name()

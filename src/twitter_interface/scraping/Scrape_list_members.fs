@@ -27,7 +27,7 @@ module Scrape_list_members =
                         By.CssSelector("div>div:nth-child(2)>div>div>div>div>a[role='link']"))
                     let user_name = name_field.Text
                     let user_url = handle_field.GetAttribute("href")
-                    let user_handle = User_handle (Uri(user_url).Segments|>Array.last;)
+                    let user_handle = User_handle.handle_from_url user_url
                     Some {Twitter_user.name=user_name; handle=user_handle}
                     
                 with

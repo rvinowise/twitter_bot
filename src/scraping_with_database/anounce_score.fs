@@ -10,11 +10,7 @@ module Anounce_score =
     open Xunit
 
     
-    
-    
-    type User_data = {
-        name: string
-    }
+   
     let scrape_state_of_competitors member_list_id =
         Scraping.prepare_for_scraping ()
         
@@ -43,11 +39,7 @@ module Anounce_score =
         |>social_database.write_user_states_to_db current_time
         
         Export_scores_to_googlesheet.update_googlesheets social_database
-        |>ignore
-        
-//        Export_scores_to_csv.export_score_changes
-//            start_time current_time
-//            score_changes
+
         Log.info "finish scraping and announcing scores."
         ()
 

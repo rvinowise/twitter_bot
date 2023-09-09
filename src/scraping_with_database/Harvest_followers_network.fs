@@ -5,7 +5,7 @@ open System.Runtime.InteropServices.JavaScript
 open canopy.classic
 open Xunit
 
-module Update_followers_network =
+module Harvest_followers_network =
     
   
     let repeat_if_older_than = DateTime.Now.AddDays(-1)
@@ -57,17 +57,14 @@ module Update_followers_network =
         
     let rec step_of_harvesting_acquaintances_network
         db_connection
-        depth
         unknown_users_around
         =
         log_start_of_step_of_harvesting_acquaintances_network unknown_users_around
         
-        match depth,unknown_users_around with
-        |_,[] ->
+        match unknown_users_around with
+        |[] ->
             Log.info "harvesting acquaintances network has finished because there's no unknown users around"; ()
-        //|0,_ ->
-        //    Log.info "harvesting acquaintances network has finished because depth is reached"; ()
-        |_,observed_user::rest_unknown_users->
+        |observed_user::rest_unknown_users->
             let followees, followers =
                 harvest_user
                     db_connection
@@ -94,17 +91,14 @@ module Update_followers_network =
             )
             |>step_of_harvesting_acquaintances_network
                 db_connection
-                (depth-1)
 
                 
     let harvest_following_network_around_user
         db_connection
-        depth
         root_user
         =
         step_of_harvesting_acquaintances_network
             db_connection
-            depth
             [root_user]
             
     [<Fact>]
@@ -112,5 +106,4 @@ module Update_followers_network =
         Scraping.prepare_for_scraping()
         step_of_harvesting_acquaintances_network
             (Database.open_connection())
-            5
             [User_handle "dicortona"]

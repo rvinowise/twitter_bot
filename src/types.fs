@@ -18,22 +18,40 @@ module User_handle =
     let db_value (handle:User_handle) =
         (value handle).ToCharArray()
         
-    let trim_atsign (value:string) =
+    let trim_potential_atsign (value:string) =
         if Seq.head value = '@' then
             value[1..]
         else
             value
+    
+    
+    let url_from_handle handle =
+        $"{Twitter_settings.base_url}/{value handle}"        
+    let handle_from_url user_url =
+        User_handle (Uri(user_url).Segments|>Array.last)
+        
+    let try_handle_from_url user_url =
+        try
+            (Uri(user_url).Segments)
+            |>Array.last
+            |>User_handle
+            |>Some
+        with
+        | :? FormatException as exc ->
+            Log.error $"can't get user handle from url {user_url}: {exc}"|>ignore
+            None
+            
 type Twitter_user = {
     handle: User_handle;
     name: string
 }
 
 module Twitter_user =
-    let url user =
-        $"{Twitter_settings.base_url}/{user.handle|>User_handle.value}"
-
-    let url_from_handle handle =
-        $"{Twitter_settings.base_url}/{User_handle.value handle}"
+    
+    
         
     let handle user =
         user.handle
+        
+        
+    

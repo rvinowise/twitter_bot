@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 open System.IO
+open System.Threading.Tasks
 open Google.Apis.Auth.OAuth2
 open Google.Apis.Services
 open Google.Apis.Sheets.v4.Data
@@ -42,7 +43,7 @@ module Export_scores_to_googlesheet =
     
     
     let sheet_row_clean = [
-        for empty in 0 .. 20 -> ""
+        for empty in 0 .. 50 -> ""
     ]
         
     let input_into_sheet
@@ -60,10 +61,15 @@ module Export_scores_to_googlesheet =
             ValueInputOption = valueInputOption,
             Data = List<ValueRange>[dataValueRange]
         )
-
-        Googlesheets.create_googlesheet_service().Spreadsheets.Values.BatchUpdate(
-            requestBody, sheet.doc_id
-        ).Execute()
+        try
+            Googlesheets.create_googlesheet_service().Spreadsheets.Values.BatchUpdate(
+                requestBody, sheet.doc_id
+            ).Execute()|>ignore
+            ()
+        with
+        | :? TaskCanceledException as exc ->
+            Log.error $"""couldn't write to googlesheet: {exc.Message}"""|>ignore
+            ()
     
     let lists_to_google_obj
         (lists: string list list)
@@ -141,7 +147,7 @@ module Export_scores_to_googlesheet =
     let hyperlink_to_twitter_user handle =
         sprintf
             """=HYPERLINK("%s", "@%s")"""
-            (Twitter_user.url_from_handle handle)
+            (User_handle.url_from_handle handle)
             (handle|>User_handle.value)
     
     let sheet_row_of_competitor
@@ -259,7 +265,7 @@ module Export_scores_to_googlesheet =
         (table_with_amounts)
         (sheet:Google_spreadsheet)
         =
-        let days_in_past = 100
+        let days_in_past = 20
         
         let last_datetime,current_scores,score_hisory =
             get_history_of_amounts_for_users
@@ -287,12 +293,8 @@ module Export_scores_to_googlesheet =
             constant_data
             @user_scores
             |>List
-        Log.info $"""
-        inputting into google sheet:
-        {sheet}
-        rows:
-        {user_scores}
-        """    
+        Log.info $"inputting into google sheet: {sheet}"
+            
         input_into_sheet sheet all_rows
     
     
@@ -302,7 +304,7 @@ module Export_scores_to_googlesheet =
         (sheet:Google_spreadsheet)
         =
         Log.info $"updating google sheet, page '{sheet.page_name}'" 
-        clean_sheet sheet|>ignore
+        clean_sheet sheet
         input_history_of_amounts_to_sheet
             social_database
             table_with_amounts
@@ -313,7 +315,6 @@ module Export_scores_to_googlesheet =
             social_database_connection
             social_database.Table_with_amounts.Followers
             Settings.Google_sheets.followers_amount
-            |>ignore
         update_googlesheet
             social_database_connection
             social_database.Table_with_amounts.Posts

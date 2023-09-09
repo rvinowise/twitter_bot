@@ -32,7 +32,7 @@ type Social_competition_database() =
         (datetime:DateTime)
         (users_with_amounts: (User_handle*int)seq )
         =
-        Log.info $"""writing followers amounts to DB on {datetime}"""
+        Log.info $"""writing followers amounts to DB at {datetime}"""
         users_with_amounts
         |>Seq.iter(fun (user, score)-> 
             this.write_followers_amount_to_db datetime user score
@@ -45,7 +45,7 @@ type Social_competition_database() =
         (datetime:DateTime)
         (users_with_amounts: (User_handle*int)seq )
         =
-        Log.info $"""writing posts amounts to DB on {datetime}"""
+        Log.info $"""writing posts amounts to DB at {datetime}"""
         users_with_amounts
         |>Seq.iter(fun (user, amount)-> 
             db_connection.Query<User_handle>(

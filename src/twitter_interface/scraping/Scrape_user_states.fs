@@ -104,7 +104,7 @@ module Scrape_user_states =
         |>Scraping.try_element
         |>function
         |None->
-            $"url '{Twitter_user.url_from_handle user_handle}' doesn't show the Followers field"
+            $"url '{User_handle.url_from_handle user_handle}' doesn't show the Followers field"
             |>Log.error
             |>Result.Error
         |Some followers_qty_field->
@@ -115,7 +115,7 @@ module Scrape_user_states =
     
     
     let scrape_user_page user_handle =
-        url (Twitter_user.url_from_handle user_handle)
+        url (User_handle.url_from_handle user_handle)
         {
             Scraped_user_state.posts_amount = scrape_posts_amount ()
             followers_amount = scrape_followers_amount_of_user user_handle

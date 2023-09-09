@@ -37,7 +37,7 @@ module Import_scores_from_googlesheet =
             $"{sheet.page_name}!B3:B4000"
         ).Execute().Values
         |>Googlesheets.google_column_as_array
-        |>Array.map (string>>User_handle.trim_atsign>>User_handle)
+        |>Array.map (string>>User_handle.trim_potential_atsign>>User_handle)
     
     
     let import_scores_on_day

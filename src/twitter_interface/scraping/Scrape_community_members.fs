@@ -25,7 +25,7 @@ module Scrape_community_members =
                 let handle_field = user_entry.FindElement(By.CssSelector("a[role='link']"))
                 let user_name = name_field.Text
                 let user_url = handle_field.GetAttribute("href")
-                let user_handle = User_handle (Uri(user_url).Segments|>Array.last)
+                let user_handle = User_handle.handle_from_url user_url
                 {Twitter_user.name=user_name; handle=user_handle}
             )
         Log.important $"community has {List.length users} members... "
