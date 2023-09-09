@@ -4,14 +4,14 @@ namespace rvinowise.twitter
 
 open System
 open Dapper
+open Npgsql
 open Xunit
 open rvinowise.twitter.social_database
 
-type Social_competition_database() =
+type Social_competition_database(db_connection: NpgsqlConnection) =
     
-    let db_connection = Database.open_connection()
+    new() = new Social_competition_database(Database.open_connection())
         
-                
     member this.write_followers_amount_to_db 
         (datetime: DateTime)
         (user: User_handle)
@@ -78,8 +78,8 @@ type Social_competition_database() =
         )
         
     member this.amounts_from_scraping_state
-        (amount_of_what: Scraped_user_state->Result<int, string>) 
-        (states: (User_handle*Scraped_user_state) list)
+        (amount_of_what: User_social_activity->Result<int, string>) 
+        (states: (User_handle*User_social_activity) list)
         =
         states
         |>List.choose (fun (user,state) ->
@@ -88,22 +88,22 @@ type Social_competition_database() =
             |Result.Error message -> None
         )
         
-    member this.write_user_states_to_db
+    member this.write_user_activity_to_db
         datetime
-        (state:(Twitter_user*Scraped_user_state) list)
+        (activity:(Twitter_user*User_social_activity) list)
         =
-        state
+        activity
         |>List.map fst
         |>this.update_user_names_in_db
         
-        state
+        activity
         |>List.map (fun (user, state)->user.handle, state)
-        |>this.amounts_from_scraping_state Scraped_user_state.followers_amount
+        |>this.amounts_from_scraping_state User_social_activity.followers_amount
         |>this.write_followers_amounts_to_db datetime
         
-        state
+        activity
         |>List.map (fun (user, state)->user.handle, state)
-        |>this.amounts_from_scraping_state Scraped_user_state.posts_amount
+        |>this.amounts_from_scraping_state User_social_activity.posts_amount
         |>this.write_posts_amounts_to_db datetime
     
     
@@ -214,81 +214,5 @@ type Social_database_test() =
     
     let social_db = new Social_competition_database()
     
-    [<Fact(Skip="manual")>]
-    let ``try writing with time-zoned datetime``()=
-        [
-            User_handle "rvinowise", 12
-        ]|>social_db.write_followers_amounts_to_db DateTime.Now
-    
-    [<Fact(Skip="manual")>]
-    let ``try writing to bd row with the error column``()=
-        [
-            User_handle "rvinowise", 10
-        ]|>social_db.write_followers_amounts_to_db DateTime.Now
-    
-    [<Fact>] //(Skip="manual")
-    let ``try write user states to db``()=
-        [
-            {
-                Twitter_user.handle=User_handle "rvinowise"
-                name="Victor Rybin test"
-            },{
-                Scraped_user_state.followers_amount=Result.Ok 7890
-                posts_amount=Result.Ok 7890
-            };
-            
-            {
-                Twitter_user.handle=User_handle "rvinowise2"
-                name="Victor Rybin no posts"
-            },{
-                Scraped_user_state.followers_amount=Result.Ok 200
-                posts_amount=Result.Error "no field with posts amount"
-            };
-            
-            {
-                Twitter_user.handle=User_handle "rvinowise3"
-                name="Victor Rybin no data"
-            },{
-                Scraped_user_state.followers_amount=Result.Error "no field with followers_amount"
-                posts_amount=Result.Error "no field with posts amount"
-            };
-            
-            {
-                Twitter_user.handle=User_handle "rvinowise4"
-                name="Victor Rybin no followers"
-            },{
-                Scraped_user_state.followers_amount=Result.Error "no field with followers_amount"
-                posts_amount=Result.Ok 410
-            }
-        ]|>social_db.write_user_states_to_db DateTime.Now
-    
-    [<Fact>]//(Skip="manual")
-    let ``try read_scores_closest_to_the_end_of_day``()=
-        let scores =
-            social_db.read_amounts_closest_to_the_end_of_day
-                Table_with_amounts.Followers
-                (DateTime(2023,08,28))
-        ()
-    
-    
-    [<Fact>]//(Skip="manual")
-    let ``try read time with offset from UTC``()=
-        let result = 
-            Database.open_connection().Query<Amount_for_user>(
-                $"""select * from followers_amount
-                    where amount = 7890
-                """
-            )
-        ()
-    
-    [<Fact(Skip="manual")>]
-    let ``try read_user_names_from_handles``()=
-        let test = social_db.read_user_names_from_handles()
-        ()
-    
-    [<Fact>]
-    let ``try read_last_competitors``()=
-        let test =
-            social_db.read_last_competitors
-                (DateTime.Now - TimeSpan.FromDays(3))
-        ()
+
+   

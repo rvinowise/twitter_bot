@@ -8,15 +8,18 @@ open rvinowise.twitter
 open FParsec
 
 
-type Scraped_user_state = {
+type User_social_activity = {
     posts_amount: Result<int,string>
     followers_amount: Result<int,string>
+    followees_amount: Result<int,string>
 }
 
-module Scraped_user_state =
+module User_social_activity =
     let followers_amount state =
         state.followers_amount
 
+    let followees_amount state =
+        state.followees_amount
     let posts_amount state =
         state.posts_amount
 
@@ -34,7 +37,7 @@ module Lettered_number_parser =
         )
 
 
-module Scrape_user_states =
+module Scrape_user_social_activity =
 
     let remove_commas (number:string) =
         number.Replace(",", "")
@@ -98,8 +101,8 @@ module Scrape_user_states =
     
     
     
-    let scrape_followers_amount_of_user user_handle =
-        let followers_qty_field = $"a[href='/{User_handle.value user_handle}/followers'] span span"
+    let scrape_acquaintances_amount_of_user user_handle link =
+        let followers_qty_field = $"a[href='/{User_handle.value user_handle}/{link}'] span span"
         followers_qty_field
         |>Scraping.try_element
         |>function
@@ -112,13 +115,18 @@ module Scrape_user_states =
             |>read
             |>parse_number_with_multiplier_letter
     
+    let scrape_followers_amount_of_user user_handle =
+        scrape_acquaintances_amount_of_user user_handle "followers"
     
+    let scrape_followees_amount_of_user user_handle =
+        scrape_acquaintances_amount_of_user user_handle "following"
     
-    let scrape_user_page user_handle =
+    let scrape_user_social_activity user_handle =
         url (User_handle.url_from_handle user_handle)
         {
-            Scraped_user_state.posts_amount = scrape_posts_amount ()
+            User_social_activity.posts_amount = scrape_posts_amount ()
             followers_amount = scrape_followers_amount_of_user user_handle
+            followees_amount = scrape_followees_amount_of_user user_handle
         }
             
     let scrape_stats_of_users 
@@ -129,7 +137,7 @@ module Scrape_user_states =
         |>Seq.map (fun twitter_user ->
             twitter_user
             ,
-            scrape_user_page twitter_user
+            scrape_user_social_activity twitter_user
         )
 
     

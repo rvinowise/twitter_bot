@@ -10,7 +10,7 @@ module Harvest_followers_network =
   
     let repeat_if_older_than = DateTime.Now.AddDays(-1)
     
-    let harvest_user_bio
+    let harvest_user_briefing
         db_connection
         user
         =
@@ -22,6 +22,14 @@ module Harvest_followers_network =
             db_connection
             user_briefing
 
+        let user_activity =
+            Scrape_user_social_activity.scrape_user_social_activity
+                user
+        ()
+//        (new Social_competition_database(db_connection)).write_user_activity_to_db
+//              DateTime.Now
+//              user_activity
+        
     let log_start_of_step_of_harvesting_acquaintances_network
         unknown_users_around
         =
@@ -35,10 +43,10 @@ module Harvest_followers_network =
         db_connection
         user
         =
-        harvest_user_bio
+        harvest_user_briefing
             db_connection
             user
-        
+
         let followees,followers =
             user
             |>Scrape_followers_network.scrape_acquaintances_of_user

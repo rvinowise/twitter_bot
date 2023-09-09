@@ -21,7 +21,7 @@ module Anounce_score =
                 user,
                 user
                 |>Twitter_user.handle
-                |>Scrape_user_states.scrape_user_page
+                |>Scrape_user_social_activity.scrape_user_social_activity
             )
             |>List.ofSeq
         browser.Quit()
@@ -32,11 +32,11 @@ module Anounce_score =
         let new_state =
             scrape_state_of_competitors Settings.Competitors.list
         
-        let current_time = DateTime.Now
-        
         use social_database = new Social_competition_database()
-        new_state
-        |>social_database.write_user_states_to_db current_time
+        
+        social_database.write_user_activity_to_db
+              DateTime.Now
+              new_state
         
         Export_scores_to_googlesheet.update_googlesheets social_database
 

@@ -17,7 +17,7 @@
     <Compile Include="src\twitter_interface\parsing\Parse_twitter_user.fs" />
     
     <Compile Include="src\twitter_interface\Scraping\Scraping.fs" />
-    <Compile Include="src\twitter_interface\Scraping\Scrape_user_states.fs" />
+    <Compile Include="src\twitter_interface\Scraping\Scrape_user_social_activity.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scrape_user_briefing.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scrape_list_members.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scrape_catalog.fs" />
