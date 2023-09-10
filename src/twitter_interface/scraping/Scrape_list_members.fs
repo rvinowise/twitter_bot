@@ -13,7 +13,7 @@ module Scrape_list_members =
     
     
     let rec keep_skimming_elements_while_valid
-        (skimmed_elements: Twitter_user list)
+        skimmed_elements
         (user_cells: IWebElement list)
         =
         match user_cells with
@@ -28,7 +28,7 @@ module Scrape_list_members =
                     let user_name = name_field.Text
                     let user_url = handle_field.GetAttribute("href")
                     let user_handle = User_handle.handle_from_url user_url
-                    Some {Twitter_user.name=user_name; handle=user_handle}
+                    Some (user_handle,user_name)
                     
                 with
                 | :? StaleElementReferenceException as exc ->
@@ -41,7 +41,7 @@ module Scrape_list_members =
                     rest_cells
     
     let rec skim_displayed_elements_till_they_are_not_stale
-        (previous_skimmed_elements: Twitter_user list)
+        previous_skimmed_elements
         (table_with_elements: IWebElement)
         =
         let user_cells = table_with_elements.FindElements(By.CssSelector("div[data-testid='UserCell']"))
@@ -60,8 +60,8 @@ module Scrape_list_members =
            all_skimmed_elements
             
     let new_elements_are_skimmed
-        (skimmed_sofar_elements: Twitter_user Set)
-        (new_skimmed_members: Twitter_user Set)
+        skimmed_sofar_elements
+        new_skimmed_members
         =
         skimmed_sofar_elements
         |>Set.difference new_skimmed_members
@@ -74,7 +74,7 @@ module Scrape_list_members =
         actions.SendKeys(Keys.Tab).Perform()
         let rec skim_and_scroll_iteration
             table_with_elements
-            (skimmed_sofar_elements: Twitter_user Set)
+            skimmed_sofar_elements
             =
             let new_skimmed_members =
                 table_with_elements
@@ -122,7 +122,6 @@ module Scrape_list_members =
         |None->
             Log.error "Timeline: List members didn't appear, can't read users... "|>ignore
             Set.empty
-        //|>Seq.take 3 //
 
     
   

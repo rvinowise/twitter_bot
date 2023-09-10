@@ -4,19 +4,20 @@ open System
 open System.Runtime.InteropServices.JavaScript
 open canopy.classic
 open Xunit
+open rvinowise.twitter.social_database
 
 module Harvest_followers_network =
     
   
     let repeat_if_older_than = DateTime.Now.AddDays(-1)
     
-    let harvest_user_briefing
+    let harvest_top_of_user_page
         db_connection
         user
         =
         Log.info $"harvesting bio of user {User_handle.value user}"
         let user_briefing =
-            Scrape_user_briefing.scrape_user_page user
+            Scrape_user_briefing.scrape_user_briefing user
         
         Social_user_database.write_user_briefing
             db_connection
@@ -25,10 +26,12 @@ module Harvest_followers_network =
         let user_activity =
             Scrape_user_social_activity.scrape_user_social_activity
                 user
-        ()
-//        (new Social_competition_database(db_connection)).write_user_activity_to_db
-//              DateTime.Now
-//              user_activity
+                
+        Social_activity_database.write_optional_social_activity_of_user
+              db_connection
+              DateTime.Now
+              user
+              user_activity
         
     let log_start_of_step_of_harvesting_acquaintances_network
         unknown_users_around
@@ -43,7 +46,7 @@ module Harvest_followers_network =
         db_connection
         user
         =
-        harvest_user_briefing
+        harvest_top_of_user_page
             db_connection
             user
 

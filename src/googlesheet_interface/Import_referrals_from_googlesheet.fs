@@ -7,6 +7,7 @@ open System.IO
 open Google.Apis.Auth.OAuth2
 open Google.Apis.Services
 open Google.Apis.Sheets.v4.Data
+open Npgsql
 open Xunit
 
 open Google.Apis.Sheets.v4
@@ -60,7 +61,7 @@ module Import_referrals_from_googlesheet =
     
     let import_recruitings_starting_from_index
         (googlesheet_service: Google.Apis.Sheets.v4.SheetsService)
-        (social_database: Social_competition_database)
+        (db_connection: NpgsqlConnection)
         (sheet:Google_spreadsheet)
         (recruiting_datetimes:DateTime array)
         starting_index
@@ -92,13 +93,14 @@ module Import_referrals_from_googlesheet =
                     |>Parse_social_user.user_from_raw_text
                 )
             )
-        social_database.write_recruiting_referrals
+        Social_activity_database.write_recruiting_referrals
+            db_connection
             recruitings
 
     let import_referrals
-        (googlesheet_service: Google.Apis.Sheets.v4.SheetsService)
-        (social_database: Social_competition_database)
-        (sheet:Google_spreadsheet)
+        googlesheet_service
+        db_connection
+        sheet
         =
         Log.info $"start import_referrals from {sheet}"
         let recruiting_datetimes =
@@ -106,7 +108,7 @@ module Import_referrals_from_googlesheet =
             
         let new_recruitings_starting_index =
             let last_db_recruiting_date =
-                social_database.read_last_recruiting_datetime()
+                Social_activity_database.read_last_recruiting_datetime db_connection
             recruiting_datetimes
             |>Array.tryFindIndex(fun datetime->
                 datetime > last_db_recruiting_date
@@ -116,7 +118,7 @@ module Import_referrals_from_googlesheet =
         |Some index ->
             import_recruitings_starting_from_index
                 googlesheet_service
-                social_database
+                db_connection
                 sheet
                 recruiting_datetimes
                 index
@@ -131,7 +133,7 @@ module Import_referrals_from_googlesheet =
         let test =
             import_referrals
                 (Googlesheets.create_googlesheet_service())
-                (new Social_competition_database())
+                (Database.open_connection())
                 {
                     Google_spreadsheet.doc_id = "137ExyTBgr-IL0TlxIv-V4EvWee_BDbwyh5U0M06IwsU"
                     page_id=0

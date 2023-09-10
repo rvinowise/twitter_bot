@@ -7,6 +7,7 @@ open System.IO
 open Google.Apis.Auth.OAuth2
 open Google.Apis.Services
 open Google.Apis.Sheets.v4.Data
+open Npgsql
 open Xunit
 
 open Google.Apis.Sheets.v4
@@ -41,7 +42,7 @@ module Import_scores_from_googlesheet =
     
     
     let import_scores_on_day
-        (social_database: Social_competition_database)
+        (db_connection: NpgsqlConnection)
         (sheet:Google_spreadsheet)
         (row_to_user_correspondence: User_handle array)
         (column_of_day: char)
@@ -83,7 +84,8 @@ module Import_scores_from_googlesheet =
                 user,score
             )
         
-        social_database.write_followers_amounts_to_db
+        Social_activity_database.write_followers_amounts_to_db
+            db_connection
             last_moment_of_that_date
             users_scores
             
@@ -91,11 +93,11 @@ module Import_scores_from_googlesheet =
         (sheet:Google_spreadsheet)
         columns_of_days
         =
-        use social_database = new Social_competition_database()
+        use db_connection = Database.open_connection()
         let sorted_users = row_to_user_correspondence sheet
         columns_of_days
         |>List.iter (
-            import_scores_on_day social_database sheet sorted_users
+            import_scores_on_day db_connection sheet sorted_users
         )
     
     let import_scores_between_two_date_columns

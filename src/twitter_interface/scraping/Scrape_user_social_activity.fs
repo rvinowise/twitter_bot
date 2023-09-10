@@ -9,9 +9,9 @@ open FParsec
 
 
 type User_social_activity = {
-    posts_amount: Result<int,string>
-    followers_amount: Result<int,string>
-    followees_amount: Result<int,string>
+    posts_amount: int option
+    followers_amount: int option
+    followees_amount: int option
 }
 
 module User_social_activity =
@@ -48,13 +48,13 @@ module Scrape_user_social_activity =
         |>remove_commas
         |>run Lettered_number_parser.number_with_letter
         |>function
-        |Success (number,_,_) -> Result.Ok number
+        |Success (number,_,_) -> Some number
         |Failure (error,_,_) -> 
             $"""error while parsing number of followers:
             string: {text}
             error: {error}"""
-            |>Log.error
-            |>Result.Error
+            |>Log.error|>ignore
+            None
     
 //    let parse_posts_qty_from_string text =
 //        text
@@ -79,8 +79,8 @@ module Scrape_user_social_activity =
             input
             |>parse_number_with_multiplier_letter
             |>function
-            | Result.Error error -> raise (Exception(error))
-            | Result.Ok result_number -> should equal expected_number result_number
+            | None -> raise (Exception())
+            | Some result_number -> should equal expected_number result_number
         )
         
     let scrape_posts_amount ()=
@@ -93,7 +93,7 @@ module Scrape_user_social_activity =
         |None->
             "posts_qty_field isn't on the page"
             |>Log.error
-            |>Result.Error
+            None
         |Some posts_qty_field->
             posts_qty_field
             |>read
@@ -108,8 +108,8 @@ module Scrape_user_social_activity =
         |>function
         |None->
             $"url '{User_handle.url_from_handle user_handle}' doesn't show the Followers field"
-            |>Log.error
-            |>Result.Error
+            |>Log.error|>ignore
+            None
         |Some followers_qty_field->
             followers_qty_field
             |>read

@@ -68,7 +68,7 @@ module Scrape_user_briefing =
             |None->DateTime.MinValue
             
             
-    let scrape_user_page user_handle =
+    let scrape_user_briefing user_handle =
         url (User_handle.url_from_handle user_handle)
         {
             User_briefing.handle = user_handle
@@ -88,7 +88,7 @@ module Scrape_user_briefing =
         |>Seq.map (fun twitter_user ->
             twitter_user
             ,
-            scrape_user_page twitter_user
+            scrape_user_briefing twitter_user
         )
 
     

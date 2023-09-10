@@ -181,18 +181,20 @@ module Export_scores_to_googlesheet =
             competitor
     
     let get_history_of_amounts_for_users
-        (social_database: Social_competition_database)
+        db_connection
         (amount_of_what: social_database.Table_with_amounts)
         days_from_today
         =
-        let last_datetime = social_database.read_last_followers_amount_time()
+        let last_datetime =
+            Social_activity_database.read_last_followers_amount_time db_connection
         let competitors =
-            social_database.read_last_competitors
+            Social_activity_database.read_last_competitors db_connection
                 (last_datetime - TimeSpan.FromHours(Settings.Competitors.include_from_past))
             |>Set.ofSeq
 
         let last_amounts =
-            social_database.read_last_amounts_closest_to_moment_for_users
+            Social_activity_database.read_last_amounts_closest_to_moment_for_users
+                    db_connection
                     amount_of_what
                     last_datetime
                     competitors
@@ -213,7 +215,8 @@ module Export_scores_to_googlesheet =
         [
             for day_from_today in 1 .. days_from_today ->
                 let historical_day = last_datetime.AddDays(-day_from_today)
-                social_database.read_amounts_closest_to_the_end_of_day
+                Social_activity_database.read_amounts_closest_to_the_end_of_day
+                    db_connection
                     amount_of_what
                     historical_day
         ]
@@ -261,7 +264,7 @@ module Export_scores_to_googlesheet =
         ()
             
     let input_history_of_amounts_to_sheet
-        social_database
+        db_connection
         (table_with_amounts)
         (sheet:Google_spreadsheet)
         =
@@ -269,7 +272,7 @@ module Export_scores_to_googlesheet =
         
         let last_datetime,current_scores,score_hisory =
             get_history_of_amounts_for_users
-                social_database
+                db_connection
                 table_with_amounts
                 days_in_past
         
@@ -279,7 +282,9 @@ module Export_scores_to_googlesheet =
                 sheet_row_of_total_score;
                 (sheet_row_of_header last_datetime days_in_past)
             ]
-        let user_handles_to_names = social_database.read_user_names_from_handles()
+        let user_handles_to_names =
+            Social_activity_database.read_user_names_from_handles
+                db_connection
         let user_scores=
             current_scores
             |>Seq.map(fun (place,user_handle,_) ->
@@ -322,14 +327,14 @@ module Export_scores_to_googlesheet =
     
     [<Fact>]//(Skip="manual")
     let ``try update_googlesheets``() =
-        new Social_competition_database()
+        Database.open_connection()
         |>update_googlesheets
     
    
     [<Fact>]//(Skip="manual")
     let ``try input_posts_amount_to_sheet``() =
         update_googlesheet
-            (new Social_competition_database())
+            (Database.open_connection())
             social_database.Table_with_amounts.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"

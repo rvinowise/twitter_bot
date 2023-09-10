@@ -2,7 +2,7 @@ namespace rvinowise.twitter
 
 open System.Threading.Tasks
 open OpenQA.Selenium
-
+open canopy.classic
 
 
 module Program =
@@ -28,16 +28,19 @@ module Program =
     
     let announce_competition_successes()=
         try
+            Scraping.prepare_for_scraping ()
             Anounce_score.scrape_and_announce_user_state()
+            browser.Quit()
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't scrape state of twitter-competitors: {exc.Message}"""|>ignore
             ()
         
         try
+            use db_connection = Database.open_connection() 
             Import_referrals_from_googlesheet.import_referrals
                 (Googlesheets.create_googlesheet_service())
-                (new Social_competition_database())
+                db_connection
                 Settings.Google_sheets.read_referrals
         with
         | :? TaskCanceledException as exc ->

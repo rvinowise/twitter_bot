@@ -31,7 +31,7 @@
     <Compile Include="src\database\Database.fs" />
     <Compile Include="src\database\social_database_structure.fs" />
     <Compile Include="src\database\Social_user_database.fs" />
-    <Compile Include="src\database\Social_competition_database.fs" />
+    <Compile Include="src\database\Social_activity_database.fs" />
     <Compile Include="src\database\Social_following_database.fs" />
     
     

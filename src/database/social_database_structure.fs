@@ -10,11 +10,13 @@ type Db_twitter_user = {
 
 type Table_with_amounts =
     |Followers
+    |Followees
     |Posts
     with
     override this.ToString() =
         match this with
         |Followers -> "followers_amount"
+        |Followees -> "followees_amount"
         |Posts -> "posts_amount"
 
 [<CLIMutable>]

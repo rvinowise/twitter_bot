@@ -8,59 +8,122 @@ open Npgsql
 open Xunit
 open rvinowise.twitter.social_database
 
-type Social_competition_database(db_connection: NpgsqlConnection) =
+module Social_activity_database =
     
-    new() = new Social_competition_database(Database.open_connection())
-        
-    member this.write_followers_amount_to_db 
-        (datetime: DateTime)
-        (user: User_handle)
-        (amount: int)
+    
+    let write_activity_amount_of_user
+        (db_connection: NpgsqlConnection)
+        (amount_of_what:Table_with_amounts)
+        (datetime:DateTime)
+        user
+        (amount:int)
         =
         db_connection.Query<User_handle>(
-            @"insert into followers_amount (datetime, user_handle, amount)
+            $"insert into {amount_of_what} (datetime, user_handle, amount)
             values (@datetime, @user_handle, @amount)
             on conflict (datetime, user_handle) do update set amount = @amount",
             {|
                 datetime = datetime
                 user_handle = User_handle.db_value user
-                amount = amount; 
+                amount = amount
             |}
         ) |> ignore
-
-    member this.write_followers_amounts_to_db
+        
+    
+    let write_optional_activity_amount_of_user
+        (db_connection: NpgsqlConnection)
+        (amount_of_what:Table_with_amounts)
+        (datetime:DateTime)
+        user
+        (amount:int option)
+        =
+        amount
+        |>function
+        |Some amount->
+            write_activity_amount_of_user
+                db_connection
+                amount_of_what
+                datetime
+                user
+                amount
+        |None->()
+    
+    let write_optional_social_activity_of_user
+        (db_connection: NpgsqlConnection)
+        (datetime:DateTime)
+        user
+        (activity:User_social_activity)
+        =
+        activity
+        |>User_social_activity.followees_amount
+        |>write_optional_activity_amount_of_user
+                db_connection
+                Table_with_amounts.Followees
+                datetime
+                user
+        activity
+        |>User_social_activity.followers_amount
+        |>write_optional_activity_amount_of_user
+                db_connection
+                Table_with_amounts.Followers
+                datetime
+                user           
+        activity
+        |>User_social_activity.posts_amount
+        |>write_optional_activity_amount_of_user
+                db_connection
+                Table_with_amounts.Posts
+                datetime
+                user
+    
+    let write_optional_social_activity_of_users
+        (db_connection: NpgsqlConnection)
+        (datetime:DateTime)
+        (activities: seq<User_handle*User_social_activity>)
+        =
+        activities
+        |>Seq.iter(fun (user,activity)->
+            write_optional_social_activity_of_user
+               db_connection
+               datetime
+               user
+               activity
+        )
+            
+    let write_followers_amounts_to_db
+        (db_connection: NpgsqlConnection)
         (datetime:DateTime)
         (users_with_amounts: (User_handle*int)seq )
         =
         Log.info $"""writing followers amounts to DB at {datetime}"""
         users_with_amounts
         |>Seq.iter(fun (user, score)-> 
-            this.write_followers_amount_to_db datetime user score
+            write_activity_amount_of_user
+                db_connection
+                Table_with_amounts.Followers
+                datetime 
+                user
+                score
         )
     
-    
-    
-    
-    member this.write_posts_amounts_to_db
+    let write_posts_amounts_to_db
+        (db_connection: NpgsqlConnection)
         (datetime:DateTime)
         (users_with_amounts: (User_handle*int)seq )
         =
         Log.info $"""writing posts amounts to DB at {datetime}"""
         users_with_amounts
-        |>Seq.iter(fun (user, amount)-> 
-            db_connection.Query<User_handle>(
-                @"insert into posts_amount (datetime, user_handle, amount)
-                values (@datetime, @user_handle, @amount)
-                on conflict (datetime, user_handle) do update set amount = @amount",
-                {|
-                    datetime = datetime
-                    user_handle = User_handle.db_value user
-                    amount = amount; 
-                |}
-            ) |> ignore
-        )    
+        |>Seq.iter(fun (user, score)-> 
+            write_activity_amount_of_user
+                db_connection
+                Table_with_amounts.Posts
+                datetime 
+                user
+                score
+        ) 
     
-    member this.update_user_names_in_db
+    let update_user_names_in_db
+        (db_connection: NpgsqlConnection)
         (users: Twitter_user list)
         =
         Log.info $"writing {List.length users} user names to DB"
@@ -77,37 +140,10 @@ type Social_competition_database(db_connection: NpgsqlConnection) =
             ) |> ignore
         )
         
-    member this.amounts_from_scraping_state
-        (amount_of_what: User_social_activity->Result<int, string>) 
-        (states: (User_handle*User_social_activity) list)
-        =
-        states
-        |>List.choose (fun (user,state) ->
-            match amount_of_what state with
-            |Result.Ok number -> Some (user,number)
-            |Result.Error message -> None
-        )
-        
-    member this.write_user_activity_to_db
-        datetime
-        (activity:(Twitter_user*User_social_activity) list)
-        =
-        activity
-        |>List.map fst
-        |>this.update_user_names_in_db
-        
-        activity
-        |>List.map (fun (user, state)->user.handle, state)
-        |>this.amounts_from_scraping_state User_social_activity.followers_amount
-        |>this.write_followers_amounts_to_db datetime
-        
-        activity
-        |>List.map (fun (user, state)->user.handle, state)
-        |>this.amounts_from_scraping_state User_social_activity.posts_amount
-        |>this.write_posts_amounts_to_db datetime
     
     
-    member this.write_recruiting_referrals
+    let write_recruiting_referrals
+        (db_connection: NpgsqlConnection)
         recruitings
         =
         recruitings
@@ -124,7 +160,9 @@ type Social_competition_database(db_connection: NpgsqlConnection) =
             ) |> ignore
         )
     
-    member this.read_last_followers_amount_time() =
+    let read_last_followers_amount_time
+        (db_connection: NpgsqlConnection)
+        =   
         db_connection.Query<DateTime>(
             @"select COALESCE(max(datetime),make_date(1000,1,1)) from followers_amount"
         )|>Seq.head
@@ -132,7 +170,8 @@ type Social_competition_database(db_connection: NpgsqlConnection) =
     
         
     
-    member this.read_last_amounts_closest_to_moment
+    let read_last_amounts_closest_to_moment
+        (db_connection: NpgsqlConnection)
         (record_with_amounts: Table_with_amounts)
         (moment:DateTime)
         =
@@ -153,16 +192,21 @@ type Social_competition_database(db_connection: NpgsqlConnection) =
             |}
         )
     
-    member this.read_amounts_closest_to_the_end_of_day
+    let read_amounts_closest_to_the_end_of_day
+        (db_connection: NpgsqlConnection)
         amounts_table
-        (day:DateTime) =
+        (day:DateTime)
+        =
         day.Date.AddHours(23).AddMinutes(59)
-        |>this.read_last_amounts_closest_to_moment amounts_table
+        |>read_last_amounts_closest_to_moment db_connection
+              amounts_table
     
     
     
         
-    member this.read_user_names_from_handles () =
+    let read_user_names_from_handles
+        (db_connection: NpgsqlConnection)
+        =
         db_connection.Query<Db_twitter_user>(
             @"select * from twitter_user"
         )
@@ -171,7 +215,8 @@ type Social_competition_database(db_connection: NpgsqlConnection) =
     
     
         
-    member this.read_last_competitors
+    let read_last_competitors
+        (db_connection: NpgsqlConnection)
         (since_datetime:DateTime)
         =
         db_connection.Query<string>(
@@ -181,13 +226,14 @@ type Social_competition_database(db_connection: NpgsqlConnection) =
             {|since_datetime=since_datetime|}
         )
     
-    member this.read_last_amounts_closest_to_moment_for_users
+    let read_last_amounts_closest_to_moment_for_users
+        (db_connection: NpgsqlConnection)
         (record_with_amounts: Table_with_amounts)
         (last_moment: DateTime)
         (users: string Set)
         =
         let last_amounts =
-            this.read_last_amounts_closest_to_moment
+            read_last_amounts_closest_to_moment db_connection
                 record_with_amounts
                 last_moment
         last_amounts
@@ -200,19 +246,14 @@ type Social_competition_database(db_connection: NpgsqlConnection) =
         )|>Map.ofSeq
             
     
-    member this.read_last_recruiting_datetime()=
+    let read_last_recruiting_datetime
+        (db_connection: NpgsqlConnection)
+        =
         db_connection.Query<DateTime>(
             @"select COALESCE(max(submitted_at),make_date(1000,1,1)) from referral"
         )|>Seq.head
         
     
-    interface IDisposable with
-        member this.Dispose() =
-            db_connection.Close()
 
-type Social_database_test() =
-    
-    let social_db = new Social_competition_database()
-    
 
    

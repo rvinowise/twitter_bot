@@ -11,34 +11,34 @@ module Anounce_score =
 
     
    
-    let scrape_state_of_competitors member_list_id =
-        Scraping.prepare_for_scraping ()
-        
-        let user_states =
-            member_list_id
-            |>Scrape_list_members.scrape_twitter_list_members
-            |>Seq.map (fun user->
-                user,
-                user
-                |>Twitter_user.handle
-                |>Scrape_user_social_activity.scrape_user_social_activity
-            )
-            |>List.ofSeq
-        browser.Quit()
-        user_states
-    
-    
     let scrape_and_announce_user_state()=
-        let new_state =
-            scrape_state_of_competitors Settings.Competitors.list
         
-        use social_database = new Social_competition_database()
+        let competitors =
+            Settings.Competitors.list
+            |>Scrape_list_members.scrape_twitter_list_members
         
-        social_database.write_user_activity_to_db
+        let activity_of_competitors =
+            competitors
+            |>Seq.map (fun (handle,_) ->
+                handle,
+                Scrape_user_social_activity.scrape_user_social_activity
+                    handle
+            )
+            
+        use db_connection = Database.open_connection()
+        
+        competitors
+        |>Social_user_database.update_user_names_in_db
+            db_connection
+        
+        activity_of_competitors
+        |>Social_activity_database.write_optional_social_activity_of_users
+              db_connection
               DateTime.Now
-              new_state
         
-        Export_scores_to_googlesheet.update_googlesheets social_database
+        
+        
+        Export_scores_to_googlesheet.update_googlesheets db_connection
 
         Log.info "finish scraping and announcing scores."
         ()
