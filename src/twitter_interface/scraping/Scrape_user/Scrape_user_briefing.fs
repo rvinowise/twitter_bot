@@ -69,7 +69,6 @@ module Scrape_user_briefing =
             
             
     let scrape_user_briefing user_handle =
-        url (User_handle.url_from_handle user_handle)
         {
             User_briefing.handle = user_handle
             name = Scrape_user_elements.name()
@@ -80,16 +79,6 @@ module Scrape_user_briefing =
             web_site = Scrape_user_elements.web_site()
         }
             
-    let scrape_briefing_of_users 
-        (users: User_handle seq) 
-        =
-        Log.info "scraping briefing of members... "
-        users
-        |>Seq.map (fun twitter_user ->
-            twitter_user
-            ,
-            scrape_user_briefing twitter_user
-        )
 
     
     

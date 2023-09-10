@@ -122,23 +122,13 @@ module Scrape_user_social_activity =
         scrape_acquaintances_amount_of_user user_handle "following"
     
     let scrape_user_social_activity user_handle =
-        url (User_handle.url_from_handle user_handle)
         {
             User_social_activity.posts_amount = scrape_posts_amount ()
             followers_amount = scrape_followers_amount_of_user user_handle
             followees_amount = scrape_followees_amount_of_user user_handle
         }
             
-    let scrape_stats_of_users 
-        (users: User_handle seq) 
-        =
-        Log.info "scraping stats of members... "
-        users
-        |>Seq.map (fun twitter_user ->
-            twitter_user
-            ,
-            scrape_user_social_activity twitter_user
-        )
+   
 
     
     

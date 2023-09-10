@@ -66,14 +66,18 @@ module Social_following_database =
         ) |> ignore
         
         
-    let was_user_visited_recently //todo dicortona was visited several times in several hours
+    let was_user_harvested_recently //todo dicortona was visited several times in several hours
         (db_connection:NpgsqlConnection)
         (since_when: DateTime)
         user
         =
-        db_connection.Query<string>(
-            @"select user from user_visited_by_following_scraper
-            where user = @user and
-            visited_at >= @since_when",
-            {|user=user; since_when=since_when|}
-        )|>Seq.length > 0
+        let was_visited =
+            db_connection.Query<string>(
+                @"select user from user_visited_by_following_scraper
+                where user = @user and
+                visited_at >= @since_when",
+                {|user=user; since_when=since_when|}
+            )|>Seq.length > 0
+        if was_visited then
+            Log.info $"user {User_handle.value user} was harvested after {since_when}"
+        was_visited

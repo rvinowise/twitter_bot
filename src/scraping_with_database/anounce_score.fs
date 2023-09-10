@@ -20,6 +20,7 @@ module Anounce_score =
         let activity_of_competitors =
             competitors
             |>Seq.map (fun (handle,_) ->
+                Reveal_user_page.reveal_user_page handle
                 handle,
                 Scrape_user_social_activity.scrape_user_social_activity
                     handle

@@ -14,6 +14,8 @@ module Harvest_followers_network =
         user
         =
         Log.info $"harvesting bio of user {User_handle.value user}"
+        Reveal_user_page.reveal_user_page user
+        
         let user_briefing =
             Scrape_user_briefing.scrape_user_briefing user
         
@@ -45,6 +47,7 @@ module Harvest_followers_network =
         user
         =
         Log.important $"harvesting user {user}"
+        Surpass_distractions.surpass_cookies_agreement ()
         harvest_top_of_user_page
             db_connection
             user
@@ -95,7 +98,7 @@ module Harvest_followers_network =
             
             new_unknown_users_around
             |>List.filter (
-                Social_following_database.was_user_visited_recently
+                Social_following_database.was_user_harvested_recently
                     db_connection
                     (DateTime.Now-repeat_if_older_than)
                 >>not
