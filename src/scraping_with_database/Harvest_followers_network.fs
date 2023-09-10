@@ -8,8 +8,6 @@ open rvinowise.twitter.social_database
 
 module Harvest_followers_network =
     
-  
-    let repeat_if_older_than = DateTime.Now.AddDays(-1)
     
     let harvest_top_of_user_page
         db_connection
@@ -46,6 +44,7 @@ module Harvest_followers_network =
         db_connection
         user
         =
+        Log.important $"harvesting user {user}"
         harvest_top_of_user_page
             db_connection
             user
@@ -68,6 +67,7 @@ module Harvest_followers_network =
         
     let rec step_of_harvesting_acquaintances_network
         db_connection
+        repeat_if_older_than
         unknown_users_around
         =
         log_start_of_step_of_harvesting_acquaintances_network unknown_users_around
@@ -97,19 +97,22 @@ module Harvest_followers_network =
             |>List.filter (
                 Social_following_database.was_user_visited_recently
                     db_connection
-                    repeat_if_older_than
+                    (DateTime.Now-repeat_if_older_than)
                 >>not
             )
             |>step_of_harvesting_acquaintances_network
                 db_connection
+                repeat_if_older_than
 
                 
     let harvest_following_network_around_user
         db_connection
+        repeat_if_older_than
         root_user
         =
         step_of_harvesting_acquaintances_network
             db_connection
+            repeat_if_older_than
             [root_user]
             
     [<Fact>]
@@ -117,4 +120,5 @@ module Harvest_followers_network =
         Scraping.prepare_for_scraping()
         step_of_harvesting_acquaintances_network
             (Database.open_connection())
+            (TimeSpan.FromDays(-1))
             [User_handle "dicortona"]

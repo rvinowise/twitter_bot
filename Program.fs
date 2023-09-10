@@ -9,7 +9,7 @@ module Program =
 
     
     
-    let import_scores_from_console
+    let import_scores_from_googlesheet
         parameters
         =
         Log.important<|sprintf
@@ -26,6 +26,32 @@ module Program =
                     (end_column|>Seq.head)
         |_-> Log.important "specify Start_column and End_column with dates of scores, e.g. 'import E P'"
     
+    
+    let harvest_network_of_acquaintances
+        parameters
+        =
+        Log.important<|sprintf
+            $"harvesting network of social connections: {parameters}"
+        match parameters with
+        |[root_user] ->
+            
+            use db_connection = Database.open_connection() 
+            
+            try
+                Scraping.prepare_for_scraping ()
+                root_user
+                |>User_handle
+                |>Harvest_followers_network.harvest_following_network_around_user
+                    db_connection
+                    Settings.repeat_harvesting_if_older_than
+                browser.Quit()
+            with
+            | :? WebDriverException as exc ->
+                Log.error $"""can't scrape acquaintances: {exc.Message}"""|>ignore
+                () 
+        |_ -> Log.important "specify the root user handle"
+        
+        
     let announce_competition_successes()=
         try
             Scraping.prepare_for_scraping ()
@@ -53,7 +79,9 @@ module Program =
         let args = args|>List.ofArray
         match args with
         | "import"::rest ->
-            import_scores_from_console rest
+            import_scores_from_googlesheet rest
+        | "following"::rest ->
+            harvest_network_of_acquaintances rest
         |_->
             announce_competition_successes()
         

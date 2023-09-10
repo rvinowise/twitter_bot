@@ -92,7 +92,7 @@ module Scrape_user_social_activity =
         |>function
         |None->
             "posts_qty_field isn't on the page"
-            |>Log.error
+            |>Log.error|>ignore
             None
         |Some posts_qty_field->
             posts_qty_field

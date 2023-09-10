@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="src\settings.fs" />
+    <Compile Include="src\Settings.fs" />
     <Compile Include="src\twitter_interface\twitter_settings.fs" />
     <Compile Include="src\Logger.fs" />
     
@@ -90,6 +90,7 @@
     <!--configuration  -->
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
     <PackageReference Include="FSharp.Configuration" Version="2.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
 

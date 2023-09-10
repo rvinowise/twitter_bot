@@ -2,11 +2,6 @@
 
 open System
 open Microsoft.Extensions.Configuration
-open OpenQA.Selenium
-open Xunit
-open canopy.classic
-open FSharp.Configuration
-
 
 //type Config = AppSettings<"app.config">
 type Google_spreadsheet = {
@@ -16,7 +11,6 @@ type Google_spreadsheet = {
 }
 
 module Settings = 
-    open System.Configuration
     
     
     
@@ -35,6 +29,10 @@ module Settings =
         they are included from the recent past*) 
         let include_from_past = int (competitors_section["include_from_past_hours"])
     let headless =  (configuration_root["headless"]) = "true"
+    let repeat_harvesting_if_older_than =
+        let days = //GetValue()
+            (configuration_root :> IConfiguration).GetValue<int>("repeat_harvesting_if_older_than_days",1)
+        TimeSpan.FromDays(days)
     let db_connection_string = configuration_root["db_connection_string"]
     
     module Google_sheets =
