@@ -8,7 +8,7 @@ open Microsoft.Extensions.Configuration
 open OpenQA.Selenium
 open SeleniumExtras.WaitHelpers
 open Xunit
-open canopy.classic
+open canopy.parallell.functions
 open Dapper
 open Npgsql
 
@@ -79,5 +79,5 @@ module Social_following_database =
                 {|user=user; since_when=since_when|}
             )|>Seq.length > 0
         if was_visited then
-            Log.info $"user {User_handle.value user} was harvested after {since_when}"
+            Log.info $"user {User_handle.value user} was already harvested after {since_when}"
         was_visited

@@ -5,19 +5,19 @@ open OpenQA.Selenium
 open OpenQA.Selenium.Interactions
 open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
-open canopy.classic
+open canopy.parallell.functions
 open rvinowise.twitter
 
 module Scrape_community_members =
     
     
-    let read_community_members community_id = 
+    let read_community_members browser community_id = 
         Log.info $"reading members of community {community_id} ..." 
         let community_members_url = 
             $"{Twitter_settings.base_url}/i/communities/{community_id}/members"
-        url community_members_url
+        url community_members_url browser
         
-        let user_web_entries = elements "li[role='listitem']"
+        let user_web_entries = elements "li[role='listitem']" browser
         let users = 
             user_web_entries
             |>List.map (fun user_entry ->

@@ -5,7 +5,7 @@ open OpenQA.Selenium
 open OpenQA.Selenium.Interactions
 open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
-open canopy.classic
+open canopy.parallell.functions
 open rvinowise.twitter
 
 module Scrape_list_members =
@@ -67,7 +67,8 @@ module Scrape_list_members =
         |>Set.difference new_skimmed_members
         |>Set.isEmpty|>not
             
-    let consume_all_elements_of_dynamic_list
+    let consume_all_elements_of_dynamic_list                 
+        browser
         table_with_elements
         =
         let actions = Actions(browser)
@@ -106,17 +107,18 @@ module Scrape_list_members =
             table_with_elements
             Set.empty
             
-    let scrape_twitter_list_members list_id = 
+    let scrape_twitter_list_members browser list_id = 
         Log.info $"reading members of list {list_id} ... " 
         let members_url = 
             $"{Twitter_settings.base_url}/i/lists/{list_id}/members"
-        url members_url
+        url members_url browser
         
-        let table_with_members = Scraping.try_element "div[aria-label='Timeline: List members']"
+        let table_with_members =
+            Scraping.try_element browser "div[aria-label='Timeline: List members']" 
         
         match table_with_members with
         |Some table_with_members ->
-            let users = consume_all_elements_of_dynamic_list table_with_members
+            let users = consume_all_elements_of_dynamic_list browser table_with_members
             Log.important $"list has {Seq.length users} members... "
             users
         |None->

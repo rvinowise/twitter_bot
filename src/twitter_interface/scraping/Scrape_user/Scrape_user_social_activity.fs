@@ -3,7 +3,7 @@
 open System
 open Xunit
 open FsUnit
-open canopy.classic
+open canopy.parallell.functions
 open rvinowise.twitter
 open FParsec
 
@@ -83,10 +83,10 @@ module Scrape_user_social_activity =
             | Some result_number -> should equal expected_number result_number
         )
         
-    let scrape_posts_amount ()=
+    let scrape_posts_amount browser =
         let posts_qty_field =
             "div:has(>h2[role='heading']) > div[dir='ltr']"
-            |>Scraping.try_element
+            |>Scraping.try_element browser
         
         posts_qty_field
         |>function
@@ -95,37 +95,37 @@ module Scrape_user_social_activity =
             |>Log.error|>ignore
             None
         |Some posts_qty_field->
-            posts_qty_field
-            |>read
-            |>parse_number_with_multiplier_letter
+            browser
+            |>read posts_qty_field
+            |>parse_number_with_multiplier_letter 
     
     
     
-    let scrape_acquaintances_amount_of_user user_handle link =
+    let scrape_acquaintances_amount_of_user browser user_handle link =
         let followers_qty_field = $"a[href='/{User_handle.value user_handle}/{link}'] span span"
         followers_qty_field
-        |>Scraping.try_element
+        |>Scraping.try_element browser
         |>function
         |None->
             $"url '{User_handle.url_from_handle user_handle}' doesn't show the Followers field"
             |>Log.error|>ignore
             None
         |Some followers_qty_field->
-            followers_qty_field
-            |>read
+            browser
+            |>read followers_qty_field
             |>parse_number_with_multiplier_letter
     
-    let scrape_followers_amount_of_user user_handle =
-        scrape_acquaintances_amount_of_user user_handle "followers"
+    let scrape_followers_amount_of_user browser user_handle =
+        scrape_acquaintances_amount_of_user browser user_handle "followers"
     
-    let scrape_followees_amount_of_user user_handle =
-        scrape_acquaintances_amount_of_user user_handle "following"
+    let scrape_followees_amount_of_user browser user_handle =
+        scrape_acquaintances_amount_of_user browser user_handle "following"
     
-    let scrape_user_social_activity user_handle =
+    let scrape_user_social_activity browser user_handle =
         {
-            User_social_activity.posts_amount = scrape_posts_amount ()
-            followers_amount = scrape_followers_amount_of_user user_handle
-            followees_amount = scrape_followees_amount_of_user user_handle
+            User_social_activity.posts_amount = scrape_posts_amount browser
+            followers_amount = scrape_followers_amount_of_user browser user_handle
+            followees_amount = scrape_followees_amount_of_user browser user_handle
         }
             
    

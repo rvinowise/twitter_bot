@@ -2,7 +2,8 @@ namespace rvinowise.twitter
 
 open System.Threading.Tasks
 open OpenQA.Selenium
-open canopy.classic
+open canopy.parallell.functions
+open rvinowise.twitter
 
 
 module Program =
@@ -27,36 +28,34 @@ module Program =
         |_-> Log.important "specify Start_column and End_column with dates of scores, e.g. 'import E P'"
     
     
-    let harvest_network_of_acquaintances
-        parameters
+    let harvest_following
+        root_users
         =
-        Log.important<|sprintf
-            $"harvesting network of social connections: {parameters}"
-        match parameters with
-        |[root_user] ->
-            
-            use db_connection = Database.open_connection() 
-            
-            try
-                Scraping.prepare_for_scraping ()
-                root_user
-                |>User_handle
-                |>Harvest_followers_network.harvest_following_network_around_user
+        try
+            root_users
+            |>Seq.zip Settings.auth_tokens
+            |>Array.ofSeq
+            |>Array.Parallel.iter(fun (bot_token, user_to_harvest)->
+                use db_connection = Database.open_connection() 
+                use browser = Scraping.prepare_authentified_browser bot_token
+                Harvest_followers_network.harvest_following_network_around_user
+                    browser
                     db_connection
                     Settings.repeat_harvesting_if_older_than
-                browser.Quit()
-            with
-            | :? WebDriverException as exc ->
-                Log.error $"""can't scrape acquaintances: {exc.Message}"""|>ignore
-                () 
-        |_ -> Log.important "specify the root user handle"
+                    (User_handle user_to_harvest)
+            )
+        with
+        | :? WebDriverException as exc ->
+            Log.error $"""can't harvest acquaintances: {exc.Message}"""|>ignore
+    
         
-        
-    let announce_competition_successes()=
+    let announce_competition_successes ()=
         try
-            Scraping.prepare_for_scraping ()
-            Anounce_score.scrape_and_announce_user_state()
-            browser.Quit()
+            use browser =
+                Settings.auth_tokens
+                |>Seq.head
+                |>Scraping.prepare_authentified_browser 
+            Anounce_score.scrape_and_announce_user_state browser.browser
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't scrape state of twitter-competitors: {exc.Message}"""|>ignore
@@ -81,8 +80,10 @@ module Program =
         | "import"::rest ->
             import_scores_from_googlesheet rest
         | "following"::rest ->
-            harvest_network_of_acquaintances rest
+            //Scraping.set_canopy_configuration_directories()
+            harvest_following rest
         |_->
+            //Scraping.set_canopy_configuration_directories()
             announce_competition_successes()
         
         Log.important "bot finished execution."

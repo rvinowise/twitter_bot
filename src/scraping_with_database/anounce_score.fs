@@ -5,24 +5,24 @@ module Anounce_score =
     
     open System
     open OpenQA.Selenium
-    open canopy.classic
+    open canopy.parallell.functions
     open FSharp.Configuration
     open Xunit
 
     
    
-    let scrape_and_announce_user_state()=
+    let scrape_and_announce_user_state browser =
         
         let competitors =
             Settings.Competitors.list
-            |>Scrape_list_members.scrape_twitter_list_members
+            |>Scrape_list_members.scrape_twitter_list_members browser
         
         let activity_of_competitors =
             competitors
             |>Seq.map (fun (handle,_) ->
-                Reveal_user_page.reveal_user_page handle
+                Reveal_user_page.reveal_user_page browser handle
                 handle,
-                Scrape_user_social_activity.scrape_user_social_activity
+                Scrape_user_social_activity.scrape_user_social_activity browser
                     handle
             )
             
@@ -45,6 +45,3 @@ module Anounce_score =
         ()
 
         
-    [<Fact>]//(Skip="manual")
-    let ``try scrape_and_announce_score``()=
-        scrape_and_announce_user_state ()

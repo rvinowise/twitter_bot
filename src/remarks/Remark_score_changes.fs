@@ -6,7 +6,7 @@ open Microsoft.Extensions.Configuration
 open OpenQA.Selenium
 open SeleniumExtras.WaitHelpers
 open Xunit
-open canopy.classic
+open canopy.parallell.functions
 open rvinowise.twitter
 open Dapper
 

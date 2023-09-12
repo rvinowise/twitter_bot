@@ -2,15 +2,16 @@ namespace rvinowise.twitter
 
 open OpenQA.Selenium
 open canopy.classic
+open canopy.parallell.functions
 open FSharp.Configuration
 
 module Login_to_twitter =
     
 
-    let find_login_button_with_text text = 
+    let find_login_button_with_text browser text = 
         let buttons = 
-            elements "div[role='button'] div[dir='ltr'] span span"
-        highlight "div[role='button'] div[dir='ltr'] span span"
+            elements "div[role='button'] div[dir='ltr'] span span" browser
+        highlight "div[role='button'] div[dir='ltr'] span span" browser
         buttons
         |>List.filter(fun button ->
             button.Text = text
@@ -18,13 +19,13 @@ module Login_to_twitter =
             button_name_span.FindElement(By.XPath("../../.."))
         )|>List.head
 
-    let login_to_twitter =
-       url (Twitter_settings.base_url+"/i/flow/login")
-       element "input[name='text']" << Settings.login
-       let button_1 = find_login_button_with_text "Next"
-       button_1 |> click
+    let login_to_twitter (browser: IWebDriver) =
+       url (Twitter_settings.base_url+"/i/flow/login") browser
+       (element "input[name='text']" browser) << Settings.login
+       let button_1 = find_login_button_with_text browser "Next" 
+       click button_1 browser
        
-       let password_field = element "input[name='password']"
+       let password_field = element "input[name='password']" browser
        password_field << Settings.password
        //password_field.SendKeys(Keys.Enter)
 //       let button_2 = element "div[role='button'] div[dir='ltr']"

@@ -4,7 +4,7 @@ open System
 open System.Globalization
 open FSharp.Data
 open OpenQA.Selenium
-open canopy.classic
+open canopy.parallell.functions
 open OpenQA.Selenium.Support.UI
 open FParsec
 open Xunit

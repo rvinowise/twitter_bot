@@ -16,7 +16,9 @@ module Settings =
     
     let configuration_builder = (ConfigurationBuilder()).AddJsonFile("appsettings.json", false, true);
     let configuration_root = configuration_builder.Build()
-    let auth_token = configuration_root["auth_token"]
+    let auth_tokens =
+        (configuration_root :> IConfiguration).GetSection("auth_tokens").Get<string[]>();
+    
     let login = configuration_root["login"]
     let password = configuration_root["password"]
     

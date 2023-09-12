@@ -3,7 +3,7 @@
 open System
 open Xunit
 open FsUnit
-open canopy.classic
+open canopy.parallell.functions
 open canopy.types
 open rvinowise.twitter
 open FParsec
@@ -23,10 +23,10 @@ module Scrape_user_briefing =
 
 
     module Scrape_user_elements=
-        let name () =
+        let name browser =
             try
-                """div[data-testid='UserName'] span > span:nth-child(1)"""
-                |>element
+                browser
+                |>element """div[data-testid='UserName'] span > span:nth-child(1)""" 
                 |>Parsing.html_node_from_web_element
                 |>Parse_twitter_user.readable_text_from_html_segments
             with
@@ -35,9 +35,9 @@ module Scrape_user_briefing =
                 ""
             
                 
-        let bio () =
+        let bio browser =
             """div[data-testid='UserDescription']"""
-            |>Scraping.try_element
+            |>Scraping.try_element browser
             |>function
             |Some element ->
                 element
@@ -45,38 +45,38 @@ module Scrape_user_briefing =
                 |>Parse_twitter_user.readable_text_from_html_segments
             |None->""
             
-        let location () =
+        let location browser =
             "span[data-testid='UserLocation'] > span > span"
-            |>Scraping.try_text
+            |>Scraping.try_text browser
             |>Option.defaultValue ""
             
-        let web_site () =
+        let web_site browser =
             "a[data-testid='UserUrl'] > span"
-            |>Scraping.try_text
+            |>Scraping.try_text browser
             |>Option.defaultValue ""
         
-        let profession () =
+        let profession browser =
             "span[data-testid='UserProfessionalCategory'] > span[role='button']"
-            |>Scraping.try_text
+            |>Scraping.try_text browser
             |>Option.defaultValue ""
         
-        let joined_date () =
+        let joined_date browser =
             "span[data-testid='UserJoinDate'] > span"
-            |>Scraping.try_text
+            |>Scraping.try_text browser
             |>function
             |Some date_text -> Parsing.parse_joined_date date_text
             |None->DateTime.MinValue
             
             
-    let scrape_user_briefing user_handle =
+    let scrape_user_briefing browser user_handle =
         {
             User_briefing.handle = user_handle
-            name = Scrape_user_elements.name()
-            bio = Scrape_user_elements.bio()
-            date_joined = Scrape_user_elements.joined_date()
-            location = Scrape_user_elements.location()
-            profession = Scrape_user_elements.profession()
-            web_site = Scrape_user_elements.web_site()
+            name = Scrape_user_elements.name browser
+            bio = Scrape_user_elements.bio browser
+            date_joined = Scrape_user_elements.joined_date browser
+            location = Scrape_user_elements.location browser
+            profession = Scrape_user_elements.profession browser
+            web_site = Scrape_user_elements.web_site browser
         }
             
 

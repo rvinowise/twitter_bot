@@ -6,7 +6,7 @@ open OpenQA.Selenium.Interactions
 open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
 open Xunit
-open canopy.classic
+open canopy.parallell.functions
 open rvinowise.twitter
 open FSharp.Data
 

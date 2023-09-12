@@ -9,7 +9,7 @@ open SeleniumExtras.WaitHelpers
 open Serilog
 open Serilog.Formatting.Compact
 open Xunit
-open canopy.classic
+open canopy.parallell.functions
 open Dapper
 open Npgsql
 

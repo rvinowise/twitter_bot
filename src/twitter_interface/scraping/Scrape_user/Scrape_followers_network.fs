@@ -1,6 +1,6 @@
 ﻿namespace rvinowise.twitter
 
-open canopy.classic
+open canopy.parallell.functions
 open Xunit
 
 module Scrape_followers_network =
@@ -13,24 +13,25 @@ module Scrape_followers_network =
         
     
     let scrape_following_of_user
+        browser
         (url: User_handle -> string)
         starting_user
         =
         starting_user
         |>url
-        |>Scrape_catalog.scrape_catalog
+        |>Scrape_catalog.scrape_catalog browser
         |>Set.map Parse_twitter_user.parse_twitter_user_cell
     
     
     
-    let scrape_acquaintances_of_user root_user =
+    let scrape_acquaintances_of_user browser root_user =
         let followees =
             root_user
-            |>scrape_following_of_user
+            |>scrape_following_of_user browser
                   followees_url
         let followers =
             root_user
-            |>scrape_following_of_user
+            |>scrape_following_of_user browser
                   followers_url
         
         followees

@@ -4,7 +4,7 @@ open System
 open Microsoft.Extensions.Configuration
 open OpenQA.Selenium
 open Xunit
-open canopy.classic
+open canopy.parallell.functions
 open FSharp.Configuration
 
 

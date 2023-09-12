@@ -2,7 +2,8 @@
 
 open System
 open System.Runtime.InteropServices.JavaScript
-open canopy.classic
+open OpenQA.Selenium
+open canopy.parallell.functions
 open Xunit
 open rvinowise.twitter.social_database
 
@@ -10,14 +11,15 @@ module Harvest_followers_network =
     
     
     let harvest_top_of_user_page
+        browser
         db_connection
         user
         =
         Log.info $"harvesting bio of user {User_handle.value user}"
-        Reveal_user_page.reveal_user_page user
+        Reveal_user_page.reveal_user_page browser user
         
         let user_briefing =
-            Scrape_user_briefing.scrape_user_briefing user
+            Scrape_user_briefing.scrape_user_briefing browser user
         
         Social_user_database.write_user_briefing
             db_connection
@@ -25,6 +27,7 @@ module Harvest_followers_network =
 
         let user_activity =
             Scrape_user_social_activity.scrape_user_social_activity
+                browser
                 user
                 
         Social_activity_database.write_optional_social_activity_of_user
@@ -33,28 +36,22 @@ module Harvest_followers_network =
               user
               user_activity
         
-    let log_start_of_step_of_harvesting_acquaintances_network
-        unknown_users_around
-        =
-        Log.info """step_of_harvesting_acquaintances_network started with unknown_users_around= """
-        unknown_users_around
-        |>Seq.map User_handle.value
-        |>String.concat ", "
-        |>Log.info  
-    
+   
     let harvest_user
+        browser
         db_connection
         user
         =
         Log.important $"harvesting user {user}"
-        Surpass_distractions.surpass_cookies_agreement ()
+        Surpass_distractions.surpass_cookies_agreement browser
         harvest_top_of_user_page
+            browser
             db_connection
             user
 
         let followees,followers =
             user
-            |>Scrape_followers_network.scrape_acquaintances_of_user
+            |>Scrape_followers_network.scrape_acquaintances_of_user browser
         
         Social_following_database.write_social_connections_of_user
             db_connection   
@@ -67,23 +64,27 @@ module Harvest_followers_network =
             user
             
         followees,followers
-        
-    let rec step_of_harvesting_acquaintances_network
+    
+    exception Browser_failed_when_harvesting_following of User_handle list
+    
+    
+    let harvest_user_adding_his_acquaintances
+        browser
         db_connection
         repeat_if_older_than
         unknown_users_around
         =
-        log_start_of_step_of_harvesting_acquaintances_network unknown_users_around
-        
         match unknown_users_around with
         |[] ->
-            Log.info "harvesting acquaintances network has finished because there's no unknown users around"; ()
+            Log.info "harvesting acquaintances network has finished because there's no unknown users around"
+            []
         |observed_user::rest_unknown_users->
             let followees, followers =
                 harvest_user
+                    browser
                     db_connection
                     observed_user
-            
+        
             let new_unknown_users_around =
                 followers
                 |>Set.union followees
@@ -103,25 +104,48 @@ module Harvest_followers_network =
                     (DateTime.Now-repeat_if_older_than)
                 >>not
             )
-            |>step_of_harvesting_acquaintances_network
+            
+    let rec resilient_step_of_harvesting_following
+        (browser:Browser)
+        db_connection
+        repeat_if_older_than
+        unknown_users_around
+        =
+        let browser,new_unknown_users_around =
+            try
+                browser,
+                harvest_user_adding_his_acquaintances
+                    browser.browser
+                    db_connection
+                    repeat_if_older_than
+                    unknown_users_around
+            with
+            | :? WebDriverException as exc ->
+                Log.error $"""can't harvest user: {exc.Message}. Restarting scraping browser"""|>ignore
+                browser.restart()
+                browser,unknown_users_around
+            | :? ArgumentNullException as exc ->
+                Log.error $"""was the browser closed? {exc.Message}. Restarting scraping browser"""|>ignore
+                browser.restart()
+                browser,unknown_users_around
+                
+        if new_unknown_users_around <> [] then
+            resilient_step_of_harvesting_following
+                browser
                 db_connection
                 repeat_if_older_than
-
-                
+                new_unknown_users_around        
+            
     let harvest_following_network_around_user
+        browser
         db_connection
         repeat_if_older_than
         root_user
         =
-        step_of_harvesting_acquaintances_network
+        resilient_step_of_harvesting_following
+            browser
             db_connection
             repeat_if_older_than
             [root_user]
             
-    [<Fact>]
-    let ``try harvest_following_network_around_user``()=
-        Scraping.prepare_for_scraping()
-        step_of_harvesting_acquaintances_network
-            (Database.open_connection())
-            (TimeSpan.FromDays(-1))
-            [User_handle "dicortona"]
+   
