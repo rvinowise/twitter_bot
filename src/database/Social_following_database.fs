@@ -73,10 +73,10 @@ module Social_following_database =
         =
         let was_visited =
             db_connection.Query<string>(
-                @"select user from user_visited_by_following_scraper
-                where user = @user and
+                @"select handle from user_visited_by_following_scraper
+                where handle = @handle and
                 visited_at >= @since_when",
-                {|user=user; since_when=since_when|}
+                {|handle=user; since_when=since_when|}
             )|>Seq.length > 0
         if was_visited then
             Log.info $"user {User_handle.value user} was already harvested after {since_when}"
