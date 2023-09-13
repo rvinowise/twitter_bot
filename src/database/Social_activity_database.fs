@@ -150,7 +150,12 @@ module Social_activity_database =
         |>Seq.iter(fun (submitted_at,link_referral,recruit,claimed_referral) ->
             db_connection.Query<unit>(
                 @"insert into referral (submitted_at, recruit, link_referral, claimed_referral)
-                values (@submitted_at, @recruit, @link_referral, @claimed_referral)",
+                values (@submitted_at, @recruit, @link_referral, @claimed_referral)
+                on conflict (recruit) do
+                update set
+                    submitted_at=@submitted_at,
+                    link_referral = @link_referral,
+                    claimed_referral = @claimed_referral",
                 {|
                     submitted_at = submitted_at
                     link_referral = link_referral

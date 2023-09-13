@@ -107,7 +107,7 @@ module Scrape_user_social_activity =
         |>Scraping.try_element browser
         |>function
         |None->
-            $"url '{User_handle.url_from_handle user_handle}' doesn't show the Followers field"
+            $"url '{User_handle.url_from_handle user_handle}' doesn't show the {link} field"
             |>Log.error|>ignore
             None
         |Some followers_qty_field->
@@ -116,7 +116,7 @@ module Scrape_user_social_activity =
             |>parse_number_with_multiplier_letter
     
     let scrape_followers_amount_of_user browser user_handle =
-        scrape_acquaintances_amount_of_user browser user_handle "followers"
+        scrape_acquaintances_amount_of_user browser user_handle "verified_followers"
     
     let scrape_followees_amount_of_user browser user_handle =
         scrape_acquaintances_amount_of_user browser user_handle "following"
