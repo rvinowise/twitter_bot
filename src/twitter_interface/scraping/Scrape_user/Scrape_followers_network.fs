@@ -19,7 +19,7 @@ module Scrape_followers_network =
         =
         starting_user
         |>url
-        |>Scrape_catalog.scrape_catalog browser
+        |>Scrape_dynamic_list.scrape_catalog browser
         |>Set.map Parse_twitter_user.parse_twitter_user_cell
     
     

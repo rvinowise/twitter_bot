@@ -9,7 +9,14 @@ open canopy.parallell.functions
 open rvinowise.twitter
 
 module Scrape_list_members =
-    
+    (*
+    this module doesn't separate Scraping from Parsing, so,
+    it has additional complexity to avoid stale elements
+    (they can become stale while we're parsing them).
+    A simpler approach is used in "Scrape_dynamic_list":
+    it scrapes elements in one read first,
+    and then it analyses their preserved HTML content.
+    *)
     
     
     let rec keep_skimming_elements_while_valid

@@ -9,7 +9,7 @@ open SeleniumExtras.WaitHelpers
 open rvinowise.twitter
 open canopy.parallell.functions
 
-module Scrape_catalog =
+module Scrape_dynamic_list =
     
     
     
@@ -30,10 +30,8 @@ module Scrape_catalog =
             
     let consume_all_items_of_catalog
         browser
-        catalog
         =
         let rec skim_and_scroll_iteration
-            catalog
             (skimmed_sofar_elements: HtmlNode Set)
             =
             let new_skimmed_items =
@@ -52,13 +50,12 @@ module Scrape_catalog =
                 new_skimmed_items
                 |>Set.ofSeq
                 |>Set.union skimmed_sofar_elements
-                |>skim_and_scroll_iteration catalog
+                |>skim_and_scroll_iteration
                     
             else
                 skimmed_sofar_elements
         
         skim_and_scroll_iteration
-            catalog
             Set.empty
             
     let scrape_catalog browser catalog_url = 
@@ -69,8 +66,8 @@ module Scrape_catalog =
             Scraping.try_element browser "div:has(>div[data-testid='cellInnerDiv'])"
         
         match catalogue with
-        |Some catalogue ->
-            let items = consume_all_items_of_catalog browser catalogue
+        |Some _ ->
+            let items = consume_all_items_of_catalog browser
             Log.important $"catalogue has {Seq.length items} items"
             items
         |None->

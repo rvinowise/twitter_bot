@@ -10,17 +10,10 @@ open canopy.parallell.functions
 open rvinowise.twitter
 open FSharp.Data
 
-type Twitter_profile_from_catalog = {
-    user: Twitter_user
-    bio: string
-}
-
-module Twitter_profile_from_catalog =
-    let handle profile =
-        profile.user.handle
 
 
-module Parse_twitter_user =
+
+module Parse_twitter_post =
     
     let name_node (catalog_item_cell:HtmlNode) =
         catalog_item_cell
@@ -53,7 +46,7 @@ module Parse_twitter_user =
         |None->""
            
     
-    let parse_twitter_user_cell user_cell =
+    let parse_twitter_post post =
         let name =
             user_cell
             |>name_node
@@ -83,7 +76,7 @@ module Parse_twitter_user =
         
         
     [<Fact>]
-    let ``try parse_user_bio_from_textual_user_div``()=
+    let ``try from html``()=
         let test = 
             """<div dir="auto" class="css-901oao r-18jsvk2 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0" data-testid="UserDescription"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Researcher </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/AgeGlobal" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@AgeGlobal</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/HealthyLongeviT" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@HealthyLongeviT</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> formerly </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/karolinskainst" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@karolinskainst</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23neuroscience&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#neuroscience</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23ageing&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#ageing</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23alzheimerdisease&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#alzheimerdisease</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23longevity&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#longevity</a></span></div>"""
             |>HtmlNode.Parse |>Seq.head
