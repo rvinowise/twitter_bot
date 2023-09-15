@@ -17,7 +17,8 @@
     
     <Compile Include="src\twitter_interface\parsing\Parsing.fs" />
     <Compile Include="src\twitter_interface\parsing\Parse_twitter_user.fs" />
-    <Compile Include="src\twitter_interface\parsing\Parse_twitter_post.fs" />
+    <Compile Include="src\twitter_interface\parsing\Parse_post_from_timeline.fs" />
+    <Compile Include="src\twitter_interface\parsing\Parse_post_from_its_page.fs" />
     
     <Compile Include="src\twitter_interface\Scraping\Browser.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scraping.fs" />

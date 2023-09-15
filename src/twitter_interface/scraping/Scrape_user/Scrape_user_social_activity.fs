@@ -41,7 +41,7 @@ module Scrape_user_social_activity =
             "10.7K posts",10700
         ]|>List.map (fun (input,expected_number)->
             input
-            |>parse_number_with_multiplier_letter
+            |>Parsing_abbreviated_number.try_parse_abbreviated_number
             |>function
             | None -> raise (Exception())
             | Some result_number -> should equal expected_number result_number
@@ -61,7 +61,7 @@ module Scrape_user_social_activity =
         |Some posts_qty_field->
             browser
             |>read posts_qty_field
-            |>parse_number_with_multiplier_letter 
+            |>Parsing_abbreviated_number.try_parse_abbreviated_number 
     
     
     
@@ -77,7 +77,7 @@ module Scrape_user_social_activity =
         |Some followers_qty_field->
             browser
             |>read followers_qty_field
-            |>parse_number_with_multiplier_letter
+            |>Parsing_abbreviated_number.try_parse_abbreviated_number
     
     let scrape_followers_amount_of_user browser user_handle =
         scrape_acquaintances_amount_of_user browser user_handle "verified_followers"

@@ -23,7 +23,7 @@ module Scrape_timeline =
         "article[data-testid='tweet']"
         |>Scrape_dynamic_list.consume_all_items_of_dynamic_list
             browser
-        |>Seq.map Parse_twitter_post.parse_twitter_post
+        |>Seq.map Parse_post_from_timeline.parse_twitter_post
         
 
   

@@ -20,13 +20,13 @@ module Html_element =
     
 
 module Parsing_abbreviated_number =
-    let final_multiplier: Parser<int,unit> =
+    let final_multiplier_parser: Parser<int,unit> =
         (pstring "K"|>>fun _-> 1000) <|>
         (pstring "M"|>>fun _->1000000) <|>
         (spaces|>>fun _->1)
         
-    let abbreviated_number: Parser<int,unit> =
-        pfloat .>>. final_multiplier
+    let abbreviated_number_parser: Parser<int,unit> =
+        pfloat .>>. final_multiplier_parser
         |>> (fun (first_number,last_multiplier) ->
             (first_number * float last_multiplier)
             |> int
@@ -39,7 +39,7 @@ module Parsing_abbreviated_number =
     let try_parse_abbreviated_number text =
         text
         |>remove_commas
-        |>run abbreviated_number
+        |>run abbreviated_number_parser
         |>function
         |Success (number,_,_) -> Some number
         |Failure (error,_,_) -> 
@@ -48,12 +48,22 @@ module Parsing_abbreviated_number =
             error: {error}"""
             |>Log.error|>ignore
             None
+    
+    let parse_abbreviated_number text =
+        text
+        |>try_parse_abbreviated_number
+        |>function
+        |Some result -> result
+        |None -> raise (FormatException $"there's no abbreviated number in text: '{text}'")
 
 module Parsing =
+    
+    let last_url_segment (text:string) =
+        text.Substring(text.LastIndexOf(@"/")+1)
+    
     let descendants css (node:HtmlNode) =
         HtmlNode.cssSelect node css
     
-   
         
     let should_be_single seq =
         if Seq.length seq = 1 then
@@ -72,7 +82,17 @@ module Parsing =
         node
         |>descendants css
         |>should_be_single
-            
+    
+    
+    let which_have_child
+        (child:HtmlNode)
+        (parents: HtmlNode seq)
+        =
+        parents
+        |>Seq.filter(fun anchor->
+            anchor.Elements()
+            |>List.contains child
+        )
             
     let descend levels_amount (node:HtmlNode) =
         [1..levels_amount]

@@ -22,13 +22,8 @@ type post = {
     reposts_amount: int
     views_amount: int  
 }
-module Parse_twitter_post =
+module Parse_post_from_timeline =
     
-    
-    
-    
-    
-           
     
     let valuable_part_of_article article_html =
         article_html
@@ -43,19 +38,32 @@ module Parse_twitter_post =
         |>Parsing.descendant "a"
         |>Parsing.descend 2
     
+    
+    let long_post_has_show_more_button post_body =
+        ()
+    let post_quotes_another_post post_body =
+        ()
+    let post_replies_to_another_post post_body =
+        ()
+    
+    let post_is_shown_fully body_elements =
+        long_post_has_show_more_button body_elements
+        ||post_quotes_another_post body_elements
+        ||post_replies_to_another_post body_elements
+        |>not
+    
     let parse_twitter_post article_html =
-        let valuable_part = 
+        let post_elements = 
             valuable_part_of_article article_html
+            |>HtmlNode.elements
         
         let header =
-            valuable_part
-            |>HtmlNode.elements
+            post_elements
             |>Seq.head
             |>Parsing.descendant "div[data-testid='User-Name']"
         
         let footing_with_stats =
-            valuable_part
-            |>HtmlNode.elements
+            post_elements
             |>Seq.last
             |>Parsing.descend 1
         
@@ -64,14 +72,21 @@ module Parse_twitter_post =
             |>compound_name_span
             |>Parsing.readable_text_from_html_segments
         
+            
+        
         let created_at_node =
             header
             |>Parsing.descendant "time"
         
-        let id =
-            created_at_node
-            |>Parsing.descendant ".."
+        let post_url =
+            header
+            |>Parsing.descendants "a"
+            |>Parsing.which_have_child created_at_node
+            |>Parsing.should_be_single
             |>HtmlNode.attributeValue "href"
+        
+        let post_id =
+            Parsing.last_url_segment post_url
         
         let created_at =
             created_at_node
@@ -87,16 +102,17 @@ module Parse_twitter_post =
             |>fun url_with_slash->url_with_slash[1..]
             |>User_handle
         
-            
-        let message = ""
-//            parse_user_bio_from_textual_user_div
-//                node_with_textual_user_info
+        
+        let body_elements =
+            post_elements
+            |>Seq.skip 1
+            |>Seq.take (Seq.length post_elements - 2)
         
         let number_of_footer_element node =
             node
             |>Parsing.descendant "span[data-testid='app-text-transition-container'] > span > span"
             |>HtmlNode.innerText
-            |>Parsing_abbreviated_number.abbreviated_number
+            |>Parsing_abbreviated_number.parse_abbreviated_number
         
         let replies_amount =
             footing_with_stats
@@ -121,9 +137,15 @@ module Parse_twitter_post =
             |>HtmlNode.elements
             |>Seq.item 3
             |>number_of_footer_element
+        
+        
+        let message = 
+            body_elements
+            |>post_is_shown_fully
+            
             
         {
-            id = id
+            id = post_id
             auhtor = author_handle
             created_at = created_at
             message = message

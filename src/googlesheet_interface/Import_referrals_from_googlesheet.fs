@@ -47,15 +47,14 @@ module Import_referrals_from_googlesheet =
         )
     
     module Parse_social_user =
-        let remove_url (text:string) =
-            text.Substring(text.LastIndexOf(@"/")+1)
+        
         
         let remove_impossible_symbols (text:string) =
             text.Replace("@","")
         
         let user_from_raw_text user =
             user
-            |>remove_url
+            |>Parsing.last_url_segment
             |>remove_impossible_symbols
     
     
