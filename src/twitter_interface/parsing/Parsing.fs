@@ -18,6 +18,37 @@ module Html_element =
     let attribute name (node: HtmlNode) =
         node.Attribute(name)
     
+
+module Parsing_abbreviated_number =
+    let final_multiplier: Parser<int,unit> =
+        (pstring "K"|>>fun _-> 1000) <|>
+        (pstring "M"|>>fun _->1000000) <|>
+        (spaces|>>fun _->1)
+        
+    let abbreviated_number: Parser<int,unit> =
+        pfloat .>>. final_multiplier
+        |>> (fun (first_number,last_multiplier) ->
+            (first_number * float last_multiplier)
+            |> int
+        )    
+    
+    let remove_commas (number:string) =
+        number.Replace(",", "")
+        
+    
+    let try_parse_abbreviated_number text =
+        text
+        |>remove_commas
+        |>run abbreviated_number
+        |>function
+        |Success (number,_,_) -> Some number
+        |Failure (error,_,_) -> 
+            $"""error while parsing number of followers:
+            string: {text}
+            error: {error}"""
+            |>Log.error|>ignore
+            None
+
 module Parsing =
     let descendants css (node:HtmlNode) =
         HtmlNode.cssSelect node css
@@ -35,6 +66,12 @@ module Parsing =
         else
             Log.error $"expected one element, but there's {Seq.length seq}"|>ignore
             Seq.head seq
+    
+    
+    let descendant css (node:HtmlNode) =
+        node
+        |>descendants css
+        |>should_be_single
             
             
     let descend levels_amount (node:HtmlNode) =
@@ -78,3 +115,24 @@ module Parsing =
             "Joined September 2017"
             |>parse_joined_date
         ()
+        
+        
+    let segment_of_composed_text_as_text (segment:HtmlNode) =
+        match segment.Name() with
+        |"img" -> //an emoji
+            segment.AttributeValue "alt"
+        |"span" when segment.InnerText() = "" -> " " //FSharpData removes spaces from spans 😳
+        |_->segment.InnerText()
+    
+    let readable_text_from_html_segments (root:HtmlNode) =
+        root
+        |>HtmlNode.elements
+        |>Seq.map segment_of_composed_text_as_text
+        |>String.concat ""
+        
+    let parse_datetime format text =
+        DateTime.ParseExact(
+            text,
+            format,
+            CultureInfo.InvariantCulture
+        )

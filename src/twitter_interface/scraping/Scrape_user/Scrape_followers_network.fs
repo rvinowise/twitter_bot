@@ -11,15 +11,34 @@ module Scrape_followers_network =
     let followees_url user =
         $"{Twitter_settings.base_url}/{User_handle.value user}/following"
         
+        
+        
+    let scrape_user_catalog browser catalog_url = 
+        Log.info $"reading elements of catalog {catalog_url} ... " 
+        url catalog_url browser
+        
+        let user_catalog_element = "div[data-testid='UserCell']"
+        let catalogue =
+            Scraping.try_element browser "div:has(>div[data-testid='cellInnerDiv'])"
+        
+        match catalogue with
+        |Some _ ->
+            let items = Scrape_dynamic_list.consume_all_items_of_dynamic_list browser user_catalog_element
+            Log.important $"catalogue has {Seq.length items} items"
+            items
+        |None->
+            Log.error $"{catalog_url} doesn't have a catalogue "|>ignore
+            Set.empty
+    
     
     let scrape_following_of_user
         browser
-        (url: User_handle -> string)
+        (url_from_user: User_handle -> string)
         starting_user
         =
         starting_user
-        |>url
-        |>Scrape_dynamic_list.scrape_catalog browser
+        |>url_from_user
+        |>scrape_user_catalog browser
         |>Set.map Parse_twitter_user.parse_twitter_user_cell
     
     
@@ -39,3 +58,6 @@ module Scrape_followers_network =
         ,
         followers
         |>Set.map Twitter_profile_from_catalog.handle
+        
+        
+    

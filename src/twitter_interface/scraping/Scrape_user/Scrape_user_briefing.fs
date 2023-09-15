@@ -28,7 +28,7 @@ module Scrape_user_briefing =
                 browser
                 |>element """div[data-testid='UserName'] span > span:nth-child(1)""" 
                 |>Parsing.html_node_from_web_element
-                |>Parse_twitter_user.readable_text_from_html_segments
+                |>Parsing.readable_text_from_html_segments
             with
             | :? CanopyElementNotFoundException as exc ->
                 Log.error $"name_field isn't found on the web-page: {exc.Message}" |>ignore
@@ -42,7 +42,7 @@ module Scrape_user_briefing =
             |Some element ->
                 element
                 |>Parsing.html_node_from_web_element
-                |>Parse_twitter_user.readable_text_from_html_segments
+                |>Parsing.readable_text_from_html_segments
             |None->""
             
         let location browser =

@@ -29,17 +29,6 @@ module Parse_twitter_user =
         |>HtmlNode.elements //span with the compound name
         |>Seq.head //there's only one such a span
     
-    let segment_of_composed_text_as_text (segment:HtmlNode) =
-        match segment.Name() with
-        |"img" -> //an emoji
-            segment.AttributeValue "alt"
-        |"span" when segment.InnerText() = "" -> " " //FSharpData removes spaces from spans 😳
-        |_->segment.InnerText()
-    let readable_text_from_html_segments (root:HtmlNode) =
-        root
-        |>HtmlNode.elements
-        |>Seq.map segment_of_composed_text_as_text
-        |>String.concat ""
     
     let parse_user_bio_from_textual_user_div
         (node_with_textual_user_info:HtmlNode)
@@ -49,7 +38,7 @@ module Parse_twitter_user =
         |>Seq.tryItem 1 //skip the first div which is the name and handle. take the second div which is the briefing 
         |>function
         |Some bio_node->
-            readable_text_from_html_segments bio_node
+            Parsing.readable_text_from_html_segments bio_node
         |None->""
            
     
@@ -57,7 +46,7 @@ module Parse_twitter_user =
         let name =
             user_cell
             |>name_node
-            |>readable_text_from_html_segments
+            |>Parsing.readable_text_from_html_segments
         
         let node_with_textual_user_info =
             user_cell
@@ -87,5 +76,5 @@ module Parse_twitter_user =
         let test = 
             """<div dir="auto" class="css-901oao r-18jsvk2 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0" data-testid="UserDescription"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Researcher </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/AgeGlobal" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@AgeGlobal</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/HealthyLongeviT" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@HealthyLongeviT</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> formerly </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/karolinskainst" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@karolinskainst</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23neuroscience&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#neuroscience</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23ageing&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#ageing</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23alzheimerdisease&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#alzheimerdisease</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23longevity&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#longevity</a></span></div>"""
             |>HtmlNode.Parse |>Seq.head
-            |>readable_text_from_html_segments
+            |>Parsing.readable_text_from_html_segments
         ()

@@ -12,11 +12,12 @@ open canopy.parallell.functions
 module Scrape_dynamic_list =
     
     
-    
-    let skim_displayed_items browser
+    let skim_displayed_items
+        browser
+        item_css
         =
-        let user_cells = elements "div[data-testid='UserCell']" browser
-        user_cells
+        let items = elements item_css browser
+        items
         |>Seq.map Parsing.html_node_from_web_element
         
             
@@ -28,14 +29,15 @@ module Scrape_dynamic_list =
         |>Set.difference new_skimmed_items
         |>Set.isEmpty|>not
             
-    let consume_all_items_of_catalog
+    let consume_all_items_of_dynamic_list
         browser
+        item_selector
         =
         let rec skim_and_scroll_iteration
             (skimmed_sofar_elements: HtmlNode Set)
             =
             let new_skimmed_items =
-                skim_displayed_items browser 
+                skim_displayed_items browser item_selector
                 |>Set.ofSeq
                 
             if new_elements_are_skimmed 
@@ -58,24 +60,11 @@ module Scrape_dynamic_list =
         skim_and_scroll_iteration
             Set.empty
             
-    let scrape_catalog browser catalog_url = 
-        Log.info $"reading elements of catalog {catalog_url} ... " 
-        url catalog_url browser
-        
-        let catalogue =
-            Scraping.try_element browser "div:has(>div[data-testid='cellInnerDiv'])"
-        
-        match catalogue with
-        |Some _ ->
-            let items = consume_all_items_of_catalog browser
-            Log.important $"catalogue has {Seq.length items} items"
-            items
-        |None->
-            Log.error $"{catalog_url} doesn't have a catalogue "|>ignore
-            Set.empty
+    
 
     
-  
+    
+        
 
 
     
