@@ -191,7 +191,8 @@ module Parse_post_from_timeline =
         
         let message = 
             body_elements
-            |>is_post_shown_fully
+            |>Seq.map Parsing.segment_of_composed_text_as_text
+            |>String.concat ""
             
             
         {

@@ -20,32 +20,35 @@ module Scrape_dynamic_list =
         items
         |>Seq.map Parsing.html_node_from_web_element
         
-            
-    let new_elements_are_skimmed
-        (skimmed_sofar_elements: HtmlNode Set)
-        (new_skimmed_items: HtmlNode Set)
+
+    let add_new_items_to_map
+        added_items
+        map
         =
-        skimmed_sofar_elements
-        |>Set.difference new_skimmed_items
-        |>Set.isEmpty|>not
-            
-    
+        added_items
+        |>Seq.fold (fun all_items (new_item,parsed_new_item) -> 
+            all_items
+            |>Map.add new_item parsed_new_item
+        )
+            map
     
     let consume_items_of_dynamic_list
         browser
-        (action: HtmlNode -> 'a)
+        (action: HtmlNode -> 'Parsed_item)
         item_selector
         =
         let rec skim_and_scroll_iteration
-            (skimmed_sofar_items: HtmlNode Set)
+            (skimmed_sofar_items: Map<HtmlNode, 'Parsed_item>)
             =
-            let current_skimmed_items =
+            let visible_skimmed_items =
                 skim_displayed_items browser item_selector
                 |>Set.ofSeq
                 
             let new_skimmed_items =
                 skimmed_sofar_items
-                |>Set.difference current_skimmed_items
+                |>Map.keys
+                |>Set.ofSeq
+                |>Set.difference visible_skimmed_items
             
             if (not new_skimmed_items.IsEmpty) then
                 Actions(browser)
@@ -53,18 +56,21 @@ module Scrape_dynamic_list =
                     .Perform()
                 sleep 1
                 
-                new_skimmed_items
-                |>Seq.map action
+                let parsed_new_items =
+                    new_skimmed_items
+                    |>Seq.map (fun item->
+                        item, action item
+                    )
                 
-                new_skimmed_items
-                |>Set.union skimmed_sofar_items
+                skimmed_sofar_items
+                |>add_new_items_to_map parsed_new_items
                 |>skim_and_scroll_iteration
                     
             else
                 skimmed_sofar_items
         
         skim_and_scroll_iteration
-            Set.empty
+            Map.empty
         
     
     let collect_all_items_of_dynamic_list
@@ -74,7 +80,7 @@ module Scrape_dynamic_list =
         item_selector
         |>consume_items_of_dynamic_list
             browser
-            (fun _->())
+            ignore
     
         
             
