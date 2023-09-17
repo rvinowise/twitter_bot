@@ -41,15 +41,65 @@ module Parse_post_from_timeline =
     
     let long_post_has_show_more_button post_body =
         ()
-    let post_quotes_another_post post_body =
-        ()
-    let post_replies_to_another_post post_body =
+    let is_post_quoting_another_source body_elements =
+        body_elements
+        |>Seq.map (Parsing.descendants "data-testid='tweetText'")
+    
+    
+    let url_from_show_more_button button_show_more =
+        button_show_more
+        |>HtmlNode.attributeValue "href"
+    
+    let url_from_opened_quoted_source quoted_source_node browser=
+        quoted_source_node
+        |>canopy.parallell.functions.click browser
+    
+    let url_of_quoted_source quoted_source_node =
+        let button_show_more =
+            quoted_source_node
+            |>Parsing.descendant "data-testid='tweet-text-show-more-link'"
+        let quoted_url = 
+            match button_show_more with
+            |Some button_show_more ->
+                url_from_show_more_button button_show_more
+            |None ->
+                url_from_opened_quoted_source quoted_source_node
+        quoted_url
+        
+    let is_post_quoting_another_source_with_show_more_button body_elements =
+
+        let messages_of_article =
+            body_elements
+            |>Seq.map (
+                Parsing.descendants "data-testid='tweetText'"
+            )
+        if Seq.length messages_of_article > 2 then
+            Log.error $"article has {Seq.length messages_of_article} messages in it, expected 2 maximum (the post and its quoted source)"
+        
+        let quoted_source_node =
+            messages_of_article
+            |>Seq.tryItem 1
+        
+        match quoted_source_node with
+        |Some quoted_source_node ->
+            url_of_quoted_source quoted_source_node
+        |None ->
+            
+        
+        let quoted_source_url =
+            messages_of_article
+            |>Seq.tryItem 1
+            |>Option.map (Parsing.descendant "data-testid='tweet-text-show-more-link'")
+            |>Option.map (HtmlNode.attributeValue "href")  
+        
+        
+    let is_post_replying_to_another_post post_body =
         ()
     
-    let post_is_shown_fully body_elements =
+    let is_post_shown_fully body_elements =
         long_post_has_show_more_button body_elements
-        ||post_quotes_another_post body_elements
-        ||post_replies_to_another_post body_elements
+        ||post_quotes_another_source body_elements
+        ||is_post_replying_to_another_post body_elements
         |>not
     
     let parse_twitter_post article_html =
@@ -141,7 +191,7 @@ module Parse_post_from_timeline =
         
         let message = 
             body_elements
-            |>post_is_shown_fully
+            |>is_post_shown_fully
             
             
         {

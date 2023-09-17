@@ -14,7 +14,7 @@ open FSharp.Data
 
 type post = {
     message: string
-    quoterd: string
+    related_post: int64
 }
 module Parse_post_from_its_page =
     
@@ -35,11 +35,9 @@ module Parse_post_from_its_page =
         |>HtmlNode.elements
     
     let parse_twitter_post article_html =
-        
-            
         {
             message = message article_html
-            quoted = quoted_post article_html
+            related_post = quoted_post article_html
         }
         
         

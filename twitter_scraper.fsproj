@@ -28,6 +28,7 @@
     <Compile Include="src\twitter_interface\Scraping\Scrape_user\Scrape_user_social_activity.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scrape_user\Scrape_user_briefing.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scrape_user\Scrape_timeline.fs" />
+    <Compile Include="src\twitter_interface\Scraping\Scrape_user\Scrape_post_from_timeline.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scrape_user\Surpass_distractions.fs" />
     <Compile Include="src\twitter_interface\Scraping\Scrape_user\Scrape_followers_network.fs" />
     

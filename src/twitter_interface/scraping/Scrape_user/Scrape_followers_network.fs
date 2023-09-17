@@ -23,7 +23,7 @@ module Scrape_followers_network =
         
         match catalogue with
         |Some _ ->
-            let items = Scrape_dynamic_list.consume_all_items_of_dynamic_list browser user_catalog_element
+            let items = Scrape_dynamic_list.collect_all_items_of_dynamic_list browser user_catalog_element
             Log.important $"catalogue has {Seq.length items} items"
             items
         |None->

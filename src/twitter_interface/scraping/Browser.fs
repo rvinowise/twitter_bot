@@ -39,3 +39,8 @@ type Browser(cookies:Cookie seq) =
             
     static member from_cookie(cookie) =
         new Browser(cookie)
+        
+        
+module Browser =
+    let browser (browser:Browser) =
+        browser.browser
