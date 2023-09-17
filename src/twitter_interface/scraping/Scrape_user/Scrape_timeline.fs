@@ -13,14 +13,20 @@ open FParsec
 module Scrape_timeline =
 
 
+    let open_post_to_see_quoted_url
+        browser
+        article_node
+        =
+        
    
     let parse_post_from_timeline
         browser
         article_node
         =
-        if Parse_post_from_timeline.is_post_shown_fully article_nodeen then
+        if Parse_post_from_timeline.is_post_shown_fully article_node then
             Parse_post_from_timeline.parse_twitter_post article_node
         else
+            open_post_to_see_quoted_url browser article_node
             
             
             
