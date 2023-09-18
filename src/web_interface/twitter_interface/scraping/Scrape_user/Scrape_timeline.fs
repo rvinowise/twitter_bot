@@ -5,7 +5,7 @@ open Xunit
 open FsUnit
 open canopy.parallell.functions
 open canopy.types
-open rvinowise.twitter
+open rvinowise.html_parsing
 open FParsec
 
 
@@ -18,14 +18,17 @@ module Scrape_timeline =
         article_node
         =
         browser
-        |>click 
+        |>click article_node
    
     let parse_post_from_timeline
         browser
         article_node
         =
+        let (Html_string article_node) = article_node
+        let article_node = Html_parsing.parseable_node_from_string article_node
         if Parse_post_from_timeline.is_post_shown_fully article_node then
             Parse_post_from_timeline.parse_twitter_post article_node
+            ()
         else
             open_post_to_see_quoted_url browser article_node
             

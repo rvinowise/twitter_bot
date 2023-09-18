@@ -25,10 +25,6 @@ module Html_element =
 
 module Html_parsing =
     
-    let init_context () =
-        let context = BrowsingContext.New(AngleSharp.Configuration.Default)
-
-        let document = context.OpenAsync(req => req.Content(source));
     
     let last_url_segment (text:string) =
         text.Substring(text.LastIndexOf(@"/")+1)

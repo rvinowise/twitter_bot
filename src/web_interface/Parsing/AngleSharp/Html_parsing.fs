@@ -17,6 +17,8 @@ open rvinowise.twitter
 (*this module encapsulates an external library for parsing HTML *)
 
 type Html_node = AngleSharp.Dom.IElement
+type Comparable_html_hode = FSharp.Data.HtmlNode
+type Html_string = Html_string of string
 type Web_node = OpenQA.Selenium.IWebElement
 
 module Html_node =
@@ -112,7 +114,6 @@ module Html_node =
 
 
 
-
 module Html_parsing =
     
     let init_context () =
@@ -122,17 +123,31 @@ module Html_parsing =
         text.Substring(text.LastIndexOf(@"/")+1)
     
   
+    
+    let parseable_node_from_string
+        (context:IBrowsingContext )
+        (html_text: string)
+        =
+        let htmlParser = context.GetService<IHtmlParser>()
+        let document = htmlParser.ParseDocument html_text
+        document.Body
+        
     let parseable_node_from_scraped_node
         (context:IBrowsingContext )
         (web_node: Web_node): Html_node
         =
         let html_text = web_node.GetAttribute("outerHTML")
-        let htmlParser = context.GetService<IHtmlParser>();
-        let document = htmlParser.ParseDocument html_text
-        document.Body
-        
-    
+        parseable_node_from_string context html_text
+                
+    let comparable_node_from_scraped_node
+        (web_node: Web_node): Comparable_html_hode
+        =
+        web_node.GetAttribute("outerHTML")
+        |>Comparable_html_hode.Parse
+        |>Seq.head
 
+    
+    
     let segment_of_composed_text_as_text (segment:Html_node) =
         match segment.ClassName with
         |"img" -> //an emoji

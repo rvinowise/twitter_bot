@@ -9,6 +9,9 @@ open SeleniumExtras.WaitHelpers
 open rvinowise.html_parsing
 open canopy.parallell.functions
 
+
+
+
 module Scrape_dynamic_list =
     
     
@@ -18,7 +21,7 @@ module Scrape_dynamic_list =
         =
         let items = elements item_css browser
         items
-        |>Seq.map Html_parsing.parseable_node_from_scraped_node
+        |>Seq.map (fun web_element -> Html_string (web_element.GetAttribute("outerHTML")))
         
 
     let add_new_items_to_map
@@ -34,14 +37,17 @@ module Scrape_dynamic_list =
     
     let consume_items_of_dynamic_list
         browser
-        (action: Html_node -> 'Parsed_item)
+        (action: Html_string -> 'Parsed_item)
         item_selector
         =
+        let parsing_context = Html_parsing.init_context()
         let rec skim_and_scroll_iteration
-            (skimmed_sofar_items: Map<HtmlNode, 'Parsed_item>)
+            (skimmed_sofar_items: Map<Html_string, 'Parsed_item>)
             =
             let visible_skimmed_items =
-                skim_displayed_items browser item_selector
+                skim_displayed_items
+                    browser
+                    item_selector
                 |>Set.ofSeq
                 
             let new_skimmed_items =
