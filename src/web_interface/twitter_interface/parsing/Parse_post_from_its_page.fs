@@ -9,7 +9,7 @@ open Xunit
 open canopy.parallell.functions
 open rvinowise.twitter
 open FSharp.Data
-
+open rvinowise.html_parsing
 
 
 type post = {
@@ -21,18 +21,19 @@ module Parse_post_from_its_page =
     
     let message article_html =
         article_html
-        |>Parsing.descendant "div[data-testid='tweetText']"
-        |>Parsing.readable_text_from_html_segments
+        |>Html_node.descendant "div[data-testid='tweetText']"
+        |>Html_parsing.readable_text_from_html_segments
        
     let quoted_post article_html =
         article_html
-        |>Parsing.descendant "div[data-testid='tweetText']"
-        |>Parsing.readable_text_from_html_segments   
+        |>Html_node.descendant "div[data-testid='tweetText']"
+        |>Html_parsing.readable_text_from_html_segments   
     
     let quoted_post article_html =
-        Parsing.descendant "div[role='link']"
-        |>Parsing.descend 1
-        |>HtmlNode.elements
+        article_html
+        |>Html_node.descendant "div[role='link']"
+        |>Html_node.descend 1
+        |>Html_node.direct_children
     
     let parse_twitter_post article_html =
         {

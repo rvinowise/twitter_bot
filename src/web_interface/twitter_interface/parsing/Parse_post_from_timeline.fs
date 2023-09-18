@@ -7,7 +7,7 @@ open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
 open Xunit
 open canopy.parallell.functions
-open rvinowise.twitter
+open rvinowise.html_parsing
 open FSharp.Data
 
 
@@ -22,65 +22,100 @@ type post = {
     reposts_amount: int
     views_amount: int  
 }
+
+type Additional_post_load =
+    |Quotation of HtmlNode
+    |External_url of HtmlNode
+    |Image_and_quotation of HtmlNode
+    |Images of HtmlNode
+    
+type Html_segments_of_post = {
+    header: HtmlNode
+    message: HtmlNode
+    load: HtmlNode option
+    footing: HtmlNode
+}
+
 module Parse_post_from_timeline =
     
     
     let valuable_part_of_article article_html =
         article_html
-        |>Parsing.descend 2
-        |>HtmlNode.elements |> Seq.item 1
-        |>HtmlNode.elements |> Seq.item 1
+        |>Html_node.descend 2
+        |>Html_node.direct_children |> Seq.item 1
+        |>Html_node.direct_children |> Seq.item 1
     
     let compound_name_span post_header =
         post_header
-        |>HtmlNode.elements
+        |>Html_node.direct_children
         |>Seq.head
-        |>Parsing.descendant "a"
-        |>Parsing.descend 2
+        |>Html_node.descendant "a"
+        |>Html_node.descend 2
+    
+    
+    let post_header_node node =
+        node
+        |>Html_node.descendants "data-testid='User-Name'"
+        
+    let additional_load_from_its_node additional_load_node =
+        let link_node =
+            additional_load_node
+            |>Html_parsing.try_descendant "div[role='link']"
+        
+        let image_preview_nodes =
+            additional_load_node
+            |>Html_parsing.descendants "div[data-testid='tweetPhoto']"
+        
+        let video_node =
+            additional_load_node
+            |>Html_parsing.descendants "aria-label='Embedded video' ing[alt='Embedded video']"
+        
+        match link_node with 
+        |Some link_node->
+            let quoted_source_node =
+                link_node
+                |>Html_parsing.try_descendant "data-testid='tweetText'"
+            match quoted_source_node with
+            |Some node -> Additional_post_load.Quotation additional_load_node
+            |None ->
+                
+        |None ->()
+        
+        
     
     
     let long_post_has_show_more_button post_body =
-        ()
+           post_body
+           |>Html_node.try_descendant "data-testid='tweet-text-show-more-link'"
+           |>function
+               |Some _ ->true
+               |None->false
     let is_post_quoting_another_source body_elements =
         body_elements
-        |>Seq.map (Parsing.descendants "data-testid='tweetText'")
+        |>Seq.map (Html_node.descendants "data-testid='tweetText'")
     
     
     let url_from_show_more_button button_show_more =
         button_show_more
         |>HtmlNode.attributeValue "href"
     
-    let url_from_opened_quoted_source quoted_source_node browser=
-        quoted_source_node
-        |>canopy.parallell.functions.click browser
-    
-    let url_of_quoted_source quoted_source_node =
-        let button_show_more =
-            quoted_source_node
-            |>Parsing.descendant "data-testid='tweet-text-show-more-link'"
-        let quoted_url = 
-            match button_show_more with
-            |Some button_show_more ->
-                url_from_show_more_button button_show_more
-            |None ->
-                url_from_opened_quoted_source quoted_source_node
-        quoted_url
         
     let is_post_quoting_another_source_with_show_more_button body_elements =
 
         let messages_of_article =
             body_elements
             |>Seq.map (
-                Parsing.descendants "data-testid='tweetText'"
+                Html_parsing.descendants "data-testid='tweetText'"
             )
         if Seq.length messages_of_article > 2 then
             Log.error $"article has {Seq.length messages_of_article} messages in it, expected 2 maximum (the post and its quoted source)"
         
-        let quoted_source_node =
+        //a quoted_post, image, image & quoted_post
+        let additional_load_node =
             messages_of_article
             |>Seq.tryItem 1
         
-        match quoted_source_node with
+        match additional_load_node with
         |Some quoted_source_node ->
             url_of_quoted_source quoted_source_node
         |None ->
@@ -89,7 +124,7 @@ module Parse_post_from_timeline =
         let quoted_source_url =
             messages_of_article
             |>Seq.tryItem 1
-            |>Option.map (Parsing.descendant "data-testid='tweet-text-show-more-link'")
+            |>Option.map (Html_parsing.descendant "data-testid='tweet-text-show-more-link'")
             |>Option.map (HtmlNode.attributeValue "href")  
         
         
@@ -102,98 +137,119 @@ module Parse_post_from_timeline =
         ||is_post_replying_to_another_post body_elements
         |>not
     
-    let parse_twitter_post article_html =
+    
+    let html_segments_of_post article_html =
+        
         let post_elements = 
             valuable_part_of_article article_html
-            |>HtmlNode.elements
+            |>Html_node.direct_children
         
         let header =
             post_elements
             |>Seq.head
-            |>Parsing.descendant "div[data-testid='User-Name']"
+            |>Html_node.descendant "div[data-testid='User-Name']"
         
         let footing_with_stats =
             post_elements
             |>Seq.last
-            |>Parsing.descend 1
-        
-        let author_name =
-            header
-            |>compound_name_span
-            |>Parsing.readable_text_from_html_segments
-        
-            
-        
-        let created_at_node =
-            header
-            |>Parsing.descendant "time"
-        
-        let post_url =
-            header
-            |>Parsing.descendants "a"
-            |>Parsing.which_have_child created_at_node
-            |>Parsing.should_be_single
-            |>HtmlNode.attributeValue "href"
-        
-        let post_id =
-            Parsing.last_url_segment post_url
-        
-        let created_at =
-            created_at_node
-            |>HtmlNode.attributeValue "datetime"
-            |>Parsing.parse_datetime "yyyy-MM-dd'T'HH:mm:ss.fff'Z'"
-            
-        
-        let author_handle =
-            header
-            |>HtmlNode.elements |>Seq.item 1
-            |>Parsing.descendant "a[role='link']"
-            |>HtmlNode.attributeValue "href"
-            |>fun url_with_slash->url_with_slash[1..]
-            |>User_handle
-        
-        
+            |>Html_node.descend 1
+    
         let body_elements =
             post_elements
             |>Seq.skip 1
             |>Seq.take (Seq.length post_elements - 2)
         
-        let number_of_footer_element node =
+        let message =
+            body_elements
+            |>Seq.head
+            |>Html_node.descendant "div[data-testid='tweetText']"
+            
+        let additional_load =
+            body_elements
+            |>Seq.tryItem 1
+            
+        {
+            header = header
+            message = message
+            load = additional_load
+            footing = footing_with_stats
+        }
+    
+    let additional_load_of_post article_html  =
+        
+    
+    let parse_twitter_post article_html =
+        
+        let post_html_segments =
+            html_segments_of_post article_html
+        
+        let author_name =
+            post_html_segments.header
+            |>compound_name_span
+            |>Html_parsing.readable_text_from_html_segments
+        
+        let created_at_node =
+            post_html_segments.header
+            |>Html_parsing.descendant "time"
+        
+        let post_url =
+            post_html_segments.header
+            |>Html_parsing.descendants "a"
+            |>Html_parsing.which_have_direct_child created_at_node
+            |>Html_parsing.should_be_single
+            |>HtmlNode.attributeValue "href"
+        
+        let post_id =
+            Html_parsing.last_url_segment post_url
+        
+        let created_at =
+            created_at_node
+            |>HtmlNode.attributeValue "datetime"
+            |>Html_parsing.parse_datetime "yyyy-MM-dd'T'HH:mm:ss.fff'Z'"
+            
+        
+        let author_handle =
+            post_html_segments.header
+            |>Html_parsing.direct_children |>Seq.item 1
+            |>Html_parsing.descendant "a[role='link']"
+            |>HtmlNode.attributeValue "href"
+            |>fun url_with_slash->url_with_slash[1..]
+            |>User_handle
+        
+        
+        let number_inside_footer_element node =
             node
-            |>Parsing.descendant "span[data-testid='app-text-transition-container'] > span > span"
+            |>Html_parsing.descendant "span[data-testid='app-text-transition-container'] > span > span"
             |>HtmlNode.innerText
             |>Parsing_abbreviated_number.parse_abbreviated_number
         
         let replies_amount =
-            footing_with_stats
-            |>HtmlNode.elements
+            post_html_segments.footing
+            |>Html_parsing.direct_children
             |>Seq.head
-            |>number_of_footer_element
+            |>number_inside_footer_element
             
         let likes_amount =
-            footing_with_stats
-            |>HtmlNode.elements
+            post_html_segments.footing
+            |>Html_parsing.direct_children
             |>Seq.item 1
-            |>number_of_footer_element
+            |>number_inside_footer_element
             
         let reposts_amount =
-            footing_with_stats
-            |>HtmlNode.elements
+            post_html_segments.footing
+            |>Html_parsing.direct_children
             |>Seq.item 2
-            |>number_of_footer_element
+            |>number_inside_footer_element
         
         let views_amount =
-            footing_with_stats
-            |>HtmlNode.elements
+            post_html_segments.footing
+            |>Html_parsing.direct_children
             |>Seq.item 3
-            |>number_of_footer_element
-        
+            |>number_inside_footer_element
         
         let message = 
-            body_elements
-            |>Seq.map Parsing.segment_of_composed_text_as_text
-            |>String.concat ""
-            
+            post_html_segments.message
+            |>Html_parsing.readable_text_from_html_segments
             
         {
             id = post_id

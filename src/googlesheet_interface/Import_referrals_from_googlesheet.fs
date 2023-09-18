@@ -54,7 +54,7 @@ module Import_referrals_from_googlesheet =
         
         let user_from_raw_text user =
             user
-            |>Parsing.last_url_segment
+            |>Html_parsing.last_url_segment
             |>remove_impossible_symbols
     
     

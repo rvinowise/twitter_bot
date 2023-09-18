@@ -1,69 +1,43 @@
-﻿namespace rvinowise.twitter
+﻿namespace rvinowise.html_parsing.fsharpdata
 
 open System
 open System.Globalization
 open FSharp.Data
+open AngleSharp
 open OpenQA.Selenium
-open canopy.parallell.functions
-open OpenQA.Selenium.Support.UI
 open FParsec
 open Xunit
+
 open rvinowise.twitter
 
 
+(*this module encapsulates an external library for parsing HTML *)
+
+type Html_node = FSharp.Data.HtmlNode
+//type Html_node = AngleSharp.Dom.IElement
+type Web_node = OpenQA.Selenium.IWebElement
+
 module Html_element =
-    let text (node: HtmlNode) =
+    let text (node: Html_node) =
         node.DirectInnerText
-
-    let attribute name (node: HtmlNode) =
-        node.Attribute(name)
     
 
-module Parsing_abbreviated_number =
-    let final_multiplier_parser: Parser<int,unit> =
-        (pstring "K"|>>fun _-> 1000) <|>
-        (pstring "M"|>>fun _->1000000) <|>
-        (spaces|>>fun _->1)
-        
-    let abbreviated_number_parser: Parser<int,unit> =
-        pfloat .>>. final_multiplier_parser
-        |>> (fun (first_number,last_multiplier) ->
-            (first_number * float last_multiplier)
-            |> int
-        )    
-    
-    let remove_commas (number:string) =
-        number.Replace(",", "")
-        
-    
-    let try_parse_abbreviated_number text =
-        text
-        |>remove_commas
-        |>run abbreviated_number_parser
-        |>function
-        |Success (number,_,_) -> Some number
-        |Failure (error,_,_) -> 
-            $"""error while parsing number of followers:
-            string: {text}
-            error: {error}"""
-            |>Log.error|>ignore
-            None
-    
-    let parse_abbreviated_number text =
-        text
-        |>try_parse_abbreviated_number
-        |>function
-        |Some result -> result
-        |None -> raise (FormatException $"there's no abbreviated number in text: '{text}'")
 
-module Parsing =
+module Html_parsing =
+    
+    let init_context () =
+        let context = BrowsingContext.New(AngleSharp.Configuration.Default)
+
+        let document = context.OpenAsync(req => req.Content(source));
     
     let last_url_segment (text:string) =
         text.Substring(text.LastIndexOf(@"/")+1)
     
-    let descendants css (node:HtmlNode) =
+    let descendants css (node:Html_node) =
         HtmlNode.cssSelect node css
     
+    let direct_children (node:Html_node) =
+        node.Elements()
         
     let should_be_single seq =
         if Seq.length seq = 1 then
@@ -78,35 +52,54 @@ module Parsing =
             Seq.head seq
     
     
-    let descendant css (node:HtmlNode) =
+    let descendant css (node:Html_node) =
         node
         |>descendants css
         |>should_be_single
     
+//    let direct_children css (parent:HtmlNode) =
+//        HtmlNode. parent
+        
     
-    let which_have_child
-        (child:HtmlNode)
+    let first_descendants css (node:Html_node) =
+        
+        let needed_children =
+            node
+            |>Html_parsing.direct_children css
+    
+    let try_descendant css (node:Html_node) =
+        node
+        |>descendants css
+        |>function
+        |[]->None
+        |[single] -> Some single
+        |many ->
+            Log.error $"expected one element, but there's {Seq.length many}"|>ignore
+            many|>List.head|>Some
+    
+    let which_have_direct_child
+        (child:Html_node)
         (parents: HtmlNode seq)
         =
         parents
-        |>Seq.filter(fun anchor->
-            anchor.Elements()
+        |>Seq.filter(fun parent->
+            parent.Elements()
             |>List.contains child
         )
             
-    let descend levels_amount (node:HtmlNode) =
+    let descend levels_amount (node:Html_node) =
         [1..levels_amount]
         |>List.fold (fun node _ ->
             node
-            |>HtmlNode.elements
+            |>direct_children
             |>should_be_single
         )
             node
             
-    let html_node_from_web_element
-        (web_element: IWebElement)
+    let parseable_node_from_scraped_node
+        (web_node: Web_node): Html_node
         =
-        web_element.GetAttribute("outerHTML")
+        web_node.GetAttribute("outerHTML")
         |>HtmlNode.Parse
         |>Seq.head
         
@@ -137,16 +130,16 @@ module Parsing =
         ()
         
         
-    let segment_of_composed_text_as_text (segment:HtmlNode) =
+    let segment_of_composed_text_as_text (segment:Html_node) =
         match segment.Name() with
         |"img" -> //an emoji
             segment.AttributeValue "alt"
         |"span" when segment.InnerText() = "" -> " " //FSharpData removes spaces from spans 😳
         |_->segment.InnerText()
     
-    let readable_text_from_html_segments (root:HtmlNode) =
+    let readable_text_from_html_segments (root:Html_node) =
         root
-        |>HtmlNode.elements
+        |>direct_children
         |>Seq.map segment_of_composed_text_as_text
         |>String.concat ""
         

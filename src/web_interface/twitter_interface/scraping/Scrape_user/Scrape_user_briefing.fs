@@ -27,8 +27,8 @@ module Scrape_user_briefing =
             try
                 browser
                 |>element """div[data-testid='UserName'] span > span:nth-child(1)""" 
-                |>Parsing.html_node_from_web_element
-                |>Parsing.readable_text_from_html_segments
+                |>Html_parsing.html_node_from_web_element
+                |>Html_parsing.readable_text_from_html_segments
             with
             | :? CanopyElementNotFoundException as exc ->
                 Log.error $"name_field isn't found on the web-page: {exc.Message}" |>ignore
@@ -41,8 +41,8 @@ module Scrape_user_briefing =
             |>function
             |Some element ->
                 element
-                |>Parsing.html_node_from_web_element
-                |>Parsing.readable_text_from_html_segments
+                |>Html_parsing.html_node_from_web_element
+                |>Html_parsing.readable_text_from_html_segments
             |None->""
             
         let location browser =
@@ -64,7 +64,7 @@ module Scrape_user_briefing =
             "span[data-testid='UserJoinDate'] > span"
             |>Scraping.try_text browser
             |>function
-            |Some date_text -> Parsing.parse_joined_date date_text
+            |Some date_text -> Html_parsing.parse_joined_date date_text
             |None->DateTime.MinValue
             
             

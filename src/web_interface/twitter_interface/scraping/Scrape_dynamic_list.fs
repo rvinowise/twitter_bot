@@ -6,7 +6,7 @@ open OpenQA.Selenium
 open OpenQA.Selenium.Interactions
 open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
-open rvinowise.twitter
+open rvinowise.html_parsing
 open canopy.parallell.functions
 
 module Scrape_dynamic_list =
@@ -18,7 +18,7 @@ module Scrape_dynamic_list =
         =
         let items = elements item_css browser
         items
-        |>Seq.map Parsing.html_node_from_web_element
+        |>Seq.map Html_parsing.parseable_node_from_scraped_node
         
 
     let add_new_items_to_map
@@ -34,7 +34,7 @@ module Scrape_dynamic_list =
     
     let consume_items_of_dynamic_list
         browser
-        (action: HtmlNode -> 'Parsed_item)
+        (action: Html_node -> 'Parsed_item)
         item_selector
         =
         let rec skim_and_scroll_iteration

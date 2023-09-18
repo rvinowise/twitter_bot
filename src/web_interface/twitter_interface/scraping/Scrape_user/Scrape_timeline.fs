@@ -17,7 +17,8 @@ module Scrape_timeline =
         browser
         article_node
         =
-        
+        browser
+        |>click 
    
     let parse_post_from_timeline
         browser
