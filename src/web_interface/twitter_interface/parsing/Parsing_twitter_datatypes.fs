@@ -8,10 +8,11 @@ open canopy.parallell.functions
 open OpenQA.Selenium.Support.UI
 open FParsec
 open Xunit
+open rvinowise.html_parsing
 open rvinowise.twitter
 
 
-module Parsing_abbreviated_number =
+module Parsing_twitter_datatypes =
     let final_multiplier_parser: Parser<int,unit> =
         (pstring "K"|>>fun _-> 1000) <|>
         (pstring "M"|>>fun _->1000000) <|>
@@ -64,3 +65,6 @@ module Parsing_abbreviated_number =
         |Failure (error,_,_) ->
             Log.error error |>ignore
             DateTime.MinValue
+            
+    let parse_twitter_datetime text =
+        Html_parsing.parse_datetime "yyyy-MM-dd'T'HH:mm:ss.fff'Z'" text

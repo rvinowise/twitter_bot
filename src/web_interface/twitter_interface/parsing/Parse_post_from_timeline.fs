@@ -11,16 +11,46 @@ open rvinowise.html_parsing
 open FSharp.Data
 
 
+type Html_segments_of_post = {
+    header: Html_node
+    message: Html_node
+    load: Html_node option
+    footer: Html_node
+}
+//type Parsed_post_footer = {
+//    replies_amount: int
+//    reposts_amount: int
+//    likes_amount: int
+//    views_amount: int
+//}
 
-type post = {
-    id: string
-    auhtor: User_handle
-    created_at: DateTime
-    message: string
+type Post_header = {
+    author:Twitter_user
+    written_at: DateTime
+    post_url: string option
+}
+type Post_stats = {
     replies_amount: int
     likes_amount: int
     reposts_amount: int
-    views_amount: int  
+    views_amount: int
+}
+
+//module Posts_stats =
+//    let from_parsed_post (footer:Parsed_post_footer) =
+//        {
+//            Post_stats.replies_amount = footer.replies_amount
+//            likes_amount = footer.likes_amount
+//            reposts_amount = footer.reposts_amount
+//            views_amount = footer.views_amount
+//        }
+
+type Parsed_twitter_post = {
+    id: int64
+    auhtor: Twitter_user
+    created_at: DateTime
+    message: string
+    stats: Post_stats
 }
 
 type Additional_post_load =
@@ -29,12 +59,7 @@ type Additional_post_load =
     |Image_and_quotation of Html_node
     |Images of Html_node
     
-type Html_segments_of_post = {
-    header: Html_node
-    message: Html_node
-    load: Html_node option
-    footing: Html_node
-}
+
 
 module Parse_post_from_timeline =
     
@@ -44,24 +69,119 @@ module Parse_post_from_timeline =
         |>Html_node.descend 2
         |>Html_node.direct_children |> Seq.item 1
         |>Html_node.direct_children |> Seq.item 1
-    
-    let compound_name_span post_header =
-        post_header
-        |>Html_node.direct_children
-        |>Seq.head
-        |>Html_node.descendant "a"
-        |>Html_node.descend 2
+   
     
     
     let post_header_node node =
         node
         |>Html_node.descendants "data-testid='User-Name'"
-        
-    let additional_load_from_its_node additional_load_node =
-        let link_node =
+    
+    let has_different_items items =
+        if Seq.length items < 2 then
+            false
+        else
+            items
+            |>Seq.forall((=) (Seq.head items))
+            |>not
+    
+    let report_external_source_having_different_links 
+        additional_load_node
+        urls_to_external_source
+        =
+        let html =
             additional_load_node
-            |>Html_node.try_descendant "div[role='link']"
+            |>Html_node.as_html_string
+            
+        let urls =
+            urls_to_external_source
+            |>Seq.map Html_node.as_html_string
+            |>String.concat "; "
+            
+        $"additional load of tweet has different links. post:\n{html}\nlinks: {urls}"    
+        |>Log.error
+        |>ignore
+    
+    
+    
+    
+    let parse_post_header header_node =
+        let author_name =
+            header_node
+            |>Html_node.direct_children
+            |>List.head
+            |>Html_node.descendant "span > span"
+            |>Html_parsing.readable_text_from_html_segments
+            
+        let author_handle =
+            header_node
+            |>Html_node.direct_children
+            |>List.item 1
+            |>Html_node.descendant "span"
+            |>Html_node.inner_text
+            |>fun url_with_atsign->url_with_atsign[1..]
+            |>User_handle
         
+        let datetime_node =
+            header_node
+            |>Html_node.direct_children
+            |>List.item 1
+            |>Html_node.descendant "time"
+        
+        let datetime =
+            datetime_node
+            |>Html_node.attribute_value "datetime"
+            |>Parsing_twitter_datatypes.parse_twitter_datetime
+        
+        let url =
+            datetime_node
+            |>Html_node.parent
+            |>Html_node.try_attribute_value "href"
+        
+        {
+            Post_header.author = {name=author_name;handle=author_handle}
+            written_at = datetime
+            post_url=url
+        }
+    
+    [<Fact>]
+    let ``try parse_post_header``()=
+        let parsing_context = Html_parsing.init_context()
+        let main_header =
+            """
+            <div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs r-1ny4l3l" id="id__2lloufemgrh" data-testid="User-Name"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/tuftbear86" role="link" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div dir="ltr" class="css-901oao r-1awozwy r-18jsvk2 r-6koalj r-37j5jr r-a023e6 r-b88u0q r-rjixqe r-bcqeeo r-1udh08x r-3s2u2q r-qvutc0"><span class="css-901oao css-16my406 css-1hf3ou5 r-poiln3 r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Super Grumpy Bear</span></span></div><div dir="ltr" class="css-901oao r-18jsvk2 r-xoduu5 r-18u37iz r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-1awozwy r-xoduu5 r-poiln3 r-bcqeeo r-qvutc0"></span></div></div></a></div></div><div class="css-1dbjc4n r-18u37iz r-1wbh5a2 r-13hce6t"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/tuftbear86" role="link" tabindex="-1" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div dir="ltr" class="css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-1wvb978 r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">@tuftbear86</span></div></a></div><div dir="ltr" aria-hidden="true" class="css-901oao r-14j79pv r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-s1qlax r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">·</span></div><div class="css-1dbjc4n r-18u37iz r-1q142lx"><a href="/tuftbear86/status/1703597157826093349" dir="ltr" aria-label="23 hours ago" role="link" class="css-4rbku5 css-18t94o4 css-901oao r-14j79pv r-1loqt21 r-xoduu5 r-1q142lx r-1w6e6rj r-37j5jr r-a023e6 r-16dba41 r-9aw3ui r-rjixqe r-bcqeeo r-3s2u2q r-qvutc0"><time datetime="2023-09-18T02:29:48.000Z">23h</time></a></div></div></div></div>
+            """
+            |>Html_parsing.parseable_node_from_string parsing_context
+            |>parse_post_header
+        let quoted_header =
+            """
+            <div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs r-1ny4l3l" data-testid="User-Name"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div dir="ltr" class="css-901oao r-1awozwy r-18jsvk2 r-6koalj r-37j5jr r-a023e6 r-b88u0q r-rjixqe r-bcqeeo r-1udh08x r-3s2u2q r-qvutc0"><span class="css-901oao css-16my406 css-1hf3ou5 r-poiln3 r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Star Trek Minus Context</span></span></div><div dir="ltr" class="css-901oao r-18jsvk2 r-xoduu5 r-18u37iz r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-1awozwy r-xoduu5 r-poiln3 r-bcqeeo r-qvutc0"></span></div></div></div></div></div><div class="css-1dbjc4n r-18u37iz r-1wbh5a2 r-13hce6t"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><div tabindex="-1" class="css-1dbjc4n r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div dir="ltr" class="css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-1wvb978 r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">@NoContextTrek</span></div></div></div><div dir="ltr" aria-hidden="true" class="css-901oao r-14j79pv r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-s1qlax r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">·</span></div><div class="css-1dbjc4n r-18u37iz r-1q142lx"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div dir="ltr" aria-label="Sep 18" class="css-901oao r-14j79pv r-xoduu5 r-1q142lx r-1w6e6rj r-37j5jr r-a023e6 r-16dba41 r-9aw3ui r-rjixqe r-bcqeeo r-3s2u2q r-qvutc0"><time datetime="2023-09-18T02:12:52.000Z">Sep 18</time></div></div></div></div></div></div>
+            """
+            |>Html_parsing.parseable_node_from_string parsing_context
+            |>parse_post_header
+        let main_header_blue_mark =
+            """
+            <div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs r-1ny4l3l" id="id__gbii77jt59k" data-testid="User-Name"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/balajis" role="link" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div dir="ltr" class="css-901oao r-1awozwy r-18jsvk2 r-6koalj r-37j5jr r-a023e6 r-b88u0q r-rjixqe r-bcqeeo r-1udh08x r-3s2u2q r-qvutc0"><span class="css-901oao css-16my406 css-1hf3ou5 r-poiln3 r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Balaji</span></span></div><div dir="ltr" class="css-901oao r-18jsvk2 r-xoduu5 r-18u37iz r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-1awozwy r-xoduu5 r-poiln3 r-bcqeeo r-qvutc0"><svg viewBox="0 0 22 22" aria-label="Verified account" role="img" class="r-1cvl2hr r-4qtqp9 r-yyyyoo r-1xvli5t r-9cviqr r-f9ja8p r-og9te1 r-bnwqim r-1plcrui r-lrvibr" data-testid="icon-verified"><g><path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"></path></g></svg></span></div></div></a></div></div><div class="css-1dbjc4n r-18u37iz r-1wbh5a2 r-13hce6t"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/balajis" role="link" tabindex="-1" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div dir="ltr" class="css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-1wvb978 r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">@balajis</span></div></a></div><div dir="ltr" aria-hidden="true" class="css-901oao r-14j79pv r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-s1qlax r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">·</span></div><div class="css-1dbjc4n r-18u37iz r-1q142lx"><a href="/balajis/status/1703853282639450382" dir="ltr" aria-label="7 hours ago" role="link" class="css-4rbku5 css-18t94o4 css-901oao r-14j79pv r-1loqt21 r-xoduu5 r-1q142lx r-1w6e6rj r-37j5jr r-a023e6 r-16dba41 r-9aw3ui r-rjixqe r-bcqeeo r-3s2u2q r-qvutc0"><time datetime="2023-09-18T19:27:33.000Z">7h</time></a></div></div></div></div>
+            """
+            |>Html_parsing.parseable_node_from_string parsing_context
+            |>parse_post_header
+        ()
+        
+    
+    let parse_post_main_message message_node =
+        message_node
+        |>Html_node.descendant "div[data-testid='tweetText']"
+        |>Html_parsing.readable_text_from_html_segments
+    
+    let parse_additional_load_from_its_node additional_load_node =
+        
+        let external_url_node =
+            additional_load_node
+            |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+        
+        let quoted_source_node =
+            additional_load_node
+            |>Html_node.try_descendant "data-testid='tweetText'"
+            
         let image_preview_nodes =
             additional_load_node
             |>Html_node.descendants "div[data-testid='tweetPhoto']"
@@ -70,44 +190,101 @@ module Parse_post_from_timeline =
             additional_load_node
             |>Html_node.descendants "aria-label='Embedded video' ing[alt='Embedded video']"
         
-        let external_url_node =
+        let quoted_audio_call =
             additional_load_node
-            |>Html_node.try_descendant "data-testid='card.wrapper'"
+            |>Html_node.descendants "data-testid='placementTracking'"
         
-        match link_node, external_url_node with 
-        |Some link_node,_ ->
-            let quoted_source_node =
-                link_node
-                |>Html_node.try_descendant "data-testid='tweetText'"
-            let image_nodes =
-                link_node
-                //|>Html_node.descendant "img[alt='Image']"
-                |>Html_node.descendants "data-testid='tweetPhoto'"
+        match
+            image_preview_nodes,
+            external_url_node,
+            quoted_source_node
+        with 
+        | _,Some external_url_node,_ ->
+            let cover_image_node =
+                external_url_node
+                |>Html_node.descendant "alt='Content cover image'"
             
-            match quoted_source_node, image_nodes with
-            |Some quoted_source_node, [] ->
-                additional_load_node
-                |>Additional_post_load.Quotation
+            let urls_to_external_source =
+                external_url_node
+                |>Html_node.descendants "role='link'"
+                
+            if (has_different_items urls_to_external_source) then
+                (report_external_source_having_different_links
+                    additional_load_node
+                    urls_to_external_source)
+            
+            match cover_image_node,urls_to_external_source with
+            |_,external_url::rest_urls ->
+                external_url
+                |>Additional_post_load.External_url
                 |>Some
-            |None, image_nodes when (not image_nodes.IsEmpty) ->
-                additional_load_node
+            |image_node,_->
+                image_node
                 |>Additional_post_load.Images
                 |>Some
-            |None,[]->
-                Log.error "a link_node doesn't have quoted_source_node or image_node"
-                |>Exception|>raise
-            |Some quoted_source_node, image_node::rest_image_nodes ->
-                Log.error "a link_node has both quoted_source_node and image_node"
-                |>Exception|>raise
-        | _,Some external_url_node ->
-            external_url_node
-            |>Additional_post_load.External_url
+                
+        |image_node::rest_image_nodes,_,_->
+            additional_load_node
+            |>Additional_post_load.Images
             |>Some
-        |None,None ->
+        | _,_,Some quoted_source_node ->
+            
+            let show_more_button =
+                quoted_source_node
+                |>Html_node.descendant "a[data-testid='tweet-text-show-more-link']"
+            
+            let quoted_header =
+                quoted_source_node
+                |>Html_node.descendant "div[data-testid='User-Name']"
+            
+            let photos_in_quotation_node =
+                quoted_source_node
+                |>Html_node.descendants "div[data-testid='tweetPhoto']"
+            
+            let quoted_photos_explanation =
+                photos_in_quotation_node
+                |>List.map (Html_node.attribute_value "aria-label")
+            
+            quoted_source_node
+            |>Additional_post_load.Quotation
+            |>Some
+        
+            
+        |[],None,None ->
             None
         
-        
     
+    
+    
+    let parse_post_footer footer_node =
+        let number_inside_footer_element node =
+            node
+            |>Html_node.descendant "span[data-testid='app-text-transition-container'] > span > span"
+            |>Html_node.inner_text
+            |>Parsing_twitter_datatypes.parse_abbreviated_number
+        
+        {
+            Post_stats.replies_amount=
+                footer_node
+                |>Html_node.direct_children
+                |>Seq.head
+                |>number_inside_footer_element
+            reposts_amount=
+                footer_node
+                |>Html_node.direct_children
+                |>Seq.item 2
+                |>number_inside_footer_element
+            likes_amount=
+                footer_node
+                |>Html_node.direct_children
+                |>Seq.item 1
+                |>number_inside_footer_element
+            views_amount=
+                footer_node
+                |>Html_node.direct_children
+                |>Seq.item 3
+                |>number_inside_footer_element
+        }
     
     let long_post_has_show_more_button post_body =
            post_body
@@ -122,7 +299,7 @@ module Parse_post_from_timeline =
     
     let url_from_show_more_button button_show_more =
         button_show_more
-        |>Html_node.attributeValue "href"
+        |>Html_node.attribute_value "href"
     
         
     let is_post_quoting_another_source_with_show_more_button body_elements =
@@ -197,7 +374,7 @@ module Parse_post_from_timeline =
             header = header
             message = message
             load = additional_load
-            footing = footing_with_stats
+            footer = footing_with_stats
         }
     
     let additional_load_of_post article_html = ()
@@ -213,83 +390,27 @@ module Parse_post_from_timeline =
         let post_html_segments =
             html_segments_of_post article_html
         
-        let author_name =
-            post_html_segments.header
-            |>compound_name_span
-            |>Html_parsing.readable_text_from_html_segments
-        
-        let created_at_node =
-            post_html_segments.header
-            |>Html_node.descendant "time"
-        
-        let post_url =
-            post_html_segments.header
-            |>Html_node.descendants "a"
-            |>Html_node.which_have_direct_child created_at_node
-            |>Html_node.should_be_single
-            |>Html_node.attribute_value "href"
-        
+        let parsed_header =
+            parse_post_header post_html_segments.header
+
         let post_id =
-            Html_parsing.last_url_segment post_url
-        
-        let created_at =
-            created_at_node
-            |>Html_node.attributeValue "datetime"
-            |>Html_parsing.parse_datetime "yyyy-MM-dd'T'HH:mm:ss.fff'Z'"
-            
-        
-        let author_handle =
-            post_html_segments.header
-            |>Html_node.direct_children |>Seq.item 1
-            |>Html_node.descendant "a[role='link']"
-            |>Html_node.attribute_value "href"
-            |>fun url_with_slash->url_with_slash[1..]
-            |>User_handle
+            Html_parsing.last_url_segment parsed_header.post_url
+            |>int64
         
         
-        let number_inside_footer_element node =
-            node
-            |>Html_node.descendant "span[data-testid='app-text-transition-container'] > span > span"
-            |>Html_node.inner_text
-            |>Parsing_abbreviated_number.parse_abbreviated_number
-        
-        let replies_amount =
-            post_html_segments.footing
-            |>Html_node.direct_children
-            |>Seq.head
-            |>number_inside_footer_element
-            
-        let likes_amount =
-            post_html_segments.footing
-            |>Html_node.direct_children
-            |>Seq.item 1
-            |>number_inside_footer_element
-            
-        let reposts_amount =
-            post_html_segments.footing
-            |>Html_node.direct_children
-            |>Seq.item 2
-            |>number_inside_footer_element
-        
-        let views_amount =
-            post_html_segments.footing
-            |>Html_node.direct_children
-            |>Seq.item 3
-            |>number_inside_footer_element
-        
+        let post_stats =
+            parse_post_footer post_html_segments.footer
+
         let message = 
             post_html_segments.message
             |>Html_parsing.readable_text_from_html_segments
             
         {
             id = post_id
-            auhtor = author_handle
-            created_at = created_at
+            auhtor = parsed_header.author
+            created_at = parsed_header.written_at
             message = message
-            replies_amount = replies_amount
-            likes_amount = likes_amount
-            reposts_amount = reposts_amount
-            views_amount = views_amount
+            stats=post_stats
         }
         
         

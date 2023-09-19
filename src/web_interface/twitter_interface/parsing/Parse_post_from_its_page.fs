@@ -12,7 +12,7 @@ open FSharp.Data
 open rvinowise.html_parsing
 
 
-type post = {
+type Parsed_twitter_post = {
     message: string
     related_post: int64
 }

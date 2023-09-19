@@ -18,7 +18,7 @@
     
 <!--    <Compile Include="src\web_interface\parsing\FSharpData\Html_parsing.fs" />-->
     <Compile Include="src\web_interface\parsing\AngleSharp\Html_parsing.fs" />
-    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_numbers.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_twitter_datatypes.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parse_twitter_user.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parse_post_from_timeline.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parse_post_from_its_page.fs" />

@@ -23,11 +23,21 @@ type Web_node = OpenQA.Selenium.IWebElement
 
 module Html_node =
     let attribute_value attribute (node:Html_node) =
-        node.GetAttribute(attribute)
+        match node.GetAttribute(attribute) with
+        |null->raise (NullReferenceException $"node {node} doesn't have an attribute {attribute}") 
+        |value -> value
+    
+    let try_attribute_value attribute (node:Html_node) =
+        match node.GetAttribute(attribute) with
+        |null->None
+        |value -> Some value
     
     let inner_text (node:Html_node) =
         node.TextContent
 
+    let as_html_string (node:Html_node) =
+        node.GetAttribute("outerHTML")
+    
     let descendants css (node:Html_node) =
         node.QuerySelectorAll css
         |>List.ofSeq
@@ -55,6 +65,15 @@ module Html_node =
         |>should_be_single
     
     
+//    let ancestors (node:Html_node) =
+//        node.ParentElement
+        
+    
+    let parent (node:Html_node) =
+        let parent = node.ParentElement
+        if isNull parent then
+            raise (NullReferenceException $"Html_node {node} doesn't have a parent which is an Element")
+        parent
     
             
     
@@ -160,6 +179,8 @@ module Html_parsing =
         |>Html_node.direct_children
         |>Seq.map segment_of_composed_text_as_text
         |>String.concat ""
+    
+    
         
     let parse_datetime format text =
         DateTime.ParseExact(
@@ -167,3 +188,5 @@ module Html_parsing =
             format,
             CultureInfo.InvariantCulture
         )
+        
+    
