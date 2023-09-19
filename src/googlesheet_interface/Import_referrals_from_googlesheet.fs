@@ -11,6 +11,7 @@ open Npgsql
 open Xunit
 
 open Google.Apis.Sheets.v4
+open rvinowise.html_parsing
 open rvinowise.twitter
 
 

@@ -58,7 +58,7 @@ module Parse_twitter_user =
             node_with_textual_user_info
             |>Html_node.descendants "div>div>div>div>a[role='link']"
             |>Seq.head
-            |>HtmlNode.attributeValue "href"
+            |>Html_node.attribute_value "href"
             |>fun user->user[1..]
             |>User_handle
             
@@ -76,6 +76,6 @@ module Parse_twitter_user =
     let ``try parse_user_bio_from_textual_user_div``()=
         let test = 
             """<div dir="auto" class="css-901oao r-18jsvk2 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0" data-testid="UserDescription"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Researcher </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/AgeGlobal" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@AgeGlobal</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/HealthyLongeviT" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@HealthyLongeviT</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> formerly </span><div class="css-1dbjc4n r-xoduu5"><span class="r-18u37iz"><a dir="ltr" href="/karolinskainst" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">@karolinskainst</a></span></div><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23neuroscience&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#neuroscience</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23ageing&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#ageing</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23alzheimerdisease&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#alzheimerdisease</a></span><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0"> </span><span class="r-18u37iz"><a dir="ltr" href="/search?q=%23longevity&amp;src=hashtag_click" role="link" class="css-4rbku5 css-18t94o4 css-901oao css-16my406 r-1cvl2hr r-1loqt21 r-poiln3 r-bcqeeo r-qvutc0">#longevity</a></span></div>"""
-            |>HtmlNode.Parse |>Seq.head
+            |>Html_node.from_text
             |>Html_parsing.readable_text_from_html_segments
         ()

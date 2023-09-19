@@ -3,6 +3,7 @@ namespace rvinowise.twitter
 open System.Threading.Tasks
 open OpenQA.Selenium
 open canopy.parallell.functions
+open rvinowise.html_parsing
 open rvinowise.twitter
 
 
@@ -38,7 +39,9 @@ module Program =
             |>Array.Parallel.iter(fun (bot_token, user_to_harvest)->
                 use db_connection = Database.open_connection() 
                 use browser = Scraping.prepare_authentified_browser bot_token
+                use parsing_context = Html_parsing.parsing_context()
                 Harvest_followers_network.harvest_following_network_around_user
+                    parsing_context
                     browser
                     db_connection
                     Settings.repeat_harvesting_if_older_than

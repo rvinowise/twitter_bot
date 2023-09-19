@@ -40,7 +40,7 @@ module Scrape_dynamic_list =
         (action: Html_string -> 'Parsed_item)
         item_selector
         =
-        let parsing_context = Html_parsing.init_context()
+        let parsing_context = Html_parsing.parsing_context()
         let rec skim_and_scroll_iteration
             (skimmed_sofar_items: Map<Html_string, 'Parsed_item>)
             =
@@ -87,7 +87,8 @@ module Scrape_dynamic_list =
         |>consume_items_of_dynamic_list
             browser
             ignore
-    
+        |>Map.keys
+        |>List.ofSeq
         
             
     

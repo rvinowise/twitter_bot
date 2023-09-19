@@ -2,6 +2,7 @@
 
 open canopy.parallell.functions
 open Xunit
+open rvinowise.html_parsing
 
 module Scrape_followers_network =
     
@@ -28,7 +29,7 @@ module Scrape_followers_network =
             items
         |None->
             Log.error $"{catalog_url} doesn't have a catalogue "|>ignore
-            Set.empty
+            []
     
     
     let scrape_following_of_user
@@ -39,7 +40,7 @@ module Scrape_followers_network =
         starting_user
         |>url_from_user
         |>scrape_user_catalog browser
-        |>Set.map Parse_twitter_user.parse_twitter_user_cell
+        |>Seq.map (Html_node.from_html_string>> Parse_twitter_user.parse_twitter_user_cell)
     
     
     
@@ -54,10 +55,10 @@ module Scrape_followers_network =
                   followers_url
         
         followees
-        |>Set.map Twitter_profile_from_catalog.handle
+        |>Seq.map Twitter_profile_from_catalog.handle
         ,
         followers
-        |>Set.map Twitter_profile_from_catalog.handle
+        |>Seq.map Twitter_profile_from_catalog.handle
         
         
     

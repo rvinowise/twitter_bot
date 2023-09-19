@@ -5,7 +5,7 @@ open Xunit
 open FsUnit
 open canopy.parallell.functions
 open canopy.types
-open rvinowise.twitter
+open rvinowise.html_parsing
 open FParsec
 
 
@@ -27,7 +27,7 @@ module Scrape_user_briefing =
             try
                 browser
                 |>element """div[data-testid='UserName'] span > span:nth-child(1)""" 
-                |>Html_parsing.html_node_from_web_element
+                |>Html_node.from_scraped_node
                 |>Html_parsing.readable_text_from_html_segments
             with
             | :? CanopyElementNotFoundException as exc ->
@@ -35,13 +35,13 @@ module Scrape_user_briefing =
                 ""
             
                 
-        let bio browser =
+        let bio parsing_context browser =
             """div[data-testid='UserDescription']"""
             |>Scraping.try_element browser
             |>function
             |Some element ->
                 element
-                |>Html_parsing.html_node_from_web_element
+                |>Html_node.from_scraped_node_and_context parsing_context
                 |>Html_parsing.readable_text_from_html_segments
             |None->""
             
@@ -64,15 +64,15 @@ module Scrape_user_briefing =
             "span[data-testid='UserJoinDate'] > span"
             |>Scraping.try_text browser
             |>function
-            |Some date_text -> Html_parsing.parse_joined_date date_text
+            |Some date_text -> Parsing_twitter_datatypes.parse_joined_date date_text
             |None->DateTime.MinValue
             
             
-    let scrape_user_briefing browser user_handle =
+    let scrape_user_briefing parsing_context browser user_handle =
         {
             User_briefing.handle = user_handle
             name = Scrape_user_elements.name browser
-            bio = Scrape_user_elements.bio browser
+            bio = Scrape_user_elements.bio parsing_context browser
             date_joined = Scrape_user_elements.joined_date browser
             location = Scrape_user_elements.location browser
             profession = Scrape_user_elements.profession browser

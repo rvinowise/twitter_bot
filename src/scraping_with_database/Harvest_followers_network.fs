@@ -11,6 +11,7 @@ module Harvest_followers_network =
     
     
     let harvest_top_of_user_page
+        parsing_context
         browser
         db_connection
         user
@@ -19,7 +20,7 @@ module Harvest_followers_network =
         Reveal_user_page.reveal_user_page browser user
         
         let user_briefing =
-            Scrape_user_briefing.scrape_user_briefing browser user
+            Scrape_user_briefing.scrape_user_briefing parsing_context browser user
         
         Social_user_database.write_user_briefing
             db_connection
@@ -38,6 +39,7 @@ module Harvest_followers_network =
         
    
     let harvest_user
+        parsing_context
         browser
         db_connection
         user
@@ -45,6 +47,7 @@ module Harvest_followers_network =
         Log.important $"harvesting user {user}"
         Surpass_distractions.surpass_cookies_agreement browser
         harvest_top_of_user_page
+            parsing_context
             browser
             db_connection
             user
@@ -69,6 +72,7 @@ module Harvest_followers_network =
     
     
     let harvest_user_adding_his_acquaintances
+        parsing_context
         browser
         db_connection
         repeat_if_older_than
@@ -81,6 +85,7 @@ module Harvest_followers_network =
         |observed_user::rest_unknown_users->
             let followees, followers =
                 harvest_user
+                    parsing_context
                     browser
                     db_connection
                     observed_user
@@ -106,6 +111,7 @@ module Harvest_followers_network =
             )
             
     let rec resilient_step_of_harvesting_following
+        parsing_context
         (browser:Browser)
         db_connection
         repeat_if_older_than
@@ -115,6 +121,7 @@ module Harvest_followers_network =
             try
                 browser,
                 harvest_user_adding_his_acquaintances
+                    parsing_context
                     browser.browser
                     db_connection
                     repeat_if_older_than
@@ -131,18 +138,21 @@ module Harvest_followers_network =
                 
         if new_unknown_users_around <> [] then
             resilient_step_of_harvesting_following
+                parsing_context
                 browser
                 db_connection
                 repeat_if_older_than
                 new_unknown_users_around        
             
     let harvest_following_network_around_user
+        parsing_context
         browser
         db_connection
         repeat_if_older_than
         root_user
         =
         resilient_step_of_harvesting_following
+            parsing_context
             browser
             db_connection
             repeat_if_older_than

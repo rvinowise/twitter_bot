@@ -24,14 +24,13 @@ module Scrape_timeline =
         browser
         article_node
         =
-        let (Html_string article_node) = article_node
-        let article_node = Html_parsing.parseable_node_from_string article_node
-        if Parse_post_from_timeline.is_post_shown_fully article_node then
-            Parse_post_from_timeline.parse_twitter_post article_node
-            ()
-        else
-            open_post_to_see_quoted_url browser article_node
-            
+        let article_node = Html_node.from_html_string article_node
+//        if Parse_post_from_timeline.is_post_shown_fully article_node then
+//            Parse_post_from_timeline.parse_twitter_post article_node
+//            ()
+//        else
+//            open_post_to_see_quoted_url browser article_node
+        ()
             
             
     let scrape_likes_given_by_user browser user =
@@ -41,7 +40,8 @@ module Scrape_timeline =
         |>Scrape_dynamic_list.consume_items_of_dynamic_list
             browser
             (parse_post_from_timeline browser)
-        |>Seq.map Parse_post_from_timeline.parse_twitter_post
+        |>Map.keys
+        |>Seq.map (Html_node.from_html_string>>Parse_post_from_timeline.parse_twitter_post)
         
 
   
