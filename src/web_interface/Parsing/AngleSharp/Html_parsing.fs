@@ -69,8 +69,29 @@ module Html_node =
         |>should_be_single
     
     
-//    let ancestors (node:Html_node) =
-//        node.ParentElement
+    let ancestors css (node:Html_node) =
+        
+        let rec step_up_hierarchy
+            (node: Html_node)
+            hierarchy
+            =
+            if isNull node then
+                hierarchy
+            else
+                let parent = node.ParentElement
+                if parent.Matches css then
+                    step_up_hierarchy
+                        parent
+                        (parent::hierarchy)
+                else
+                    step_up_hierarchy
+                        parent
+                        hierarchy
+        
+        step_up_hierarchy
+            node.ParentElement
+            []
+        |>List.rev
         
     
     let parent (node:Html_node) =
