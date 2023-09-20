@@ -29,7 +29,7 @@ module Scrape_followers_network =
             items
         |None->
             Log.error $"{catalog_url} doesn't have a catalogue "|>ignore
-            []
+            Set.empty
     
     
     let scrape_following_of_user
@@ -40,7 +40,7 @@ module Scrape_followers_network =
         starting_user
         |>url_from_user
         |>scrape_user_catalog browser
-        |>Seq.map (Html_node.from_html_string>> Parse_twitter_user.parse_twitter_user_cell)
+        |>Set.map (Html_node.from_html_string>> Parse_twitter_user.parse_twitter_user_cell)
     
     
     
@@ -55,10 +55,10 @@ module Scrape_followers_network =
                   followers_url
         
         followees
-        |>Seq.map Twitter_profile_from_catalog.handle
+        |>Set.map Twitter_profile_from_catalog.handle
         ,
         followers
-        |>Seq.map Twitter_profile_from_catalog.handle
+        |>Set.map Twitter_profile_from_catalog.handle
         
         
     

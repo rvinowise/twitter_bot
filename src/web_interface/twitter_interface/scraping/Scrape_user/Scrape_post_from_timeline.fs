@@ -5,6 +5,7 @@ open Xunit
 open FsUnit
 open canopy.parallell.functions
 open canopy.types
+open rvinowise.html_parsing
 open rvinowise.twitter
 open FParsec
 
@@ -38,7 +39,7 @@ module Scrape_post_from_timeline =
         "article[data-testid='tweet']"
         |>Scrape_dynamic_list.collect_all_items_of_dynamic_list
             browser
-        |>Seq.map Parse_post_from_timeline.parse_twitter_post
+        |>Seq.map (Html_node.from_html_string>>Parse_post_from_timeline.parse_twitter_post)
         
 
   

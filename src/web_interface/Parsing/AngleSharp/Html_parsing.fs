@@ -24,33 +24,7 @@ type Web_node = OpenQA.Selenium.IWebElement
 module Html_node =
     
     
-    let from_text_and_context
-        (context: IBrowsingContext)
-        (html_text:string)
-        =
-        let htmlParser = context.GetService<IHtmlParser>()
-        let document = htmlParser.ParseDocument html_text
-        document.Body
-        
-    let from_scraped_node_and_context
-        (context: IBrowsingContext)
-        (web_node:IWebElement)
-        =
-        from_text_and_context
-            context
-            (web_node.GetAttribute("outerHTML"))
-            
-    let from_text (html_text:string) =
-        let context = BrowsingContext.New AngleSharp.Configuration.Default
-        from_text_and_context context html_text
     
-    let from_html_string html_text =
-        let (Html_string text) = html_text
-        from_text text
-    
-    let from_scraped_node (web_node:IWebElement) =
-        let html_text = web_node.GetAttribute("outerHTML")
-        from_text html_text
     
     let attribute_value attribute (node:Html_node) =
         match node.GetAttribute(attribute) with
@@ -161,7 +135,34 @@ module Html_node =
         )
             node
 
-
+    let from_text_and_context
+        (context: IBrowsingContext)
+        (html_text:string)
+        =
+        let htmlParser = context.GetService<IHtmlParser>()
+        let document = htmlParser.ParseDocument(String.Empty)
+        let nodes = htmlParser.ParseFragment(html_text.Trim(), document.Body)
+        nodes|>should_be_single :?> Html_node
+        
+    let from_scraped_node_and_context
+        (context: IBrowsingContext)
+        (web_node:IWebElement)
+        =
+        from_text_and_context
+            context
+            (web_node.GetAttribute("outerHTML"))
+            
+    let from_text (html_text:string) =
+        let context = BrowsingContext.New AngleSharp.Configuration.Default
+        from_text_and_context context html_text
+    
+    let from_html_string html_text =
+        let (Html_string text) = html_text
+        from_text text
+    
+    let from_scraped_node (web_node:IWebElement) =
+        let html_text = web_node.GetAttribute("outerHTML")
+        from_text html_text
 
 module Html_parsing =
     

@@ -12,10 +12,7 @@ open FSharp.Data
 open rvinowise.html_parsing
 
 
-type Parsed_twitter_post = {
-    message: string
-    related_post: int64
-}
+
 module Parse_post_from_its_page =
     
     

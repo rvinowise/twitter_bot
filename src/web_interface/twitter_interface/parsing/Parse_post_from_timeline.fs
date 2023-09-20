@@ -46,23 +46,46 @@ type Post_stats = {
 //            views_amount = footer.views_amount
 //        }
 
-
-type Additional_post_load =
-    |Quotation of Html_node
-    |External_url of Html_node
-    |Image_and_quotation of Html_node
-    |Images of Html_node
     
 
-type Parsed_twitter_post = {
-    id: int64 option
-    auhtor: Twitter_user
-    created_at: DateTime
+
+type Abbreviated_message = {
     message: string
-    additional_load: Additional_post_load option
-    stats: Post_stats
+    show_more_url: string
+}
+type Message =
+    | Abbreviated of Abbreviated_message
+    | Full of string
+    
+type Quotable_additional_load =
+    |Images of string list
+    |Videos of string list
+    
+type Quotable_post = {
+    author: Twitter_user
+    created_at: DateTime
+    message: Message
+    additional_load: Quotable_additional_load option
 }
 
+type Additional_post_load =
+    |Quotation of Quotable_post
+    |External_url of string
+    |Quotable_additional_load
+    
+type Post =
+    |Main_post of Quotable_post * Additional_post_load * Post_stats
+    |Quoted_post of Quotable_post * Quotable_additional_load
+
+type Main_post_from_timeline = {
+    post: Quotable_post
+    load:Additional_post_load
+    stats: Post_stats
+}
+type Quoted_post_from_timeline = {
+    post: Quotable_post
+    load: Quotable_additional_load
+}
 
 
 
@@ -114,7 +137,8 @@ module Parse_post_from_timeline =
             header_node
             |>Html_node.direct_children
             |>List.head
-            |>Html_node.descendant "span > span"
+            |>Html_node.descendants "span"
+            |>List.head
             |>Html_parsing.readable_text_from_html_segments
             
         let author_handle =
@@ -177,6 +201,18 @@ module Parse_post_from_timeline =
         |>Html_node.descendant "div[data-testid='tweetText']"
         |>Html_parsing.readable_text_from_html_segments
     
+    
+    let parse_quotable_additional_load load_node =
+        
+        let image_preview_nodes =
+            additional_load_node
+            |>Html_node.descendants "div[data-testid='tweetPhoto']"
+        
+        let video_nodes =
+            additional_load_node
+            |>Html_node.descendants "div[aria-label='Embedded video'] ing[alt='Embedded video']"
+        
+    
     let parse_additional_load_from_its_node additional_load_node =
         
         let external_url_node =
@@ -185,19 +221,15 @@ module Parse_post_from_timeline =
         
         let quoted_source_node =
             additional_load_node
-            |>Html_node.try_descendant "data-testid='tweetText'"
+            |>Html_node.try_descendant "div[data-testid='tweetText']"
             
-        let image_preview_nodes =
-            additional_load_node
-            |>Html_node.descendants "div[data-testid='tweetPhoto']"
-        
-        let video_node =
-            additional_load_node
-            |>Html_node.descendants "aria-label='Embedded video' ing[alt='Embedded video']"
+        let quotable_load =
+            parse_quotable_additional_load
+                additional_load_node
         
         let quoted_audio_call =
             additional_load_node
-            |>Html_node.descendants "data-testid='placementTracking'"
+            |>Html_node.descendants "div[data-testid='placementTracking']"
         
         match
             image_preview_nodes,
@@ -207,11 +239,11 @@ module Parse_post_from_timeline =
         | _,Some external_url_node,_ ->
             let cover_image_node =
                 external_url_node
-                |>Html_node.descendant "alt='Content cover image'"
+                |>Html_node.descendants "img[alt='Content cover image']"
             
             let urls_to_external_source =
                 external_url_node
-                |>Html_node.descendants "role='link'"
+                |>Html_node.descendants "div[role='link']"
                 
             if (has_different_items urls_to_external_source) then
                 (report_external_source_having_different_links
@@ -229,7 +261,7 @@ module Parse_post_from_timeline =
                 |>Some
                 
         |image_node::rest_image_nodes,_,_->
-            additional_load_node
+            image_node::rest_image_nodes
             |>Additional_post_load.Images
             |>Some
         | _,_,Some quoted_source_node ->
@@ -277,12 +309,12 @@ module Parse_post_from_timeline =
             reposts_amount=
                 footer_node
                 |>Html_node.direct_children
-                |>Seq.item 2
+                |>Seq.item 1
                 |>number_inside_footer_element
             likes_amount=
                 footer_node
                 |>Html_node.direct_children
-                |>Seq.item 1
+                |>Seq.item 2
                 |>number_inside_footer_element
             views_amount=
                 footer_node
@@ -306,13 +338,7 @@ module Parse_post_from_timeline =
         button_show_more
         |>Html_node.attribute_value "href"
     
-        
-    
-
-        
-        
-    
-    
+       
     
     let html_segments_of_post article_html =
         
@@ -384,14 +410,20 @@ module Parse_post_from_timeline =
             post_html_segments.additional_load
             |>Option.bind parse_additional_load_from_its_node
         
+        Main_post
         {
+            Quotable_post.author =parsed_header.author
+            created_at=parsed_header.written_at
+            message = ""
+            additional_load = additional_load
+        }
             id = post_id
             auhtor = parsed_header.author
             created_at = parsed_header.written_at
             message = message
             additional_load = additional_load
             stats=post_stats
-        }
+        
         
         
     [<Fact>]
