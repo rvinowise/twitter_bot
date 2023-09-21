@@ -16,7 +16,7 @@ open rvinowise.twitter
 type Html_segments_of_quoted_post = {
     header: Html_node
     message: Html_node
-    image: Html_node option
+    media: Html_node option
 }
 
 type Html_segments_of_main_post = {
@@ -60,19 +60,72 @@ type Abbreviated_message = {
     message: string
     show_more_url: string
 }
-type Message =
+type Post_message =
     | Abbreviated of Abbreviated_message
     | Full of string
 
+module Post_message =
+    let from_html_node (node:Html_node) = //"tweetText"
+        let show_mode_node =
+            node
+            |>Html_node.try_descendant "a[data-testid='tweet-text-show-more-link']"
+        
+        let message =
+            node
+            |>Html_node.direct_children
+            |>List.map Html_parsing.segment_of_composed_text_as_text
+            |>String.concat ""
+            
+        match show_mode_node with
+        |Some show_mode_node ->
+            Post_message.Abbreviated {
+                message = message
+                show_more_url =
+                    show_mode_node
+                    |>Html_node.attribute_value "href"
+            }
+        |None ->
+            Post_message.Full message
+            
 type Posted_image = {
     url: string
     description: string
 }
+
+module Posted_image =
+    let from_html_node (node: Html_node) = //img[]
+        {
+            Posted_image.url=
+                node
+                |>Html_node.attribute_value "src"
+            description=
+                node
+                |>Html_node.attribute_value "alt"
+        }
+        
 type Posted_video = {
     url: string
     poster: string
 }
 
+module Posted_video =
+    let from_html_node (node: Html_node) = //video[]
+        {
+            Posted_video.url=
+                node
+                |>Html_node.attribute_value "src"
+            poster=
+                node
+                |>Html_node.attribute_value "poster"
+        }
+    let from_poster_node (node: Html_node) = //aria-label="Embedded video" data-testid="previewInterstitial"
+        {
+            Posted_video.url=""
+            poster=
+                node
+                |>Html_node.descendant "img"
+                |>Html_node.attribute_value "src"
+        }
 type Quotable_media_item =
     |Image of Posted_image
     |Video of Posted_video
@@ -80,8 +133,8 @@ type Quotable_media_item =
 type Quotable_post = {
     author: Twitter_user
     created_at: DateTime
-    message: Message
-    additional_load: Quotable_media_item list option
+    message: Post_message
+    additional_load: Quotable_media_item list
 }
 
 type Additional_post_load =
@@ -224,48 +277,127 @@ module Parse_post_from_timeline =
             load_node
             |>Html_node.descendants "div[data-testid='tweetPhoto'] > img"
             |>List.map (fun image_node ->
-                {
-                    Posted_image.description=
-                        image_node
-                        |>Html_node.attribute_value "alt"
-                    url=
-                        image_node
-                        |>Html_node.attribute_value "src"
-                }|>Quotable_media_item.Image
+                image_node
+                |>Posted_image.from_html_node
+                |>Quotable_media_item.Image
             )
         
         let posted_videos =
             load_node
             |>Html_node.descendants "div[data-testid='videoComponent'] video"
             |>List.map (fun video_node ->
-                {
-                    Posted_video.url=
-                        video_node
-                        |>Html_node.attribute_value "src"
-                    poster=
-                        video_node
-                        |>Html_node.attribute_value "poster"
-                }|>Quotable_media_item.Video
+                video_node
+                |>Posted_video.from_html_node
+                |>Quotable_media_item.Video
             )
         
         posted_videos
         |>List.append posted_images
     
     
+    let html_segments_of_quoted_post quotation_html = //role=link
+        let header =
+            quotation_html
+            |>Html_node.descend 1
+            |>Html_node.descendant "div[data-testid='User-Name']"
+        
+        let media =
+            quotation_html
+            |>Html_node.try_descendant "div[data-testid='testCondensedMedia']"
+            
+            
+        let message =
+            quotation_html
+            |>Html_node.descendant "div[data-testid='tweetText']"
+            
+        {
+            Html_segments_of_quoted_post.header=header
+            media=media
+            message=message
+        }
+    
+    let html_segments_of_main_post article_html =
+        
+        let post_elements = 
+            valuable_part_of_article article_html
+            |>Html_node.direct_children
+        
+        let header =
+            post_elements
+            |>Seq.head
+            |>Html_node.descendant "div[data-testid='User-Name']"
+        
+        let footing_with_stats =
+            post_elements
+            |>Seq.last
+            |>Html_node.descend 1
+    
+        let body_elements =
+            post_elements
+            |>Seq.skip 1
+            |>Seq.take (Seq.length post_elements - 2)
+        
+        let message =
+            body_elements
+            |>Seq.head
+            |>Html_node.descendant "div[data-testid='tweetText']"
+            
+        let additional_load =
+            body_elements
+            |>Seq.tryItem 1
+            
+        {
+            header = header
+            message = message
+            additional_load = additional_load
+            footer = footing_with_stats
+        }
+    
     let parse_quoted_post_from_additional_load load_node =
-        let message_node =
+        let quoted_message_node =
             load_node
             |>Html_node.try_descendant "div[data-testid='tweetText']"
             
-        match message_node with
-        |Some message_node ->
+        match quoted_message_node with
+        |Some quoted_message_node ->
             let quoted_post_node =
-                message_node
+                quoted_message_node
                 |>Html_node.ancestors "div[role='link']"
                 |>List.head
            
             let quoted_post_segments =
+                html_segments_of_quoted_post
+                    quoted_message_node
+            
+            let quoted_header =
+                parse_post_header quoted_post_segments.header
+            
+            let quoted_message =
+                Post_message.from_html_node
+                    quoted_message_node
+            
+            let quoted_media_items =
+                match quoted_post_segments.media with
+                |Some quoted_media ->
+                    let quoted_images =
+                        quoted_media
+                        |>Html_node.descendants "img"
+                        |>List.map (Posted_image.from_html_node>>Quotable_media_item.Image)
+                    let quoted_videos =
+                        quoted_media
+                        |>Html_node.descendants "div[aria-label='Embedded video']"
+                        |>List.map (Posted_video.from_poster_node>>Quotable_media_item.Video)
+                    quoted_images@quoted_videos
+                |None ->[]
                 
+            
+            Some {
+                author = quoted_header.author
+                created_at = quoted_header.written_at
+                message = quoted_message
+                additional_load = quoted_media_items
+            }
+                    
         |None -> None
     
     
@@ -281,7 +413,7 @@ module Parse_post_from_timeline =
         
         let quoted_source_node =
             additional_load_node
-            |>Html_node.try_descendant "div[data-testid='tweetText']"
+            |>parse_quoted_post_from_additional_load
             
         
         let quoted_audio_call =
@@ -396,63 +528,7 @@ module Parse_post_from_timeline =
         |>Html_node.attribute_value "href"
     
        
-    let html_segments_of_quoted_post quotation_html = //role=link
-        let header =
-            quotation_html
-            |>Html_node.descend 1
-            |>Html_node.descendant "div[data-testid='User-Name']"
-        
-        let images =
-            quotation_html
-            |>Html_node.try_descendant "div[data-testid='testCondensedMedia']"
-            |>Option.map (Html_node.descendants "img")
-            
-        let message =
-            quotation_html
-            |>Html_node.descendant "div[data-testid='tweetText']"
-            
-        {
-            header=header
-            image=image
-            message=message
-        }
     
-    let html_segments_of_main_post article_html =
-        
-        let post_elements = 
-            valuable_part_of_article article_html
-            |>Html_node.direct_children
-        
-        let header =
-            post_elements
-            |>Seq.head
-            |>Html_node.descendant "div[data-testid='User-Name']"
-        
-        let footing_with_stats =
-            post_elements
-            |>Seq.last
-            |>Html_node.descend 1
-    
-        let body_elements =
-            post_elements
-            |>Seq.skip 1
-            |>Seq.take (Seq.length post_elements - 2)
-        
-        let message =
-            body_elements
-            |>Seq.head
-            |>Html_node.descendant "div[data-testid='tweetText']"
-            
-        let additional_load =
-            body_elements
-            |>Seq.tryItem 1
-            
-        {
-            header = header
-            message = message
-            additional_load = additional_load
-            footer = footing_with_stats
-        }
     
     let additional_load_of_post article_html = ()
         
