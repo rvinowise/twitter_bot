@@ -49,7 +49,11 @@ module Html_node =
     let direct_children (node:Html_node) =
         List.ofSeq node.Children
     
-    
+    let direct_children_except css (node:Html_node) =
+        node.Children
+        |>Seq.filter (fun child ->
+            child.Matches css |>not
+        )
 
     let should_be_single seq =
         if Seq.length seq = 1 then
@@ -67,6 +71,8 @@ module Html_node =
         node
         |>descendants css
         |>should_be_single
+    
+    
     
     
     let ancestors css (node:Html_node) =

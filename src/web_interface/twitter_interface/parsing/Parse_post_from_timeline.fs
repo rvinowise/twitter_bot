@@ -137,10 +137,16 @@ type Quotable_post = {
     additional_load: Quotable_media_item list
 }
 
+type External_url = {
+    base_url: string
+    gist: string
+    obfuscated_url: string
+}
+
 type Additional_post_load =
     |Quotation of Quotable_post
     |External_url of string
-    |Quotable_additional_load
+    |Quotable_additional_load of Quotable_media_item list
     
 type Post =
     |Main_post of Quotable_post * Additional_post_load * Post_stats
@@ -353,6 +359,51 @@ module Parse_post_from_timeline =
             footer = footing_with_stats
         }
     
+    let external_source_details source_node =
+        
+    
+    let parse_external_source_from_additional_load load_node =
+        let external_source_node =
+            load_node
+            |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+            
+        match external_source_node with
+        |Some external_source_node ->
+            let small_poster_css = "> div[data-testid='card.layoutSmall.media']"
+            let large_poster_css = "> div[data-testid='card.layoutLarge.media']"
+            let poster_node =
+                external_source_node
+                |>Html_node.try_descendant small_poster_css
+                |>Option.defaultWith (fun()->
+                    external_source_node
+                    |>Html_node.try_descendant large_poster_css
+                )
+            let source_link_node =
+                external_source_node
+                |>Html_node.direct_children_except small_poster_css
+                |>Html_node.should_be_single
+                |>Html_node.descendant "a[role='link']"
+            
+            let details_segments =
+                source_link_node
+                |>Html_node.descendant "div[data-testid='card.layoutSmall.detail']"
+                |>Html_node.direct_children
+            
+            details_segments
+            |>Seq.head
+            |>Html_node.inner_text
+            
+            {
+                External_url.base_url =
+                    source_link_node
+                    
+                obfuscated_url=
+                    source_link_node
+                    |>Html_node.attribute_value "href"
+                    
+            }
+        |None -> None
+    
     let parse_quoted_post_from_additional_load load_node =
         let quoted_message_node =
             load_node
@@ -407,13 +458,13 @@ module Parse_post_from_timeline =
             parse_media_from_additional_load
                 additional_load_node
                 
-        let external_url_node =
-            additional_load_node
-            |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+        let external_url_load =
+            parse_external_source_from_additional_load
+                additional_load_node
         
-        let quoted_source_node =
-            additional_load_node
-            |>parse_quoted_post_from_additional_load
+        let quoted_source =
+            parse_quoted_post_from_additional_load
+                additional_load_node
             
         
         let quoted_audio_call =
@@ -421,9 +472,9 @@ module Parse_post_from_timeline =
             |>Html_node.descendants "div[data-testid='placementTracking']"
         
         match
-            image_preview_nodes,
-            external_url_node,
-            quoted_source_node
+            media_load,
+            external_url_load,
+            quoted_source
         with 
         | _,Some external_url_node,_ ->
             let cover_image_node =
