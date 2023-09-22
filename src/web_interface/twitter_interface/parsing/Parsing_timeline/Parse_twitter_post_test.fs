@@ -52,7 +52,7 @@ I'm not for bans on veiling, I am for consistency though."""
         |>should equal 5842
         
         let load =
-            post.additional_load
+            post.external_source
             |>function
                 |None->raise (Exception "no additional load of the post")
                 |Some load -> load
@@ -115,16 +115,46 @@ It’s so empowering to see more and more courageous women finding the freedom t
 """         |>Html_node.from_text
             |>Parse_post_from_timeline.parse_main_twitter_post
         
-        match post.additional_load with
+        post.id
+        |>should equal 1704659543026765991L
+        
+        post.quotable_core.message
+        |>should equal (Post_message.Full "quotation of a 4-video-post")
+        
+        post.quotable_core.author
+        |>should equal {
+            name="tehprom"
+            handle = User_handle "tehprom269887"
+        }
+        
+        post.quotable_core.created_at
+        |>should equal (DateTime(2023,9,21,0,51,20))
+        
+        
+        let check_quoted_post (quoted_post:Quotable_post) =
+            quoted_post.author
+            |>should equal {
+                name="Infidel Noodle"
+                handle = User_handle "InfidelNoodle"
+            }
+            quoted_post.message
+            |>should equal (Post_message.Full """Ex-Muslim women and former hijabis are opening up about their religious trauma in this recent TikTok trend.
+
+It’s so empowering to see more and more courageous women finding the freedom to be their unapologetic selves ❤️
+
+#FreeFromHijab""")
+            quoted_post.media_load
+            |>should haveLength 4
+        
+        match post.external_source with
         |None -> raise Html_parsing_fail
-        |Some load ->
-            match load with
+        |Some source ->
+            match source with
             |External_url _ -> raise Html_parsing_fail
-            |Quotation_and_media(quotation, media) ->
-                match quotation,media with
-                |Some _, _ -> raise Html_parsing_fail
-                |None, media_items ->
-                    media_items
-                    |>should (haveCount 4)
+            |Quotation quoted_post ->
+                check_quoted_post quoted_post
+        
+        
+        
         
         ()
