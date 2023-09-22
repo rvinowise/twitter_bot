@@ -12,6 +12,8 @@ open FSharp.Data
 open rvinowise.twitter
 
 
+exception Bad_post_structure_exception of string*Html_node
+exception Html_parsing_fail
 
 type Html_segments_of_quoted_post = {
     header: Html_node
@@ -126,7 +128,7 @@ module Posted_video =
                 |>Html_node.descendant "img"
                 |>Html_node.attribute_value "src"
         }
-type Quotable_media_item =
+type Media_item =
     |Image of Posted_image
     |Video of Posted_video
     
@@ -134,33 +136,40 @@ type Quotable_post = {
     author: Twitter_user
     created_at: DateTime
     message: Post_message
-    additional_load: Quotable_media_item list
+    additional_load: Media_item list
 }
 
 type External_url = {
     base_url: string
-    gist: string
+    page: string
+    message: string
     obfuscated_url: string
 }
 
 type Additional_post_load =
-    |Quotation of Quotable_post
-    |External_url of string
-    |Quotable_additional_load of Quotable_media_item list
-    
-type Post =
-    |Main_post of Quotable_post * Additional_post_load * Post_stats
-    |Quoted_post of Quotable_post * Quotable_media_item
+    |External_url of External_url
+    |Quotation_and_media of Quotable_post option * Media_item list
 
-type Main_post_from_timeline = {
-    post: Quotable_post
-    load:Additional_post_load
+type Main_post = {
+    id: int64
+    quotable_core: Quotable_post
+    additional_load: Additional_post_load option
     stats: Post_stats
 }
-type Quoted_post_from_timeline = {
-    post: Quotable_post
-    load: Quotable_media_item
-}
+
+type Post =
+    |Main_post of Main_post
+    |Quoted_post of Quotable_post * Media_item list
+
+//type Main_post_from_timeline = {
+//    post: Quotable_post
+//    load:Additional_post_load
+//    stats: Post_stats
+//}
+//type Quoted_post_from_timeline = {
+//    post: Quotable_post
+//    load: Media_item
+//}
 
 
 
@@ -271,12 +280,6 @@ module Parse_post_from_timeline =
         ()
         
     
-    let parse_post_main_message message_node =
-        message_node
-        |>Html_node.descendant "div[data-testid='tweetText']"
-        |>Html_parsing.readable_text_from_html_segments
-    
-    
     let parse_media_from_additional_load load_node =
         
         let posted_images =
@@ -285,7 +288,7 @@ module Parse_post_from_timeline =
             |>List.map (fun image_node ->
                 image_node
                 |>Posted_image.from_html_node
-                |>Quotable_media_item.Image
+                |>Media_item.Image
             )
         
         let posted_videos =
@@ -294,7 +297,7 @@ module Parse_post_from_timeline =
             |>List.map (fun video_node ->
                 video_node
                 |>Posted_video.from_html_node
-                |>Quotable_media_item.Video
+                |>Media_item.Video
             )
         
         posted_videos
@@ -360,7 +363,18 @@ module Parse_post_from_timeline =
         }
     
     let external_source_details source_node =
-        
+        let small_detail_css = "> div[data-testid='card.layoutSmall.detail']"
+        let large_detail_css = "> div[data-testid='card.layoutLarge.detail']"
+        source_node
+        |>Html_node.try_descendant small_detail_css
+        |>function
+        |Some detail_node ->
+            detail_node
+            |>Html_node.direct_children
+        |None->
+            source_node
+            |>Html_node.descendant large_detail_css
+            |>Html_node.direct_children
     
     let parse_external_source_from_additional_load load_node =
         let external_source_node =
@@ -369,36 +383,30 @@ module Parse_post_from_timeline =
             
         match external_source_node with
         |Some external_source_node ->
-            let small_poster_css = "> div[data-testid='card.layoutSmall.media']"
-            let large_poster_css = "> div[data-testid='card.layoutLarge.media']"
-            let poster_node =
-                external_source_node
-                |>Html_node.try_descendant small_poster_css
-                |>Option.defaultWith (fun()->
-                    external_source_node
-                    |>Html_node.try_descendant large_poster_css
-                )
-            let source_link_node =
-                external_source_node
-                |>Html_node.direct_children_except small_poster_css
-                |>Html_node.should_be_single
-                |>Html_node.descendant "a[role='link']"
             
             let details_segments =
-                source_link_node
-                |>Html_node.descendant "div[data-testid='card.layoutSmall.detail']"
-                |>Html_node.direct_children
+                external_source_node
+                |>external_source_details
             
-            details_segments
-            |>Seq.head
-            |>Html_node.inner_text
-            
-            {
+            Some {
                 External_url.base_url =
-                    source_link_node
-                    
+                    details_segments
+                    |>Seq.head
+                    |>Html_node.descendant "> span"
+                    |>Html_parsing.readable_text_from_html_segments
+                page=
+                    details_segments
+                    |>Seq.item 1
+                    |>Html_node.descendant "> span"
+                    |>Html_parsing.readable_text_from_html_segments
+                message=
+                    details_segments
+                    |>Seq.item 2
+                    |>Html_node.descendant "> span"
+                    |>Html_parsing.readable_text_from_html_segments
                 obfuscated_url=
-                    source_link_node
+                    external_source_node
+                    |>Html_node.descendant "a[role='link']"
                     |>Html_node.attribute_value "href"
                     
             }
@@ -433,11 +441,11 @@ module Parse_post_from_timeline =
                     let quoted_images =
                         quoted_media
                         |>Html_node.descendants "img"
-                        |>List.map (Posted_image.from_html_node>>Quotable_media_item.Image)
+                        |>List.map (Posted_image.from_html_node>>Media_item.Image)
                     let quoted_videos =
                         quoted_media
                         |>Html_node.descendants "div[aria-label='Embedded video']"
-                        |>List.map (Posted_video.from_poster_node>>Quotable_media_item.Video)
+                        |>List.map (Posted_video.from_poster_node>>Media_item.Video)
                     quoted_images@quoted_videos
                 |None ->[]
                 
@@ -454,80 +462,45 @@ module Parse_post_from_timeline =
     
     let parse_additional_load_from_its_node additional_load_node =
         
-        let media_load =
+        let media_items =
             parse_media_from_additional_load
+                additional_load_node
+                
+        let quoted_post =
+            parse_quoted_post_from_additional_load
                 additional_load_node
                 
         let external_url_load =
             parse_external_source_from_additional_load
                 additional_load_node
-        
-        let quoted_source =
-            parse_quoted_post_from_additional_load
-                additional_load_node
             
-        
-        let quoted_audio_call =
-            additional_load_node
-            |>Html_node.descendants "div[data-testid='placementTracking']"
-        
         match
-            media_load,
-            external_url_load,
-            quoted_source
-        with 
-        | _,Some external_url_node,_ ->
-            let cover_image_node =
-                external_url_node
-                |>Html_node.descendants "img[alt='Content cover image']"
-            
-            let urls_to_external_source =
-                external_url_node
-                |>Html_node.descendants "div[role='link']"
-                
-            if (has_different_items urls_to_external_source) then
-                (report_external_source_having_different_links
-                    additional_load_node
-                    urls_to_external_source)
-            
-            match cover_image_node,urls_to_external_source with
-            |_,external_url::rest_urls ->
-                external_url
-                |>Additional_post_load.External_url
-                |>Some
-            |image_node,_->
-                image_node
-                |>Additional_post_load.Images
-                |>Some
-                
-        |image_node::rest_image_nodes,_,_->
-            image_node::rest_image_nodes
-            |>Additional_post_load.Images
+            media_items,
+            quoted_post,
+            external_url_load
+        with
+        |[], None, Some external_url ->
+            external_url
+            |>Additional_post_load.External_url 
             |>Some
-        | _,_,Some quoted_source_node ->
-            
-            let show_more_button =
-                quoted_source_node
-                |>Html_node.descendant "a[data-testid='tweet-text-show-more-link']"
-            
-            let quoted_header =
-                quoted_source_node
-                |>Html_node.descendant "div[data-testid='User-Name']"
-            
-            let photos_in_quotation_node =
-                quoted_source_node
-                |>Html_node.descendants "div[data-testid='tweetPhoto']"
-            
-            let quoted_photos_explanation =
-                photos_in_quotation_node
-                |>List.map (Html_node.attribute_value "aria-label")
-            
-            quoted_source_node
-            |>Additional_post_load.Quotation
-            |>Some
-        
-            
-        |[],None,None ->
+        |media_items, quoted_post, None ->
+            if
+                media_items.Length > 0 ||
+                quoted_post.IsSome
+            then
+                (quoted_post,media_items)
+                |>Additional_post_load.Quotation_and_media
+                |>Some
+            else
+                None
+        |_,_,_ ->
+            Log.error $"""
+                a strange composition of the additional_load of a post.
+                additional_load_node: {additional_load_node}
+                media_load: {media_items}
+                quoted_post: {quoted_post}
+                external_url_load: {external_url_load}
+                """|>ignore
             None
         
     
@@ -579,11 +552,6 @@ module Parse_post_from_timeline =
         |>Html_node.attribute_value "href"
     
        
-    
-    
-    let additional_load_of_post article_html = ()
-        
-    
     let repost_mark article_html =
         article_html
         |>Html_node.try_descendant "span[data-testid='socialContext']"
@@ -599,34 +567,45 @@ module Parse_post_from_timeline =
 
         let post_id =
             parsed_header.post_url
-            |>Option.map Html_parsing.last_url_segment 
-            |>Option.map int64
+            |>function
+            |Some url ->
+                url
+                |>Html_parsing.last_url_segment
+                |>int64
+            |None ->
+                ("main post doesn't have its url",article_html)
+                |>Bad_post_structure_exception
+                |>raise
         
         
         let post_stats =
             parse_post_footer post_html_segments.footer
 
         let message = 
-            post_html_segments.message
-            |>Html_parsing.readable_text_from_html_segments
+            Post_message.from_html_node
+                    post_html_segments.message
         
         let additional_load =
             post_html_segments.additional_load
             |>Option.bind parse_additional_load_from_its_node
         
-        Main_post
         {
-            Quotable_post.author =parsed_header.author
-            created_at=parsed_header.written_at
-            message = ""
-            additional_load = additional_load
-        }
-            id = post_id
-            auhtor = parsed_header.author
-            created_at = parsed_header.written_at
-            message = message
-            additional_load = additional_load
+            Main_post.id=post_id
+            quotable_core = {
+                Quotable_post.author =parsed_header.author
+                created_at=parsed_header.written_at
+                message = message
+                additional_load = []
+            }
+            additional_load=additional_load
             stats=post_stats
+        }
+//            id = post_id
+//            auhtor = parsed_header.author
+//            created_at = parsed_header.written_at
+//            message = message
+//            additional_load = additional_load
+//            stats=post_stats
         
         
         
