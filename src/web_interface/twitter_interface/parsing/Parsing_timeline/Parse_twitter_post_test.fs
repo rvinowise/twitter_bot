@@ -125,6 +125,6 @@ It’s so empowering to see more and more courageous women finding the freedom t
                 |Some _, _ -> raise Html_parsing_fail
                 |None, media_items ->
                     media_items
-                    |>should (haveLength 4)
+                    |>should (haveCount 4)
         
         ()
