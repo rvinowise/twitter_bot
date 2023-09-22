@@ -225,7 +225,7 @@ module Html_parsing =
     
     
     let segment_of_composed_text_as_text (segment:Html_node) =
-        match segment.ClassName with
+        match segment.LocalName with
         |"img" -> //an emoji
             Html_node.attribute_value "alt" segment
         |"span" when Html_node.inner_text segment = "" -> " " //FSharpData removes spaces from spans 😳
