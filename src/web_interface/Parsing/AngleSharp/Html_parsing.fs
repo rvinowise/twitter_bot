@@ -84,14 +84,13 @@ module Html_node =
             if isNull node then
                 hierarchy
             else
-                let parent = node.ParentElement
-                if parent.Matches css then
+                if node.Matches css then
                     step_up_hierarchy
-                        parent
-                        (parent::hierarchy)
+                        node.ParentElement
+                        (node::hierarchy)
                 else
                     step_up_hierarchy
-                        parent
+                        node.ParentElement
                         hierarchy
         
         step_up_hierarchy
