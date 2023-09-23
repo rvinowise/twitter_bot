@@ -246,4 +246,5 @@ module Html_parsing =
             CultureInfo.InvariantCulture
         )
         
-    
+    let standartize_linebreaks (text:string) =
+        text.ReplaceLineEndings()

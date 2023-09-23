@@ -15,7 +15,7 @@ open rvinowise.twitter
 exception Bad_post_structure_exception of string*Html_node
 exception Html_parsing_fail
 
-type Html_segments_of_quoted_post = {
+type Html_segments_of_quoted_post = { //which quoted post? it can be big or small, with different layouts
     header: Html_node
     message: Html_node
     media: Html_node option
@@ -24,22 +24,15 @@ type Html_segments_of_quoted_post = {
 type Html_segments_of_main_post = {
     header: Html_node
     message: Html_node
-    //additional_load: Html_node option
     media_load: Html_node option
     quotation_load: Html_node option
     footer: Html_node
 }
-//type Parsed_post_footer = {
-//    replies_amount: int
-//    reposts_amount: int
-//    likes_amount: int
-//    views_amount: int
-//}
 
 type Post_header = {
     author:Twitter_user
     written_at: DateTime
-    post_url: string option
+    post_url: string option //quotations don't have their URL, only main posts do
 }
 type Post_stats = {
     replies_amount: int
@@ -47,17 +40,6 @@ type Post_stats = {
     reposts_amount: int
     views_amount: int
 }
-
-//module Posts_stats =
-//    let from_parsed_post (footer:Parsed_post_footer) =
-//        {
-//            Post_stats.replies_amount = footer.replies_amount
-//            likes_amount = footer.likes_amount
-//            reposts_amount = footer.reposts_amount
-//            views_amount = footer.views_amount
-//        }
-
-    
 
 
 type Abbreviated_message = {
@@ -79,6 +61,7 @@ module Post_message =
             |>Html_node.direct_children
             |>List.map Html_parsing.segment_of_composed_text_as_text
             |>String.concat ""
+            |>Html_parsing.standartize_linebreaks
             
         match show_mode_node with
         |Some show_mode_node ->
@@ -97,7 +80,7 @@ type Posted_image = {
 }
 
 module Posted_image =
-    let from_html_node (node: Html_node) = //img[]
+    let from_html_image_node (node: Html_node) = //img[]
         {
             Posted_image.url=
                 node
@@ -107,32 +90,28 @@ module Posted_image =
                 |>Html_node.attribute_value "alt"
         }
         
-type Posted_video = {
-    url: string
-    poster: string
-}
 
 module Posted_video =
-    let from_html_node (node: Html_node) = //video[]
-        {
-            Posted_video.url=
-                node
-                |>Html_node.attribute_value "src"
-            poster=
-                node
-                |>Html_node.attribute_value "poster"
-        }
-    let from_poster_node (node: Html_node) = //aria-label="Embedded video" data-testid="previewInterstitial"
-        {
-            Posted_video.url=""
-            poster=
-                node
-                |>Html_node.descendant "img"
-                |>Html_node.attribute_value "src"
-        }
+    let from_html_video_node
+        (
+            ``node of video[]``
+                : Html_node
+        )
+        =
+        ``node of video[]``
+        |>Html_node.attribute_value "poster"
+    let from_poster_node
+        (
+            ``node with single aria-label="Embedded video" data-testid="previewInterstitial"``
+                : Html_node
+        )
+        = 
+        ``node with single aria-label="Embedded video" data-testid="previewInterstitial"``
+        |>Html_node.descendant "img"
+        |>Html_node.attribute_value "src"
 type Media_item =
     |Image of Posted_image
-    |Video of Posted_video
+    |Video_poster of string
     
 type Quotable_post = {
     author: Twitter_user
@@ -145,7 +124,8 @@ type External_url = {
     base_url: string
     page: string
     message: string
-    obfuscated_url: string
+    (* the actual referenced URL is hidden, need to click in order to see it *)
+    obfuscated_url: string 
 }
 
 type External_source =
@@ -163,28 +143,30 @@ type Post =
     |Main_post of Main_post
     |Quoted_post of Quotable_post * Media_item list
 
-//type Main_post_from_timeline = {
-//    post: Quotable_post
-//    load:Additional_post_load
-//    stats: Post_stats
-//}
-//type Quoted_post_from_timeline = {
-//    post: Quotable_post
-//    load: Media_item
-//}
 
 
+(*
+a problem: it's not clear, what html-node should be sent to a parsing function, 
+which parses a certain part of the html-layout.
 
+1: this html-node should not have other children with similar tags/attributes to those which are needed from the parsed part,
+so that the needed information could be found unambiguously.
+
+2: it makes sense to find children by unique css-identifiers, rather than in absolute terms relative to their parents, 
+so that different parts of the html-hierarchy could be sent as parameters 
+
+ *)
 module Parse_post_from_timeline =
     
-    
-    let valuable_part_of_article article_html =
+    let valuable_segments_of_post
+        article_html //article[data-testid="tweet"] 
+        = //header / body / stats
         article_html
         |>Html_node.descend 2
         |>Html_node.direct_children |> Seq.item 1
         |>Html_node.direct_children |> Seq.item 1
+        |>Html_node.direct_children
    
-    
     
     let post_header_node node =
         node
@@ -218,9 +200,11 @@ module Parse_post_from_timeline =
     
     
     
-    let parse_post_header header_node =
+    let parse_post_header
+        ``node of data-testid="User-Name"``
+        =
         let author_name =
-            header_node
+            ``node of data-testid="User-Name"``
             |>Html_node.direct_children
             |>List.head
             |>Html_node.descendants "span"
@@ -228,7 +212,7 @@ module Parse_post_from_timeline =
             |>Html_parsing.readable_text_from_html_segments
             
         let author_handle =
-            header_node
+            ``node of data-testid="User-Name"``
             |>Html_node.direct_children
             |>List.item 1
             |>Html_node.descendant "span"
@@ -237,7 +221,7 @@ module Parse_post_from_timeline =
             |>User_handle
         
         let datetime_node =
-            header_node
+            ``node of data-testid="User-Name"``
             |>Html_node.direct_children
             |>List.item 1
             |>Html_node.descendant "time"
@@ -258,66 +242,22 @@ module Parse_post_from_timeline =
             post_url=url
         }
     
-    [<Fact>]
-    let ``try parse_post_header``()=
-        let parsing_context = Html_parsing.parsing_context()
-        let main_header =
-            """
-            <div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs r-1ny4l3l" id="id__2lloufemgrh" data-testid="User-Name"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/tuftbear86" role="link" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div dir="ltr" class="css-901oao r-1awozwy r-18jsvk2 r-6koalj r-37j5jr r-a023e6 r-b88u0q r-rjixqe r-bcqeeo r-1udh08x r-3s2u2q r-qvutc0"><span class="css-901oao css-16my406 css-1hf3ou5 r-poiln3 r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Super Grumpy Bear</span></span></div><div dir="ltr" class="css-901oao r-18jsvk2 r-xoduu5 r-18u37iz r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-1awozwy r-xoduu5 r-poiln3 r-bcqeeo r-qvutc0"></span></div></div></a></div></div><div class="css-1dbjc4n r-18u37iz r-1wbh5a2 r-13hce6t"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/tuftbear86" role="link" tabindex="-1" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div dir="ltr" class="css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-1wvb978 r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">@tuftbear86</span></div></a></div><div dir="ltr" aria-hidden="true" class="css-901oao r-14j79pv r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-s1qlax r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">·</span></div><div class="css-1dbjc4n r-18u37iz r-1q142lx"><a href="/tuftbear86/status/1703597157826093349" dir="ltr" aria-label="23 hours ago" role="link" class="css-4rbku5 css-18t94o4 css-901oao r-14j79pv r-1loqt21 r-xoduu5 r-1q142lx r-1w6e6rj r-37j5jr r-a023e6 r-16dba41 r-9aw3ui r-rjixqe r-bcqeeo r-3s2u2q r-qvutc0"><time datetime="2023-09-18T02:29:48.000Z">23h</time></a></div></div></div></div>
-            """
-            |>Html_node.from_text_and_context parsing_context
-            |>parse_post_header
-        let quoted_header =
-            """
-            <div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs r-1ny4l3l" data-testid="User-Name"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div dir="ltr" class="css-901oao r-1awozwy r-18jsvk2 r-6koalj r-37j5jr r-a023e6 r-b88u0q r-rjixqe r-bcqeeo r-1udh08x r-3s2u2q r-qvutc0"><span class="css-901oao css-16my406 css-1hf3ou5 r-poiln3 r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Star Trek Minus Context</span></span></div><div dir="ltr" class="css-901oao r-18jsvk2 r-xoduu5 r-18u37iz r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-1awozwy r-xoduu5 r-poiln3 r-bcqeeo r-qvutc0"></span></div></div></div></div></div><div class="css-1dbjc4n r-18u37iz r-1wbh5a2 r-13hce6t"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><div tabindex="-1" class="css-1dbjc4n r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div dir="ltr" class="css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-1wvb978 r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">@NoContextTrek</span></div></div></div><div dir="ltr" aria-hidden="true" class="css-901oao r-14j79pv r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-s1qlax r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">·</span></div><div class="css-1dbjc4n r-18u37iz r-1q142lx"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div dir="ltr" aria-label="Sep 18" class="css-901oao r-14j79pv r-xoduu5 r-1q142lx r-1w6e6rj r-37j5jr r-a023e6 r-16dba41 r-9aw3ui r-rjixqe r-bcqeeo r-3s2u2q r-qvutc0"><time datetime="2023-09-18T02:12:52.000Z">Sep 18</time></div></div></div></div></div></div>
-            """
-            |>Html_node.from_text_and_context parsing_context
-            |>parse_post_header
-        let main_header_blue_mark =
-            """
-            <div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs r-1ny4l3l" id="id__gbii77jt59k" data-testid="User-Name"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/balajis" role="link" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div class="css-1dbjc4n r-1awozwy r-18u37iz r-1wbh5a2 r-dnmrzs"><div dir="ltr" class="css-901oao r-1awozwy r-18jsvk2 r-6koalj r-37j5jr r-a023e6 r-b88u0q r-rjixqe r-bcqeeo r-1udh08x r-3s2u2q r-qvutc0"><span class="css-901oao css-16my406 css-1hf3ou5 r-poiln3 r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">Balaji</span></span></div><div dir="ltr" class="css-901oao r-18jsvk2 r-xoduu5 r-18u37iz r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-1awozwy r-xoduu5 r-poiln3 r-bcqeeo r-qvutc0"><svg viewBox="0 0 22 22" aria-label="Verified account" role="img" class="r-1cvl2hr r-4qtqp9 r-yyyyoo r-1xvli5t r-9cviqr r-f9ja8p r-og9te1 r-bnwqim r-1plcrui r-lrvibr" data-testid="icon-verified"><g><path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"></path></g></svg></span></div></div></a></div></div><div class="css-1dbjc4n r-18u37iz r-1wbh5a2 r-13hce6t"><div class="css-1dbjc4n r-1d09ksm r-18u37iz r-1wbh5a2"><div class="css-1dbjc4n r-1wbh5a2 r-dnmrzs"><a href="/balajis" role="link" tabindex="-1" class="css-4rbku5 css-18t94o4 css-1dbjc4n r-1loqt21 r-1wbh5a2 r-dnmrzs r-1ny4l3l"><div dir="ltr" class="css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-1wvb978 r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">@balajis</span></div></a></div><div dir="ltr" aria-hidden="true" class="css-901oao r-14j79pv r-1q142lx r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-s1qlax r-qvutc0"><span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0">·</span></div><div class="css-1dbjc4n r-18u37iz r-1q142lx"><a href="/balajis/status/1703853282639450382" dir="ltr" aria-label="7 hours ago" role="link" class="css-4rbku5 css-18t94o4 css-901oao r-14j79pv r-1loqt21 r-xoduu5 r-1q142lx r-1w6e6rj r-37j5jr r-a023e6 r-16dba41 r-9aw3ui r-rjixqe r-bcqeeo r-3s2u2q r-qvutc0"><time datetime="2023-09-18T19:27:33.000Z">7h</time></a></div></div></div></div>
-            """
-            |>Html_node.from_text_and_context parsing_context
-            |>parse_post_header
-        ()
-        
     
-    let parse_media_from_additional_load load_node =
-        
-        let posted_images =
-            load_node
-            |>Html_node.descendants "div[data-testid='tweetPhoto'] > img"
-            |>List.map (fun image_node ->
-                image_node
-                |>Posted_image.from_html_node
-                |>Media_item.Image
-            )
-        
-        let posted_videos =
-            load_node
-            |>Html_node.descendants "div[data-testid='videoComponent'] video"
-            |>List.map (fun video_node ->
-                video_node
-                |>Posted_video.from_html_node
-                |>Media_item.Video
-            )
-        
-        posted_videos
-        |>List.append posted_images
-    
-    
-    let html_segments_of_quoted_post quotation_html = //role=link
+    let html_segments_of_quoted_post
+        ``node with role=link of quotation`` 
+        =
         let header =
-            quotation_html
+            ``node with role=link of quotation``
             |>Html_node.descend 1
             |>Html_node.descendant "div[data-testid='User-Name']"
         
+        //only for a small-quotation, but there's also big-quotations!
         let media =
-            quotation_html
+            ``node with role=link of quotation``
             |>Html_node.try_descendant "div[data-testid='testCondensedMedia']"
             
         let message =
-            quotation_html
+            ``node with role=link of quotation``
             |>Html_node.descendant "div[data-testid='tweetText']"
             
         {
@@ -327,11 +267,13 @@ module Parse_post_from_timeline =
         }
     
     
-    let html_segments_of_main_post article_html =
+    let html_segments_of_main_post
+        ``node with article[test-id='tweet']``
+        = 
+        //
         
         let post_elements = 
-            valuable_part_of_article article_html
-            |>Html_node.direct_children
+            valuable_segments_of_post ``node with article[test-id='tweet']``
         
         let header =
             post_elements
@@ -343,7 +285,7 @@ module Parse_post_from_timeline =
             |>Seq.last
             |>Html_node.descend 1
     
-        let body_elements =
+        let body_elements = //all except first and last
             post_elements
             |>Seq.skip 1
             |>Seq.take (Seq.length post_elements - 2)
@@ -380,7 +322,10 @@ module Parse_post_from_timeline =
                             None,Some media_or_quotation
                         |None -> Some media_or_quotation,None
                         
-                | _-> raise (Bad_post_structure_exception ("additional post load has >2 children",article_html))
+                | _-> raise (Bad_post_structure_exception (
+                    "additional post load has >2 children",
+                    ``node with article[test-id='tweet']``
+                    ))
             |None -> None,None     
         {
             header = header
@@ -390,23 +335,74 @@ module Parse_post_from_timeline =
             footer = footing_with_stats
         }
     
-    let external_source_details source_node =
-        let small_detail_css = "> div[data-testid='card.layoutSmall.detail']"
-        let large_detail_css = "> div[data-testid='card.layoutLarge.detail']"
-        source_node
+    let details_of_external_source
+        ``node with card.layoutSmall.detail or card.layoutLarge.detail``
+        =
+        let small_detail_css = "div[data-testid='card.layoutSmall.detail']"
+        let large_detail_css = "div[data-testid='card.layoutLarge.detail']"
+        ``node with card.layoutSmall.detail or card.layoutLarge.detail``
         |>Html_node.try_descendant small_detail_css
         |>function
         |Some detail_node ->
             detail_node
             |>Html_node.direct_children
         |None->
-            source_node
+            ``node with card.layoutSmall.detail or card.layoutLarge.detail``
             |>Html_node.descendant large_detail_css
             |>Html_node.direct_children
     
-    let parse_external_source_from_additional_load load_node =
-        let external_source_node =
+    
+    let parse_media_from_small_quoted_post
+        ``node with all img of the quotation`` //shouldn't include the img of its main post
+        =
+        ``node with all img of the quotation``
+        |>Html_node.descendants "div[aria-label='Embedded video'][data-testid='previewInterstitial']"
+        |>List.map (Posted_video.from_poster_node>>Media_item.Video_poster)
+    
+    let parse_media_from_large_layout //the layout of either a main-post, or a big-quotation
+        (*node with all
+            img[]
+            and
+            video[]
+        of the post, excluding a potential quoted post and images outside of the load (e.g. user picture)*)
+        load_node
+        = 
+        
+        let posted_images =
             load_node
+            |>Html_node.descendants "div[data-testid='tweetPhoto']"
+            |>List.filter(fun footage_node ->
+                footage_node
+                |>Html_node.try_descendant "div[data-testid='videoComponent']"
+                |>function
+                |Some _ ->false
+                |None->true
+            )
+            |>List.map (Html_node.descendant "img")
+            |>List.map (fun image_node ->
+                image_node
+                |>Posted_image.from_html_image_node
+                |>Media_item.Image
+            )
+        
+        // videos are also part of data-testid="tweetPhoto" node, like images
+        let posted_videos =
+            load_node
+            |>Html_node.descendants "div[data-testid='videoComponent'] video"
+            |>List.map (fun video_node ->
+                video_node
+                |>Posted_video.from_html_video_node
+                |>Media_item.Video_poster
+            )
+        
+        posted_videos
+        |>List.append posted_images
+    
+    let parse_external_source_from_additional_load
+        ``node with potential card.wrapper``
+        =
+        let external_source_node =
+            ``node with potential card.wrapper``
             |>Html_node.try_descendant "div[data-testid='card.wrapper']"
             
         match external_source_node with
@@ -414,23 +410,23 @@ module Parse_post_from_timeline =
             
             let details_segments =
                 external_source_node
-                |>external_source_details
+                |>details_of_external_source
             
             Some {
                 External_url.base_url =
                     details_segments
                     |>Seq.head
-                    |>Html_node.descendant "> span"
+                    |>Html_node.descendant ":scope> span"
                     |>Html_parsing.readable_text_from_html_segments
                 page=
                     details_segments
                     |>Seq.item 1
-                    |>Html_node.descendant "> span"
+                    |>Html_node.descendant ":scope> span"
                     |>Html_parsing.readable_text_from_html_segments
                 message=
                     details_segments
                     |>Seq.item 2
-                    |>Html_node.descendant "> span"
+                    |>Html_node.descendant ":scope> span"
                     |>Html_parsing.readable_text_from_html_segments
                 obfuscated_url=
                     external_source_node
@@ -442,10 +438,16 @@ module Parse_post_from_timeline =
     
     
     
-    let parse_quoted_post_from_its_node quotation_load = 
+    
+    
+        
+        
+    let parse_quoted_post_from_its_node
+        ``node with potential role=link of the quotation``
+        = //big or small?
         
         let quoted_message_node =
-            quotation_load
+            ``node with potential role=link of the quotation``
             |>Html_node.try_descendant "div[data-testid='tweetText']"
             
         match quoted_message_node with
@@ -460,41 +462,41 @@ module Parse_post_from_timeline =
                 |>Html_node.descendant "div[data-testid='User-Name']"
                 |>parse_post_header
             
-            let quoted_message =
-                Post_message.from_html_node
-                    quoted_message_node
-            
             let quoted_media_items =
-                let quoted_images =
-                    quotation_root_node
-                    |>Html_node.descendants "img"
-                    |>List.map (Posted_image.from_html_node>>Media_item.Image)
-                let quoted_videos =
-                    quotation_root_node
-                    |>Html_node.descendants "div[aria-label='Embedded video']"
-                    |>List.map (Posted_video.from_poster_node>>Media_item.Video)
-                quoted_images@quoted_videos
+                ``node with potential role=link of the quotation``
+                |>Html_node.try_descendant "div[data-testid='testCondensedMedia']"
+                |>function
+                |Some _->
+                    parse_media_from_small_quoted_post
+                        ``node with potential role=link of the quotation``
+                |None ->
+                    parse_media_from_large_layout
+                        ``node with potential role=link of the quotation``
             
             Some {
                 author = quoted_header.author
                 created_at = quoted_header.written_at
-                message = quoted_message
+                message =
+                    Post_message.from_html_node
+                        quoted_message_node
                 media_load = quoted_media_items
             }
         
         |None->None            
     
     
-    let parse_quoted_source_from_its_node quoted_source_node =
+    let parse_quoted_source_from_its_node
+        ``node with either role=link of quotation, or card.wrapper`` 
+        //either a quoted-post, or an external-url
+        =
         
         let quoted_post =
-            quoted_source_node
-            |>parse_quoted_post_from_its_node
-        
+            parse_quoted_post_from_its_node
+                ``node with either role=link of quotation, or card.wrapper``
                 
         let external_url_load =
             parse_external_source_from_additional_load
-                quoted_source_node
+                ``node with either role=link of quotation, or card.wrapper``
             
         match
             quoted_post,
@@ -511,7 +513,7 @@ module Parse_post_from_timeline =
         | _,_ ->
             Log.error $"""
                 a strange composition of the additional_load of a post.
-                additional_load_node: {quoted_source_node}
+                additional_load_node: {``node with either role=link of quotation, or card.wrapper``}
                 quoted_post: {quoted_post}
                 external_url_load: {external_url_load}
                 """|>ignore
@@ -520,7 +522,9 @@ module Parse_post_from_timeline =
     
     
     
-    let parse_post_footer footer_node =
+    let parse_post_footer
+        ``node with all app-text-transition-container of a post``
+        =
         let number_inside_footer_element node =
             node
             |>Html_node.try_descendant "span[data-testid='app-text-transition-container'] > span > span"
@@ -533,22 +537,22 @@ module Parse_post_from_timeline =
         
         {
             Post_stats.replies_amount=
-                footer_node
+                ``node with all app-text-transition-container of a post``
                 |>Html_node.direct_children
                 |>Seq.head
                 |>number_inside_footer_element
             reposts_amount=
-                footer_node
+                ``node with all app-text-transition-container of a post``
                 |>Html_node.direct_children
                 |>Seq.item 1
                 |>number_inside_footer_element
             likes_amount=
-                footer_node
+                ``node with all app-text-transition-container of a post``
                 |>Html_node.direct_children
                 |>Seq.item 2
                 |>number_inside_footer_element
             views_amount=
-                footer_node
+                ``node with all app-text-transition-container of a post``
                 |>Html_node.direct_children
                 |>Seq.item 3
                 |>number_inside_footer_element
@@ -560,9 +564,6 @@ module Parse_post_from_timeline =
            |>function
                |Some _ ->true
                |None->false
-    let is_post_quoting_another_source body_elements =
-        body_elements
-        |>Seq.map (Html_node.descendants "data-testid='tweetText'")
     
     
     let url_from_show_more_button button_show_more =
@@ -595,17 +596,12 @@ module Parse_post_from_timeline =
                 |>Bad_post_structure_exception
                 |>raise
         
-        
         let post_stats =
             parse_post_footer post_html_segments.footer
 
-        let message = 
-            Post_message.from_html_node
-                    post_html_segments.message
-        
         let media_items = 
             match post_html_segments.media_load with
-            |Some media -> parse_media_from_additional_load media
+            |Some media -> parse_media_from_large_layout media
             |None->[]
         
         let external_source =
@@ -618,7 +614,9 @@ module Parse_post_from_timeline =
             quotable_core = {
                 Quotable_post.author =parsed_header.author
                 created_at=parsed_header.written_at
-                message = message
+                message =
+                    Post_message.from_html_node
+                        post_html_segments.message
                 media_load = media_items
             }
             external_source=external_source
@@ -638,7 +636,5 @@ At the very brink, the pivotal…</span><span tabindex="0" class="css-901oao css
         ()
         
    
-    let is_post_replying_to_another_post post_body =
-        ()
     
     

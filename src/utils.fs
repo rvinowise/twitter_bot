@@ -15,3 +15,12 @@ module Utils =
            "+"+string int
         else
            string int
+           
+           
+    let has_different_items items =
+        if Seq.length items < 2 then
+            false
+        else
+            items
+            |>Seq.forall((=) (Seq.head items))
+            |>not
