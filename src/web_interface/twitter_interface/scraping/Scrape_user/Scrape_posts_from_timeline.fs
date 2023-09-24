@@ -18,43 +18,44 @@ type Timeline_tab =
     with
     override this.ToString() =
         match this with
-        |Posts -> "posts"
+        |Posts -> ""
         |Replies -> "with_replies"
         |Likes -> "likes"
         |Media -> "media"
         
 
-module Scrape_post_from_timeline =
-
-
-     
+module Scrape_posts_from_timeline =
             
     let scrape_timeline
         browser
+        max_amount
         (tab: Timeline_tab)
         user
         =
         url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser    
         "article[data-testid='tweet']"
-        |>Scrape_dynamic_list.collect_all_items_of_dynamic_list
+        |>Scrape_dynamic_list.collect_some_items_of_dynamic_list
             browser
+            max_amount
         |>Seq.map (Html_node.from_html_string>>Parse_post_from_timeline.parse_main_twitter_post)
         
 
   
     [<Fact>]
     let ``try scrape_timeline``()=
-        scrape_timeline
-            (
-                Settings.auth_tokens
-                |>Seq.head
-                |>Scraping.prepare_authentified_browser
-                |>Browser.browser
-            )
-            Timeline_tab.Posts
-            (User_handle "InfidelNoodle")
-    
+        let posts = 
+            scrape_timeline
+                (
+                    Settings.auth_tokens
+                    |>Seq.head
+                    |>Scraping.prepare_authentified_browser
+                    |>Browser.browser
+                )
+                10
+                Timeline_tab.Posts
+                (User_handle "InfidelNoodle")
+        ()
 
 
 

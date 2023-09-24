@@ -54,7 +54,10 @@ module Html_node =
         |>Seq.filter (fun child ->
             child.Matches css |>not
         )
-
+        
+    let matches css (node:Html_node) =
+        node.Matches css
+    
     let should_be_single seq =
         if Seq.length seq = 1 then
             Seq.head seq

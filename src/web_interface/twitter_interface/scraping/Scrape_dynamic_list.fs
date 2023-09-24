@@ -38,6 +38,7 @@ module Scrape_dynamic_list =
     let consume_items_of_dynamic_list
         browser
         (action: Html_string -> 'Parsed_item)
+        max_amount
         item_selector
         =
         let rec skim_and_scroll_iteration
@@ -55,7 +56,10 @@ module Scrape_dynamic_list =
                 |>Set.ofSeq
                 |>Set.difference visible_skimmed_items
             
-            if (not new_skimmed_items.IsEmpty) then
+            if
+                (not new_skimmed_items.IsEmpty) &&
+                (Seq.length skimmed_sofar_items < max_amount)
+            then
                 Actions(browser)
                     .SendKeys(Keys.PageDown).SendKeys(Keys.PageDown).SendKeys(Keys.PageDown)
                     .Perform()
@@ -86,10 +90,22 @@ module Scrape_dynamic_list =
         |>consume_items_of_dynamic_list
             browser
             ignore
+            Int32.MaxValue
         |>Map.keys
         |>Set.ofSeq
         
-            
+    let collect_some_items_of_dynamic_list
+        browser
+        max_amount
+        item_selector
+        =
+        item_selector
+        |>consume_items_of_dynamic_list
+            browser
+            ignore
+            max_amount
+        |>Map.keys
+        |>Set.ofSeq         
     
         
 
