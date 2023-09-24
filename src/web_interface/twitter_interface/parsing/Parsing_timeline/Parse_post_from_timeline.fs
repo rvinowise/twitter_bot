@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
+open AngleSharp.Dom
 open OpenQA.Selenium
 open OpenQA.Selenium.Interactions
 open OpenQA.Selenium.Support.UI
@@ -115,10 +116,13 @@ module Posted_video =
 type Media_item =
     |Image of Posted_image
     |Video_poster of string
-    
+
+
+type Reply_target = User_handle * int64 option
 type Quotable_post = {
     author: Twitter_user
     created_at: DateTime
+    replying_to: Reply_target option
     message: Post_message
     media_load: Media_item list
 }
@@ -270,11 +274,33 @@ module Parse_post_from_timeline =
         }
     
     
+    
+    let try_reply_header_segment segment =
+        segment
+        |>Html_node.descend 1
+        |>fun node ->
+            if
+                node.FirstChild.NodeType = NodeType.Text &&
+                node.FirstChild.TextContent = "Replying to "
+            then
+                Some segment
+            else None
+            
+    let try_message_segment segment =
+        segment
+        |>Html_node.try_descendant "div[data-testid='tweetText']"
+    
+    let try_external_source_segment segment =
+        segment
+        |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+    
+    let try_quoted_post_segment segment =
+        segment
+        |>Html_node.try_descendant "div[data-testid='tweetText']"
+    
     let html_segments_of_main_post
         ``node with article[test-id='tweet']``
         = 
-        //
-        
         let post_elements = 
             valuable_segments_of_post ``node with article[test-id='tweet']``
         
@@ -287,20 +313,36 @@ module Parse_post_from_timeline =
             post_elements
             |>Seq.last
             |>Html_node.descend 1
-    
-        let body_elements = //all except first and last
+            
+        let body_elements =
             post_elements
-            |>Seq.skip 1
-            |>Seq.take (Seq.length post_elements - 2)
+            |>Seq.skip 1|>Seq.take (Seq.length post_elements - 2)
+            
+        body_elements
+        |>Seq.
+        
+        
+        let reply_header =
+            post_elements
+            |>Seq.tryItem 1
+            |>Html_node.descend 1
+            |>fun node ->
+                if
+                    node.FirstChild.NodeType = NodeType.Text &&
+                    node.FirstChild.TextContent = "Replying to "
+                then
+                    post_elements|>Seq.head|>Some
+                else None
+            
         
         let message =
-            body_elements
-            |>Seq.head
+            post_elements
+            |>Seq.tryItem 1
             |>Html_node.descendant "div[data-testid='tweetText']"
             
         let additional_load =
-            body_elements
-            |>Seq.tryItem 1
+            post_elements
+            |>Seq.tryItem 2
         
         let media_load,quotation_load = //direct children of the additional_load_node (2nd body child)
             match additional_load with
@@ -330,6 +372,9 @@ module Parse_post_from_timeline =
                     ``node with article[test-id='tweet']``
                     ))
             |None -> None,None     
+        
+        
+        
         {
             header = header
             message = message
@@ -597,9 +642,10 @@ module Parse_post_from_timeline =
                 |>Bad_post_structure_exception
                 |>raise
         
-        let post_stats =
-            parse_post_footer post_html_segments.footer
-
+        let reply_target =
+            
+        
+        
         let media_items = 
             match post_html_segments.media_load with
             |Some media -> parse_media_from_large_layout media
@@ -609,6 +655,9 @@ module Parse_post_from_timeline =
             match post_html_segments.quotation_load with
             |Some quotation -> parse_quoted_source_from_its_node quotation
             |None -> None
+        
+        let post_stats =
+            parse_post_footer post_html_segments.footer
         
         {
             Main_post.id=post_id
