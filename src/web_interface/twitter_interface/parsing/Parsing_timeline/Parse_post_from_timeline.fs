@@ -25,6 +25,7 @@ type Html_segments_of_quoted_post = { //which quoted post? it can be big or smal
 type Html_segments_of_main_post = {
     header: Html_node
     message: Html_node
+    reply_header: Html_node option
     media_load: Html_node option
     quotation_load: Html_node option
     footer: Html_node
@@ -286,65 +287,75 @@ module Parse_post_from_timeline =
                 Some segment
             else None
             
-    let try_message_segment segment =
-        segment
-        |>Html_node.try_descendant "div[data-testid='tweetText']"
+//    let try_message_segment segment =
+//        segment
+//        |>Html_node.try_descendant "div[data-testid='tweetText']"
+//    
+//    let try_external_source_segment segment =
+//        segment
+//        |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+//    
+//    let try_quoted_post_segment segment =
+//        segment
+//        |>Html_node.try_descendant "div[data-testid='tweetText']"
     
-    let try_external_source_segment segment =
+    let is_reply_header segment =
         segment
-        |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+        |>Html_node.descend 1
+        |>fun node ->
+            node.FirstChild.NodeType = NodeType.Text &&
+            node.FirstChild.TextContent = "Replying to "
     
-    let try_quoted_post_segment segment =
+    let is_quotation_of_external_source segment =
         segment
-        |>Html_node.try_descendant "div[data-testid='tweetText']"
+        |>Html_node.matches "div[data-testid='card.wrapper']"
+        |>function
+        |true -> true
+        |false->
+            segment
+            |>Html_node.try_descendant "div[data-testid='tweetText']"
+            |>function
+            |Some quoted_message -> true
+            |None -> false
     
     let html_segments_of_main_post
         ``node with article[test-id='tweet']``
         = 
-        let post_elements = 
+        let post_segments = 
             valuable_segments_of_post ``node with article[test-id='tweet']``
         
         let header =
-            post_elements
-            |>Seq.head
+            post_segments
+            |>List.head
             |>Html_node.descendant "div[data-testid='User-Name']"
         
         let footing_with_stats =
-            post_elements
-            |>Seq.last
+            post_segments
+            |>List.last
             |>Html_node.descend 1
             
-        let body_elements =
-            post_elements
-            |>Seq.skip 1|>Seq.take (Seq.length post_elements - 2)
+        let body_segments =
+            post_segments
+            |>List.skip 1|>List.take (List.length post_segments - 2)
             
-        body_elements
-        |>Seq.
-        
-        
-        let reply_header =
-            post_elements
-            |>Seq.tryItem 1
-            |>Html_node.descend 1
-            |>fun node ->
-                if
-                    node.FirstChild.NodeType = NodeType.Text &&
-                    node.FirstChild.TextContent = "Replying to "
-                then
-                    post_elements|>Seq.head|>Some
-                else None
-            
+        let reply_header,rest_segments =
+            match body_segments with
+            |maybe_reply_header::rest_segments ->
+                if is_reply_header maybe_reply_header then
+                    Some maybe_reply_header,rest_segments
+                else
+                    None,body_segments
         
         let message =
-            post_elements
-            |>Seq.tryItem 1
+            rest_segments
+            |>Seq.head
             |>Html_node.descendant "div[data-testid='tweetText']"
             
         let additional_load =
-            post_elements
-            |>Seq.tryItem 2
+            rest_segments
+            |>Seq.tryItem 1
         
-        let media_load,quotation_load = //direct children of the additional_load_node (2nd body child)
+        let media_load,quotation_load = //direct children of the additional_load_node
             match additional_load with
             |Some additional_load ->
                 match
@@ -354,18 +365,10 @@ module Parse_post_from_timeline =
                 |[media;quotation] ->
                     Some media,Some quotation
                 |[media_or_quotation] ->
-                    media_or_quotation
-                    |>Html_node.matches "div[data-testid='card.wrapper']"
-                    |>function
-                    |true ->
+                    if is_quotation_of_external_source media_or_quotation then
                         None,Some media_or_quotation
-                    |false->
-                        media_or_quotation
-                        |>Html_node.try_descendant "div[data-testid='tweetText']"
-                        |>function
-                        |Some quoted_message ->
-                            None,Some media_or_quotation
-                        |None -> Some media_or_quotation,None
+                    else
+                        Some media_or_quotation,None
                         
                 | _-> raise (Bad_post_structure_exception (
                     "additional post load has >2 children",
@@ -373,11 +376,10 @@ module Parse_post_from_timeline =
                     ))
             |None -> None,None     
         
-        
-        
         {
-            header = header
+            Html_segments_of_main_post.header = header
             message = message
+            reply_header = reply_header
             media_load = media_load
             quotation_load = quotation_load
             footer = footing_with_stats
@@ -482,15 +484,10 @@ module Parse_post_from_timeline =
             }
         else None
     
-    
-    
-    
-    
-        
-        
+     
     let parse_quoted_post_from_its_node
         ``node with potential role=link of the quotation``
-        = //big or small?
+        = 
         
         let quoted_message_node =
             ``node with potential role=link of the quotation``
@@ -508,6 +505,8 @@ module Parse_post_from_timeline =
                 |>Html_node.descendant "div[data-testid='User-Name']"
                 |>parse_post_header
             
+            
+            
             let quoted_media_items =
                 ``node with potential role=link of the quotation``
                 |>Html_node.try_descendant "div[data-testid='testCondensedMedia']"
@@ -522,6 +521,7 @@ module Parse_post_from_timeline =
             Some {
                 author = quoted_header.author
                 created_at = quoted_header.written_at
+                replying_to=reply_target
                 message =
                     Post_message.from_html_node
                         quoted_message_node
@@ -643,6 +643,9 @@ module Parse_post_from_timeline =
                 |>raise
         
         let reply_target =
+            match post_html_segments.reply_header with
+            |>Some reply -> parse
+            |None->None
             
         
         
