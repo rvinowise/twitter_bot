@@ -94,6 +94,22 @@ module Find_segments_of_post =
         &&
         node.FirstChild.TextContent = "Replying to "
     
+    let is_mark_of_thread node =
+        node
+        |>Html_node.matches "div"
+        &&
+        node
+        |>Html_node.direct_children
+        |>List.tryHead
+        |>function
+        |Some span ->
+            span
+            |>Html_node.matches "span"
+            &&
+            span
+            |>Html_node.inner_text = "Show this thread"
+        |None -> false
+        
 //    let has_reply_header segment =
 //        segment
 //        |>Html_node.descend 1

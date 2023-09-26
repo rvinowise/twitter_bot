@@ -126,7 +126,7 @@ type External_source =
     |Quotation of Quotable_post
 
 type Main_post = {
-    id: int64
+    id: Post_id
     quotable_core: Quotable_post
     external_source: External_source option
     stats: Post_stats

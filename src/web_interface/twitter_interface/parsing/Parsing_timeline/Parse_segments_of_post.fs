@@ -13,7 +13,7 @@ open FSharp.Data
 open rvinowise.twitter
 
 
-module Parse_post =
+module Parse_segments_of_post =
     
     let parse_post_header
         ``node of data-testid="User-Name"``
@@ -147,6 +147,36 @@ module Parse_post =
         |>Html_node.inner_text
         |>User_handle.trim_potential_atsign
         |>User_handle
+    
+    let parse_reply_target author ``tweetText node`` =
+        let reply_target_from_header =
+            ``tweetText node``
+            |>Html_node.parent
+            |>Html_node.direct_children
+            |>List.head
+            |>fun potential_header ->
+                if
+                    Find_segments_of_post.is_reply_header potential_header
+                then
+                    potential_header
+                    |>parse_reply_header
+                    |>Some
+                else
+                    None
+        
+        match reply_target_from_header with
+        |Some reply->Some reply
+        |None->
+            if (
+                ``tweetText node``
+                |>Html_node.parent
+                |>Html_node.direct_children
+                |>List.last
+                |>Find_segments_of_post.is_mark_of_thread)
+            then    
+                Some author
+            else
+                None
         
     let parse_quoted_post_from_its_node
         ``node with potential role=link of the quotation``
@@ -169,19 +199,11 @@ module Parse_post =
                 |>parse_post_header
             
             let reply_target =
-                quoted_message_node
-                |>Html_node.parent
-                |>Html_node.direct_children
-                |>List.head
-                |>fun potential_header ->
-                    if
-                        Find_segments_of_post.is_reply_header potential_header
-                    then
-                        potential_header
-                        |>parse_reply_header
-                        |>Some
-                    else
-                        None
+                parse_reply_target quoted_header.author.handle quoted_message_node
+                |>function
+                |Some reply_target_user ->
+                    Some (reply_target_user,None)
+                |None->None
             
             let quoted_media_items =
                 ``node with potential role=link of the quotation``
@@ -296,15 +318,15 @@ module Parse_post =
             |Some url ->
                 url
                 |>Html_parsing.last_url_segment
-                |>int64
+                |>int64|>Post_id
             |None ->
                 ("main post doesn't have its url",article_html)
                 |>Bad_post_structure_exception
                 |>raise
         
-        let reply_target_user =
+        let reply_target =
             match post_html_segments.reply_header with
-            |Some reply -> Some (parse_reply_header reply)
+            |Some reply -> Some (parse_reply_header reply,None)
             |None->None
             
         
@@ -327,8 +349,7 @@ module Parse_post =
             quotable_core = {
                 Quotable_post.author =parsed_header.author
                 created_at=parsed_header.written_at
-                reply_target=
-                    (reply_target_user,None)|>Reply_target|>Some
+                reply_target=reply_target
                 message =
                     Post_message.from_html_node
                         post_html_segments.message

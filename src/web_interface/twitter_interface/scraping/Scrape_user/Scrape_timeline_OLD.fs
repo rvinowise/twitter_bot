@@ -38,7 +38,7 @@ module Scrape_timeline =
             (parse_post_from_timeline browser)
             Int32.MaxValue
         |>Map.keys
-        |>Seq.map (Html_node.from_html_string>>Parse_post_from_timeline.parse_main_twitter_post)
+        |>Seq.map (Html_node.from_html_string>>Parse_segments_of_post.parse_main_twitter_post)
         
 
   

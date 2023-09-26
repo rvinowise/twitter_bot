@@ -38,7 +38,7 @@ module Scrape_posts_from_timeline =
         |>Scrape_dynamic_list.collect_some_items_of_dynamic_list
             browser
             max_amount
-        |>Seq.map (Html_node.from_html_string>>Parse_post_from_timeline.parse_main_twitter_post)
+        |>Seq.map (Html_node.from_html_string>>Parse_segments_of_post.parse_main_twitter_post)
         
 
   
