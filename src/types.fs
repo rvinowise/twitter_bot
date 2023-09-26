@@ -9,7 +9,8 @@ open FSharp.Configuration
 open rvinowise.twitter
 
 
-type User_handle = User_handle of string 
+type User_handle = User_handle of string
+type Post_id = Post_id of int64
 
 module User_handle =
     let value (handle:User_handle) =
