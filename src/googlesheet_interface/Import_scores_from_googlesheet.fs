@@ -109,7 +109,7 @@ module Import_scores_from_googlesheet =
             sheet
             [start_column..end_column]
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try import_scores_from_googlesheet``() =
         let test =
             import_scores_on_days

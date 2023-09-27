@@ -141,7 +141,7 @@ module Find_segments_of_post =
         let footing_with_stats =
             post_segments
             |>List.last
-            |>Html_node.descend 1
+            |>Html_node.descendant "div[role='group']"
             
         let body_segments =
             post_segments
@@ -154,7 +154,8 @@ module Find_segments_of_post =
                     Some maybe_reply_header,rest_segments
                 else
                     None,body_segments
-        
+            |[]->raise Html_parsing_fail
+            
         let message =
             rest_segments
             |>Seq.head

@@ -62,8 +62,21 @@ module Parse_segments_of_post =
         ``node with all img of the quotation`` //shouldn't include the img of its main post
         =
         ``node with all img of the quotation``
-        |>Html_node.descendants "div[aria-label='Embedded video'][data-testid='previewInterstitial']"
-        |>List.map (Posted_video.from_poster_node>>Media_item.Video_poster)
+        |>Html_node.descendants "div[data-testid='tweetPhoto']"
+        |>List.map (fun media_item_node->
+            media_item_node
+            |>Html_node.try_descendant "div[aria-label='Embedded video'][data-testid='previewInterstitial']"
+            |>function
+            |Some video_node ->
+                video_node
+                |>Posted_video.from_poster_node
+                |>Media_item.Video_poster
+            |None ->
+                media_item_node
+                |>Html_node.descendant "img"
+                |>Posted_image.from_html_image_node
+                |>Media_item.Image
+        )
     
     let parse_media_from_large_layout //the layout of either a main-post, or a big-quotation
         (*node with all
@@ -267,11 +280,11 @@ module Parse_segments_of_post =
     
     
     let parse_post_footer
-        ``node with all app-text-transition-container of a post``
+        ``node with all app-text-transition-container of a post`` //role="group"
         =
-        let number_inside_footer_element node =
-            node
-            |>Html_node.try_descendant "span[data-testid='app-text-transition-container'] > span > span"
+        let number_inside_footer_element stat_segment =
+            stat_segment
+            |>Html_node.try_descendant ":scope>span>span"
             |>function
             |None -> 0
             |Some node ->
@@ -279,25 +292,24 @@ module Parse_segments_of_post =
                 |>Html_node.inner_text
                 |>Parsing_twitter_datatypes.parse_abbreviated_number
         
+        let stat_segments =
+            ``node with all app-text-transition-container of a post``
+            |>Html_node.descendants "span[data-testid='app-text-transition-container']"
         {
             Post_stats.replies_amount=
-                ``node with all app-text-transition-container of a post``
-                |>Html_node.direct_children
+                stat_segments
                 |>Seq.head
                 |>number_inside_footer_element
             reposts_amount=
-                ``node with all app-text-transition-container of a post``
-                |>Html_node.direct_children
+                stat_segments
                 |>Seq.item 1
                 |>number_inside_footer_element
             likes_amount=
-                ``node with all app-text-transition-container of a post``
-                |>Html_node.direct_children
+                stat_segments
                 |>Seq.item 2
                 |>number_inside_footer_element
             views_amount=
-                ``node with all app-text-transition-container of a post``
-                |>Html_node.direct_children
+                stat_segments
                 |>Seq.item 3
                 |>number_inside_footer_element
         }
