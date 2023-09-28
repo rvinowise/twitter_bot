@@ -13,7 +13,11 @@ open FSharp.Data
 open rvinowise.twitter
 
 
-exception Bad_post_structure_exception of string*Html_string
+exception Bad_post_structure_exception of string*Html_node
+    with
+        override this.ToString() =
+            this.Data0+this.Data1.OuterHtml
+
 exception Html_parsing_fail
 
 type Html_segments_of_quoted_post = { //which quoted post? it can be big or small, with different layouts
@@ -180,10 +184,10 @@ module Find_segments_of_post =
                     else
                         Some media_or_quotation,None
                         
-                | _-> raise (Bad_post_structure_exception (
-                    "additional post load has >2 children",
-                    Html_string ``node with article[test-id='tweet']``.OuterHtml
-                    ))
+                | _->
+                    raise
+                    <| Bad_post_structure_exception 
+                        ("additional post load has >2 children", ``node with article[test-id='tweet']``)
             |None -> None,None     
         
         {

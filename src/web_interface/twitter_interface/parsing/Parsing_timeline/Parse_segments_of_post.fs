@@ -88,21 +88,26 @@ module Parse_segments_of_post =
         = 
         
         let posted_images =
-            load_node
-            |>Html_node.descendants "div[data-testid='tweetPhoto']"
-            |>List.filter(fun footage_node ->
-                footage_node
-                |>Html_node.try_descendant "div[data-testid='videoComponent']"
-                |>function
-                |Some _ ->false
-                |None->true
-            )
-            |>List.map (Html_node.descendant "img")
-            |>List.map (fun image_node ->
-                image_node
-                |>Posted_image.from_html_image_node
-                |>Media_item.Image
-            )
+            try
+                load_node
+                |>Html_node.descendants "div[data-testid='tweetPhoto']"
+                |>List.filter(fun footage_node ->
+                    footage_node
+                    |>Html_node.try_descendant "div[data-testid='videoComponent']"
+                    |>function
+                    |Some _ ->false
+                    |None->true
+                )
+                |>List.map (Html_node.descendant "img")
+                |>List.map (fun image_node ->
+                    image_node
+                    |>Posted_image.from_html_image_node
+                    |>Media_item.Image
+                )
+            with
+            | :? ArgumentException as e->
+                raise
+                <| Bad_post_structure_exception("can't parse posted images from large layout",load_node)
         
         // videos are also part of data-testid="tweetPhoto" node, like images
         let posted_videos =
@@ -206,7 +211,7 @@ module Parse_segments_of_post =
     
     
     let check_thread_status_from_timeline
-        previous_post
+        (previous_post: Post_id option)
         (article_html:Html_node)
         =
         let has_linked_post_after =
@@ -222,7 +227,7 @@ module Parse_segments_of_post =
             |unexpected_number ->
                 (
                     $"an unexpected number ({unexpected_number}) of children at the vertical thread-line",
-                    Html_string article_html.OuterHtml
+                    article_html
                 )
                 |>Bad_post_structure_exception
                 |>raise  
@@ -236,22 +241,32 @@ module Parse_segments_of_post =
         match has_linked_post_before,has_linked_post_after with
         |false,true->
             Some Reply_status.Starting_local_thread
-        |true,true->
-            Some (Reply_status.Continuing_local_thread previous_post)
-        |true,false->
-            Some (Reply_status.Ending_local_thread previous_post)
+        |true,_->
+            let previous_post = 
+                match previous_post with
+                |Some post_id -> post_id
+                |None ->
+                    ("no previous post provided, but this post continues a thread",
+                    article_html)
+                    |>Bad_post_structure_exception
+                    |>raise
+            match has_linked_post_after with 
+            |true->
+                Some (Reply_status.Continuing_local_thread previous_post)
+            |false->
+                Some (Reply_status.Ending_local_thread previous_post)
         |_-> None
         
-    let parse_reply_status_of_main_post author previous_post post =
+    let parse_reply_status_of_main_post author parseable_post previous_post=
         let status_from_quotable_core =
             parse_reply_status_of_quotable_post
-                author post
+                author parseable_post
         match status_from_quotable_core with
         |Some reply_status -> Some reply_status
         |None->
             check_thread_status_from_timeline
                 previous_post
-                post
+                parseable_post
         
     let parse_quoted_post_from_its_node
         ``node with potential role=link of the quotation``
@@ -397,14 +412,16 @@ module Parse_segments_of_post =
                 |>Html_parsing.last_url_segment
                 |>int64|>Post_id
             |None ->
-                ("main post doesn't have its url",Html_string article_html.OuterHtml)
+                ("main post doesn't have its url",article_html)
                 |>Bad_post_structure_exception
                 |>raise
         
         let reply_status =
-            parse_reply_status_of_main_post
+            previous_posts
+            |>List.tryHead
+            |>Option.map (fun post->post.id)
+            |>parse_reply_status_of_main_post
                 parsed_header.author.handle
-                (List.tryHead previous_posts)
                 article_html
             
         
@@ -420,7 +437,13 @@ module Parse_segments_of_post =
             |None -> None
         
         let post_stats =
-            parse_post_footer post_html_segments.footer
+            try
+                parse_post_footer post_html_segments.footer
+            with
+            | :? ArgumentException as e ->
+                parse_post_footer post_html_segments.footer
+                reraise()
+                //Post_stats.all_zero
         
         {
             Main_post.id=post_id

@@ -26,6 +26,15 @@ type Post_stats = {
     views_amount: int
 }
 
+module Post_stats =
+    
+    let all_zero =
+        {
+            Post_stats.replies_amount=0
+            likes_amount=0
+            reposts_amount=0
+            views_amount=0
+        }
 
 type Abbreviated_message = {
     message: string
