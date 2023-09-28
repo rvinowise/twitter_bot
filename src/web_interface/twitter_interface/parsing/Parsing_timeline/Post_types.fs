@@ -103,12 +103,20 @@ type Media_item =
     |Video_poster of string
 
 
-type Reply_target = User_handle * Post_id option
-
+type Reply_status =
+    (*the author will be the same as in this message; text "show this thread" after the message *)
+    |External_thread
+    (*text "replying to..." below header *)     
+    |External_message of User_handle * Post_id option
+    (*there will be a replying message right after this message; vertical line in the timeline *)
+    |Starting_local_thread 
+    |Continuing_local_thread of Post_id //replying to the previous message in the timeline
+    |Ending_local_thread of Post_id
+    
 type Quotable_post = {
     author: Twitter_user
     created_at: DateTime
-    reply_target: Reply_target option
+    reply_status: Reply_status option
     message: Post_message
     media_load: Media_item list
 }
@@ -123,6 +131,8 @@ type External_url = {
 
 type External_source =
     |External_url of External_url
+    (*sometimes the quoted message ID can be determined from the timeline, e.g.:
+    if the replying message has images of showMore button;*)
     |Quotation of Quotable_post
 
 type Main_post = {

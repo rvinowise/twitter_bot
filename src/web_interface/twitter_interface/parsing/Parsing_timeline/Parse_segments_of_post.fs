@@ -161,35 +161,97 @@ module Parse_segments_of_post =
         |>User_handle.trim_potential_atsign
         |>User_handle
     
-    let parse_reply_target author ``tweetText node`` =
-        let reply_target_from_header =
-            ``tweetText node``
-            |>Html_node.parent
-            |>Html_node.direct_children
-            |>List.head
-            |>fun potential_header ->
-                if
-                    Find_segments_of_post.is_reply_header potential_header
-                then
+    
+    let try_reply_target_from_reply_header author node =
+        node
+        |>Html_node.parent
+        |>Html_node.direct_children
+        |>List.head
+        |>fun potential_header ->
+            if
+                Find_segments_of_post.is_reply_header potential_header
+            then
+                let reply_author =
                     potential_header
                     |>parse_reply_header
-                    |>Some
-                else
-                    None
-        
-        match reply_target_from_header with
-        |Some reply->Some reply
-        |None->
-            if (
-                ``tweetText node``
-                |>Html_node.parent
-                |>Html_node.direct_children
-                |>List.last
-                |>Find_segments_of_post.is_mark_of_thread)
-            then    
-                Some author
+                Some reply_author
             else
                 None
+    
+    let try_reply_status_from_thread_mark node =
+        if (
+            node
+            |>Html_node.parent
+            |>Html_node.direct_children
+            |>List.last
+            |>Find_segments_of_post.is_mark_of_thread)
+        then    
+            Reply_status.External_thread
+            |>Some
+        else
+            None
+    
+    let parse_reply_status_of_quotable_post author ``tweetText node`` =
+        let reply_target_from_header =
+            try_reply_target_from_reply_header
+                author
+                ``tweetText node``
+            
+        match reply_target_from_header with
+        |Some reply_target->
+            Reply_status.External_message (reply_target, None)
+            |>Some
+        |None->
+            try_reply_status_from_thread_mark ``tweetText node``
+    
+    
+    let check_thread_status_from_timeline
+        previous_post
+        (article_html:Html_node)
+        =
+        let has_linked_post_after =
+            article_html
+            //|>Html_node.descendant "div[data-testid='Tweet-User-Avatar']"
+            //|>Html_node.parent
+            |>Html_node.descendant "div:has(:scope>div[data-testid='Tweet-User-Avatar'])"
+            |>Html_node.direct_children
+            |>List.length
+            |>function
+            |1 -> false
+            |2 -> true
+            |unexpected_number ->
+                (
+                    $"an unexpected number ({unexpected_number}) of children at the vertical thread-line",
+                    Html_string article_html.OuterHtml
+                )
+                |>Bad_post_structure_exception
+                |>raise  
+        
+        let has_linked_post_before =
+            article_html
+            |>Html_node.descend 5
+            |>Html_node.direct_children
+            |>List.isEmpty|>not
+        
+        match has_linked_post_before,has_linked_post_after with
+        |false,true->
+            Some Reply_status.Starting_local_thread
+        |true,true->
+            Some (Reply_status.Continuing_local_thread previous_post)
+        |true,false->
+            Some (Reply_status.Ending_local_thread previous_post)
+        |_-> None
+        
+    let parse_reply_status_of_main_post author previous_post post =
+        let status_from_quotable_core =
+            parse_reply_status_of_quotable_post
+                author post
+        match status_from_quotable_core with
+        |Some reply_status -> Some reply_status
+        |None->
+            check_thread_status_from_timeline
+                previous_post
+                post
         
     let parse_quoted_post_from_its_node
         ``node with potential role=link of the quotation``
@@ -211,12 +273,12 @@ module Parse_segments_of_post =
                 |>Html_node.descendant "div[data-testid='User-Name']"
                 |>parse_post_header
             
-            let reply_target =
-                parse_reply_target quoted_header.author.handle quoted_message_node
-                |>function
-                |Some reply_target_user ->
-                    Some (reply_target_user,None)
-                |None->None
+            let reply_status =
+                parse_reply_status_of_quotable_post quoted_header.author.handle quoted_message_node
+//                |>function
+//                |Some reply_target_user ->
+//                    Some (reply_target_user,None)
+//                |None->None
             
             let quoted_media_items =
                 ``node with potential role=link of the quotation``
@@ -232,7 +294,7 @@ module Parse_segments_of_post =
             Some {
                 author = quoted_header.author
                 created_at = quoted_header.written_at
-                reply_target=reply_target
+                reply_status=reply_status
                 message =
                     Post_message.from_html_node
                         quoted_message_node
@@ -316,7 +378,10 @@ module Parse_segments_of_post =
     
     
         
-    let parse_main_twitter_post article_html =
+    let parse_main_twitter_post
+        (previous_posts: Main_post list )
+        (article_html:Html_node)
+        =
         
         let post_html_segments =
             Find_segments_of_post.html_segments_of_main_post article_html
@@ -332,14 +397,15 @@ module Parse_segments_of_post =
                 |>Html_parsing.last_url_segment
                 |>int64|>Post_id
             |None ->
-                ("main post doesn't have its url",article_html)
+                ("main post doesn't have its url",Html_string article_html.OuterHtml)
                 |>Bad_post_structure_exception
                 |>raise
         
-        let reply_target =
-            match post_html_segments.reply_header with
-            |Some reply -> Some (parse_reply_header reply,None)
-            |None->None
+        let reply_status =
+            parse_reply_status_of_main_post
+                parsed_header.author.handle
+                (List.tryHead previous_posts)
+                article_html
             
         
         
@@ -361,7 +427,7 @@ module Parse_segments_of_post =
             quotable_core = {
                 Quotable_post.author =parsed_header.author
                 created_at=parsed_header.written_at
-                reply_target=reply_target
+                reply_status=reply_status
                 message =
                     Post_message.from_html_node
                         post_html_segments.message

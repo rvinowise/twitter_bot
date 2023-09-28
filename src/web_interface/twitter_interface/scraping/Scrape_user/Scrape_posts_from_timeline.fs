@@ -25,7 +25,14 @@ type Timeline_tab =
         
 
 module Scrape_posts_from_timeline =
-            
+    
+    
+    let parse_post previous_posts html_post =
+        html_post
+        |>Html_node.from_html_string
+        |>Parse_segments_of_post.parse_main_twitter_post
+              (List.map snd previous_posts)
+      
     let scrape_timeline
         browser
         max_amount
@@ -35,10 +42,10 @@ module Scrape_posts_from_timeline =
         url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser    
         "article[data-testid='tweet']"
-        |>Scrape_dynamic_list.collect_some_items_of_dynamic_list
+        |>Scrape_dynamic_list.consume_items_of_dynamic_list
             browser
+            parse_post
             max_amount
-        |>Seq.map (Html_node.from_html_string>>Parse_segments_of_post.parse_main_twitter_post)
         
 
   
