@@ -22,7 +22,8 @@ module Parse_segments_of_post =
             ``node of data-testid="User-Name"``
             |>Html_node.direct_children
             |>List.item 1
-            |>Html_node.descendant "span"
+            |>Html_node.descendants "span"
+            |>List.head
             |>Html_node.inner_text
             |>fun url_with_atsign->url_with_atsign[1..]
             |>User_handle
@@ -226,7 +227,9 @@ module Parse_segments_of_post =
         
         let has_linked_post_before =
             article_html
-            |>Html_node.descend 5
+            |>Html_node.descend 2
+            |>Html_node.direct_children|>List.head
+            |>Html_node.descend 2
             |>Html_node.direct_children
             |>List.isEmpty|>not
         

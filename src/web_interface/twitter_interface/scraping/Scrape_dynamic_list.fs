@@ -83,7 +83,7 @@ module Scrape_dynamic_list =
         item_selector
         =
         let rec skim_and_scroll_iteration
-            (skimmed_sofar_items: list<Html_string * 'Parsed_item>)
+            (parsed_sofar_items: list<Html_string * 'Parsed_item>)
             =
             let visible_skimmed_items =
                 skim_displayed_items
@@ -92,14 +92,14 @@ module Scrape_dynamic_list =
                 |>Array.ofList
                 
             let new_skimmed_items =
-                skimmed_sofar_items
+                parsed_sofar_items
                 |>List.map fst
                 |>new_items_from_visible_items visible_skimmed_items
                 |>List.ofArray
             
             if
                 (new_skimmed_items|>Seq.isEmpty|>not) &&
-                (Seq.length skimmed_sofar_items < max_amount)
+                (Seq.length parsed_sofar_items < max_amount)
             then
                 Actions(browser)
                     .SendKeys(Keys.PageDown).SendKeys(Keys.PageDown).SendKeys(Keys.PageDown)
@@ -107,7 +107,7 @@ module Scrape_dynamic_list =
                 sleep 1
                 
                 let all_parsed_items =
-                    skimmed_sofar_items
+                    parsed_sofar_items
                     |>List.foldBack (fun item all_items ->
                         (item, action all_items item) 
                         ::
@@ -119,7 +119,7 @@ module Scrape_dynamic_list =
                     all_parsed_items
                 
             else
-                skimmed_sofar_items
+                parsed_sofar_items
         
         skim_and_scroll_iteration []
         

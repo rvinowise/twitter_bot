@@ -103,7 +103,9 @@
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="115.0.5790.17000" />
     <PackageReference Include="Selenium.WebDriver.GeckoDriver" Version="0.33.0" />
     <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
-    
+    <PackageReference Include="WebDriverManager" Version="2.17.1" />
+
+
     <!-- html parsing -->
     <PackageReference Include="AngleSharp" Version="1.0.4" />
     <PackageReference Include="FSharp.Data" Version="6.2.0" />

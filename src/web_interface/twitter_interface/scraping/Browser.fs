@@ -2,6 +2,9 @@
 
 open System
 open OpenQA.Selenium
+open OpenQA.Selenium.Chrome
+open OpenQA.Selenium.Firefox
+open WebDriverManager.DriverConfigs.Impl
 
 
 type Browser(cookies:Cookie seq) =
@@ -11,8 +14,10 @@ type Browser(cookies:Cookie seq) =
         let browser = 
             if Settings.headless = true then
                 canopy.parallell.functions.start canopy.types.BrowserStartMode.ChromeHeadless
+                //canopy.parallell.functions.start canopy.types.BrowserStartMode.FirefoxHeadless
             else
-                canopy.parallell.functions.start canopy.types.BrowserStartMode.Chrome
+                WebDriverManager.DriverManager().SetUpDriver(FirefoxConfig())
+                new FirefoxDriver()
     
         browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(3))
         browser.Manage().Timeouts().PageLoad <- (TimeSpan.FromSeconds(180))
