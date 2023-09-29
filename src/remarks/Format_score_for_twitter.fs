@@ -1,14 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open System.Configuration
-open Microsoft.Extensions.Configuration
-open OpenQA.Selenium
-open SeleniumExtras.WaitHelpers
-open Xunit
-open canopy.parallell.functions
 open rvinowise.twitter
-open Dapper
 
 module Format_score_for_twitter =
     

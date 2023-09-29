@@ -1,15 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open AngleSharp.Dom
-open OpenQA.Selenium
-open OpenQA.Selenium.Interactions
-open OpenQA.Selenium.Support.UI
-open SeleniumExtras.WaitHelpers
-open Xunit
-open canopy.parallell.functions
 open rvinowise.html_parsing
-open FSharp.Data
 open rvinowise.twitter
 
 
@@ -20,20 +12,22 @@ type Post_header = {
     post_url: string option //quotations don't have their URL, only main posts do
 }
 type Post_stats = {
-    replies_amount: int
-    likes_amount: int
-    reposts_amount: int
-    views_amount: int
+    replies: int
+    likes: int
+    reposts: int
+    views: int
+    bookmarks: int
 }
 
 module Post_stats =
     
     let all_zero =
         {
-            Post_stats.replies_amount=0
-            likes_amount=0
-            reposts_amount=0
-            views_amount=0
+            Post_stats.replies=0
+            likes=0
+            reposts=0
+            views=0
+            bookmarks=0
         }
 
 type Abbreviated_message = {

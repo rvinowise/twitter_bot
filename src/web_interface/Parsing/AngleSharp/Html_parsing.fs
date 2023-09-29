@@ -2,14 +2,10 @@
 
 open System
 open System.Globalization
-open System.Threading.Tasks
 open AngleSharp.Html.Parser
-open AngleSharp.Io
 open FSharp.Data
 open AngleSharp
 open OpenQA.Selenium
-open FParsec
-open Xunit
 
 open rvinowise.twitter
 

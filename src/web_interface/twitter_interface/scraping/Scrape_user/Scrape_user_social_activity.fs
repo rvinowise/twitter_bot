@@ -5,7 +5,6 @@ open Xunit
 open FsUnit
 open canopy.parallell.functions
 open rvinowise.twitter
-open FParsec
 
 
 type User_social_activity = {

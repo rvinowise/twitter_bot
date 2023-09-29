@@ -1,11 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open System.Runtime.InteropServices.JavaScript
 open OpenQA.Selenium
-open canopy.parallell.functions
-open Xunit
-open rvinowise.twitter.social_database
 
 module Harvest_followers_network =
     

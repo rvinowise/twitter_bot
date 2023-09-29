@@ -1,10 +1,7 @@
 namespace rvinowise.twitter
 
-open OpenQA.Selenium
-open Xunit
 open canopy.classic
 open canopy.parallell.functions
-open System
 open rvinowise.twitter
 
 

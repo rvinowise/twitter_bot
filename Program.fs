@@ -2,7 +2,6 @@ namespace rvinowise.twitter
 
 open System.Threading.Tasks
 open OpenQA.Selenium
-open canopy.parallell.functions
 open rvinowise.html_parsing
 open rvinowise.twitter
 

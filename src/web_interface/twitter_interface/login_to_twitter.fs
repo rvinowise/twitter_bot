@@ -3,7 +3,6 @@ namespace rvinowise.twitter
 open OpenQA.Selenium
 open canopy.classic
 open canopy.parallell.functions
-open FSharp.Configuration
 
 module Login_to_twitter =
     

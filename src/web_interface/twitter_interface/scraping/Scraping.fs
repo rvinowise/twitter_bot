@@ -3,7 +3,6 @@
 open System
 open OpenQA.Selenium
 open canopy.parallell.functions
-open OpenQA.Selenium.Support.UI
 open canopy.types
 
 module Scraping =

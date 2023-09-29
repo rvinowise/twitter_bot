@@ -1,11 +1,6 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open Microsoft.Extensions.Configuration
-open OpenQA.Selenium
-open Xunit
-open canopy.parallell.functions
-open FSharp.Configuration
 open rvinowise.twitter
 
 

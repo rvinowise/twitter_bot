@@ -2,10 +2,7 @@
 
 open System
 open System.Collections.Generic
-open System.IO
 open System.Threading.Tasks
-open Google.Apis.Auth.OAuth2
-open Google.Apis.Services
 open Google.Apis.Sheets.v4.Data
 open Xunit
 

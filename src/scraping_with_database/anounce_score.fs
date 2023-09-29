@@ -4,10 +4,6 @@
 module Anounce_score =
     
     open System
-    open OpenQA.Selenium
-    open canopy.parallell.functions
-    open FSharp.Configuration
-    open Xunit
 
     
    

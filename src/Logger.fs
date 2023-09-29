@@ -1,17 +1,7 @@
 namespace rvinowise.twitter
 
-open System
-open System.Configuration
-open System.Runtime.InteropServices
-open Microsoft.Extensions.Configuration
-open OpenQA.Selenium
-open SeleniumExtras.WaitHelpers
 open Serilog
-open Serilog.Formatting.Compact
 open Xunit
-open canopy.parallell.functions
-open Dapper
-open Npgsql
 
     
 

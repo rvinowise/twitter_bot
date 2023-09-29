@@ -1,15 +1,9 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open OpenQA.Selenium
-open OpenQA.Selenium.Interactions
-open OpenQA.Selenium.Support.UI
-open SeleniumExtras.WaitHelpers
 open Xunit
 open FsUnit
-open canopy.parallell.functions
 open rvinowise.html_parsing
-open FSharp.Data
 open rvinowise.twitter
 
 
@@ -43,13 +37,13 @@ I'm not for bans on veiling, I am for consistency though.</span></div></div><div
         |>should equal (Post_message.Full """Is Egypt also Islamophobic? 
 I'm not for bans on veiling, I am for consistency though.""")
         
-        post.stats.replies_amount
+        post.stats.replies
         |>should equal 6
-        post.stats.reposts_amount
+        post.stats.reposts
         |>should equal 11
-        post.stats.likes_amount
+        post.stats.likes
         |>should equal 65
-        post.stats.views_amount
+        post.stats.views
         |>should equal 5842
         
         post.external_source
@@ -120,13 +114,13 @@ I was about to start work on this commission, when in came an email from Twitte
         | _ -> raise Html_parsing_fail
         
         
-        post.stats.likes_amount
+        post.stats.likes
         |>should equal 0
-        post.stats.reposts_amount
+        post.stats.reposts
         |>should equal 0
-        post.stats.replies_amount
+        post.stats.replies
         |>should equal 0
-        post.stats.views_amount
+        post.stats.views
         |>should equal 9
     
     //my posts
@@ -184,13 +178,13 @@ It’s so empowering to see more and more courageous women finding the freedom t
         | _ -> raise Html_parsing_fail
         
         
-        post.stats.likes_amount
+        post.stats.likes
         |>should equal 0
-        post.stats.reposts_amount
+        post.stats.reposts
         |>should equal 0
-        post.stats.replies_amount
+        post.stats.replies
         |>should equal 0
-        post.stats.views_amount
+        post.stats.views
         |>should equal 4
         
         ()
@@ -267,11 +261,11 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |_ -> raise Html_parsing_fail
         
         
-        post.stats.likes_amount
+        post.stats.likes
         |>should equal 1
-        post.stats.reposts_amount
+        post.stats.reposts
         |>should equal 0
-        post.stats.replies_amount
+        post.stats.replies
         |>should equal 1
         
 
@@ -317,13 +311,13 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |_ -> raise Html_parsing_fail
         
         
-        post.stats.likes_amount
+        post.stats.likes
         |>should equal 0
-        post.stats.reposts_amount
+        post.stats.reposts
         |>should equal 1
-        post.stats.replies_amount
+        post.stats.replies
         |>should equal 0
-        post.stats.views_amount
+        post.stats.views
         |>should equal 17
         
     
@@ -371,13 +365,13 @@ https://openlongevity.org""")
         |_ -> raise Html_parsing_fail
         
         
-        post.stats.likes_amount
+        post.stats.likes
         |>should equal 0
-        post.stats.reposts_amount
+        post.stats.reposts
         |>should equal 0
-        post.stats.replies_amount
+        post.stats.replies
         |>should equal 0
-        post.stats.views_amount
+        post.stats.views
         |>should equal 11
         
         

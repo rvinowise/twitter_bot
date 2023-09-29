@@ -1,15 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open AngleSharp.Dom
-open OpenQA.Selenium
-open OpenQA.Selenium.Interactions
-open OpenQA.Selenium.Support.UI
-open SeleniumExtras.WaitHelpers
-open Xunit
-open canopy.parallell.functions
 open rvinowise.html_parsing
-open FSharp.Data
 open rvinowise.twitter
 
 
@@ -356,40 +348,7 @@ module Parse_segments_of_post =
     
     
     
-    let parse_post_footer
-        ``node with all app-text-transition-container of a post`` //role="group"
-        =
-        let number_inside_footer_element stat_segment =
-            stat_segment
-            |>Html_node.try_descendant ":scope>span>span"
-            |>function
-            |None -> 0
-            |Some node ->
-                node
-                |>Html_node.inner_text
-                |>Parsing_twitter_datatypes.parse_abbreviated_number
-        
-        let stat_segments =
-            ``node with all app-text-transition-container of a post``
-            |>Html_node.descendants "span[data-testid='app-text-transition-container']"
-        {
-            Post_stats.replies_amount=
-                stat_segments
-                |>Seq.head
-                |>number_inside_footer_element
-            reposts_amount=
-                stat_segments
-                |>Seq.item 1
-                |>number_inside_footer_element
-            likes_amount=
-                stat_segments
-                |>Seq.item 2
-                |>number_inside_footer_element
-            views_amount=
-                stat_segments
-                |>Seq.item 3
-                |>number_inside_footer_element
-        }
+    
     
     
         
@@ -438,12 +397,11 @@ module Parse_segments_of_post =
         
         let post_stats =
             try
-                parse_post_footer post_html_segments.footer
+                Parse_footer_with_stats.parse_post_footer post_html_segments.footer
             with
             | :? ArgumentException as e ->
-                parse_post_footer post_html_segments.footer
+                Parse_footer_with_stats.parse_post_footer post_html_segments.footer //test
                 reraise()
-                //Post_stats.all_zero
         
         {
             Main_post.id=post_id

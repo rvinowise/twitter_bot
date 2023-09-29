@@ -1,12 +1,9 @@
 ﻿namespace rvinowise.twitter
 
-open System
 open System.Collections.Generic
 open System.IO
 open Google.Apis.Auth.OAuth2
 open Google.Apis.Services
-open Google.Apis.Sheets.v4.Data
-open Xunit
 
 open Google.Apis.Sheets.v4
 open rvinowise.twitter

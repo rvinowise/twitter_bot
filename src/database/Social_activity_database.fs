@@ -5,7 +5,6 @@ namespace rvinowise.twitter
 open System
 open Dapper
 open Npgsql
-open Xunit
 open rvinowise.twitter.social_database
 
 module Social_activity_database =

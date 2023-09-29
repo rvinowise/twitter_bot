@@ -1,11 +1,7 @@
 ﻿namespace rvinowise.twitter
 
-open System
-open Xunit
-open FsUnit
 open canopy.parallell.functions
 open rvinowise.twitter
-open FParsec
 
 
 

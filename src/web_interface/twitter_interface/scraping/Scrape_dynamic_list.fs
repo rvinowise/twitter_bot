@@ -1,11 +1,8 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open FSharp.Data
 open OpenQA.Selenium
 open OpenQA.Selenium.Interactions
-open OpenQA.Selenium.Support.UI
-open SeleniumExtras.WaitHelpers
 open rvinowise.html_parsing
 open canopy.parallell.functions
 

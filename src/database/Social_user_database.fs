@@ -2,10 +2,8 @@
 
 namespace rvinowise.twitter
 
-open System
 open Dapper
 open Npgsql
-open Xunit
 open rvinowise.twitter
 open rvinowise.twitter.social_database
 
