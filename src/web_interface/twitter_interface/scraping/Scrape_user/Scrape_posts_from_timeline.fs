@@ -55,9 +55,10 @@ module Scrape_posts_from_timeline =
                     |>Scraping.prepare_authentified_browser
                     |>Browser.browser
                 )
-                10
+                100
                 Timeline_tab.Posts
-                (User_handle "InfidelNoodle")
+                (User_handle "RichardDawkins")
+        let result = List.map snd posts
         ()
 
 

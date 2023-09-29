@@ -14,9 +14,10 @@ module Scrape_dynamic_list =
     
     
     let skim_displayed_items
-        browser
+        (browser:IWebDriver)
         item_css
         =
+        browser.Manage().Timeouts().ImplicitWait <- TimeSpan.FromSeconds(60); //test
         let items = elements item_css browser
         items
         |>List.map (fun web_element -> Html_string (web_element.GetAttribute("outerHTML")))
@@ -83,7 +84,6 @@ module Scrape_dynamic_list =
         =
         let rec skim_and_scroll_iteration
             (skimmed_sofar_items: list<Html_string * 'Parsed_item>)
-            
             =
             let visible_skimmed_items =
                 skim_displayed_items

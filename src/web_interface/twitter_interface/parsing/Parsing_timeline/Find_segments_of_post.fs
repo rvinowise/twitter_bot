@@ -83,11 +83,13 @@ module Find_segments_of_post =
     
     let is_reply_header node =
         node
-        |>Html_node.matches "div"
-        &&
-        node.FirstChild.NodeType = NodeType.Text
-        &&
-        node.FirstChild.TextContent = "Replying to "
+        |>Html_node.descend 1
+        |>fun node ->
+            Html_node.matches "div" node
+            &&
+            node.FirstChild.NodeType = NodeType.Text
+            &&
+            node.FirstChild.TextContent = "Replying to "
     
     let is_mark_of_thread node =
         node
@@ -150,11 +152,15 @@ module Find_segments_of_post =
                 else
                     None,body_segments
             |[]->raise Html_parsing_fail
-            
+        
         let message =
-            rest_segments
-            |>Seq.head
-            |>Html_node.descendant "div[data-testid='tweetText']"
+            try    
+                rest_segments
+                |>Seq.head
+                |>Html_node.descendant "div[data-testid='tweetText']"
+            with
+            | :? System.ArgumentException as e ->
+                reraise()
             
         let additional_load =
             rest_segments

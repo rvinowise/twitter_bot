@@ -15,7 +15,7 @@ module Scraping =
         browser.FindElements(By.CssSelector(css_selector))
         |>Seq.tryHead
         
-    let try_element_reliable //but slow if the element doesn't appear
+    let try_element_reliably //but slow if the element doesn't appear
         (browser:IWebDriver)
         css_selector
         =

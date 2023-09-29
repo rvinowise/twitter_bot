@@ -282,10 +282,6 @@ module Parse_segments_of_post =
             
             let reply_status =
                 parse_reply_status_of_quotable_post quoted_header.author.handle quoted_message_node
-//                |>function
-//                |Some reply_target_user ->
-//                    Some (reply_target_user,None)
-//                |None->None
             
             let quoted_media_items =
                 ``node with potential role=link of the quotation``
@@ -345,13 +341,7 @@ module Parse_segments_of_post =
                 """|>ignore
             None
         
-    
-    
-    
-    
-    
-    
-        
+
     let parse_main_twitter_post
         (previous_posts: Main_post list )
         (article_html:Html_node)
