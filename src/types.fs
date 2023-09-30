@@ -20,6 +20,11 @@ module User_handle =
         else
             value
     
+    let trim_potential_slash (value:string) =
+        if Seq.head value = '/' then
+            value[1..]
+        else
+            value
     
     let url_from_handle handle =
         $"{Twitter_settings.base_url}/{value handle}"        

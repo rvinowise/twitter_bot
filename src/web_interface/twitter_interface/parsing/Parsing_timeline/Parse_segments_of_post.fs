@@ -145,8 +145,8 @@ module Parse_segments_of_post =
                     |>Html_parsing.readable_text_from_html_segments
                 obfuscated_url=
                     ``node of potential card.wrapper``
-                    |>Html_node.descendant "a[role='link']"
-                    |>Html_node.attribute_value "href"
+                    |>Html_node.try_descendant "a[role='link']"
+                    |>Option.map (Html_node.attribute_value "href")
                     
             }
         else None
@@ -154,14 +154,15 @@ module Parse_segments_of_post =
      
     let parse_reply_header reply_header =
         reply_header
-        |>Html_node.descendant "span"
+        |>Html_node.first_descendants_with_css "span"
+        |>List.head
         |>Html_node.inner_text
         |>User_handle.trim_potential_atsign
         |>User_handle
     
     
-    let try_reply_target_from_reply_header author node =
-        node
+    let try_reply_target_from_reply_header tweet_text_node =
+        tweet_text_node
         |>Html_node.parent
         |>Html_node.direct_children
         |>List.head
@@ -176,7 +177,7 @@ module Parse_segments_of_post =
             else
                 None
     
-    let try_reply_status_from_thread_mark node =
+    let try_reply_status_from_thread_mark user node =
         if (
             node
             |>Html_node.parent
@@ -184,7 +185,7 @@ module Parse_segments_of_post =
             |>List.last
             |>Find_segments_of_post.is_mark_of_thread)
         then    
-            Reply_status.External_thread
+            Reply_status.External_thread user
             |>Some
         else
             None
@@ -192,7 +193,6 @@ module Parse_segments_of_post =
     let parse_reply_status_of_quotable_post author ``tweetText node`` =
         let reply_target_from_header =
             try_reply_target_from_reply_header
-                author
                 ``tweetText node``
             
         match reply_target_from_header with
@@ -200,7 +200,7 @@ module Parse_segments_of_post =
             Reply_status.External_message (reply_target, None)
             |>Some
         |None->
-            try_reply_status_from_thread_mark ``tweetText node``
+            try_reply_status_from_thread_mark author ``tweetText node``
     
     
     let check_thread_status_from_timeline
@@ -209,9 +209,10 @@ module Parse_segments_of_post =
         =
         let has_linked_post_after =
             article_html
-            //|>Html_node.descendant "div[data-testid='Tweet-User-Avatar']"
-            //|>Html_node.parent
-            |>Html_node.descendant "div:has(:scope>div[data-testid='Tweet-User-Avatar'])"
+            |>Html_node.descendants "div[data-testid='Tweet-User-Avatar']"
+            |>List.head
+            |>Html_node.parent
+            //|>Html_node.descendant "div:has(:scope>div[data-testid='Tweet-User-Avatar'])"
             |>Html_node.direct_children
             |>List.length
             |>function
@@ -252,16 +253,27 @@ module Parse_segments_of_post =
                 Some (Reply_status.Ending_local_thread previous_post)
         |_-> None
         
-    let parse_reply_status_of_main_post author parseable_post previous_post=
+    let parse_reply_status_of_main_post
+        author
+        is_repost
+        article_node
+        previous_post
+        =
         let status_from_quotable_core =
-            parse_reply_status_of_quotable_post
-                author parseable_post
+            article_node
+            |>Html_node.descendants "div[data-testid='tweetText']"
+            |>List.head
+            |>parse_reply_status_of_quotable_post
+                author
         match status_from_quotable_core with
         |Some reply_status -> Some reply_status
         |None->
-            check_thread_status_from_timeline
-                previous_post
-                parseable_post
+            if is_repost then //reposted posts don't have thread-line in the timeline
+                None
+            else
+                check_thread_status_from_timeline
+                    previous_post
+                    article_node
         
     let parse_quoted_post_from_its_node
         ``node with potential role=link of the quotation``
@@ -314,37 +326,40 @@ module Parse_segments_of_post =
         ``node with either role=link of quotation, or card.wrapper`` 
         //either a quoted-post, or an external-url
         =
-        
-        let quoted_post =
+        match
             parse_quoted_post_from_its_node
                 ``node with either role=link of quotation, or card.wrapper``
-                
-        let external_url_load =
-            parse_external_source_from_additional_load
-                ``node with either role=link of quotation, or card.wrapper``
-            
-        match
-            quoted_post,
-            external_url_load
         with
-        |None, Some external_url ->
-            external_url
-            |>External_source.External_url 
-            |>Some
-        |Some quoted_post, None ->
+        |Some quoted_post -> 
             quoted_post
             |>External_source.Quotation
             |>Some
-        | _,_ ->
-            Log.error $"""
-                a strange composition of the additional_load of a post.
-                additional_load_node: {``node with either role=link of quotation, or card.wrapper``}
-                quoted_post: {quoted_post}
-                external_url_load: {external_url_load}
-                """|>ignore
-            None
+        |None ->
+            match
+                parse_external_source_from_additional_load
+                    ``node with either role=link of quotation, or card.wrapper``
+            with
+            |Some external_url_load ->
+                external_url_load
+                |>External_source.External_url 
+                |>Some
+            |None -> None
+            
         
-
+    let reposting_user article_node =
+        let repost_mark_node =
+            article_node
+            |>Html_node.try_descendant "span[data-testid='socialContext']"
+        match repost_mark_node with
+        |Some repost_mark_node ->
+            repost_mark_node
+            |>Html_node.ancestors "a[role='link']"
+            |>List.head
+            |>Html_node.attribute_value "href"
+            |>User_handle.trim_potential_slash
+            |>User_handle|>Some
+        |None -> None
+    
     let parse_main_twitter_post
         (previous_posts: Main_post list )
         (article_html:Html_node)
@@ -368,12 +383,15 @@ module Parse_segments_of_post =
                 |>Bad_post_structure_exception
                 |>raise
         
+        let reposting_user = article_html|>reposting_user
+        
         let reply_status =
             previous_posts
             |>List.tryHead
             |>Option.map (fun post->post.id)
             |>parse_reply_status_of_main_post
                 parsed_header.author.handle
+                reposting_user.IsSome
                 article_html
             
         
@@ -393,7 +411,6 @@ module Parse_segments_of_post =
                 Parse_footer_with_stats.parse_post_footer post_html_segments.footer
             with
             | :? ArgumentException as e ->
-                Parse_footer_with_stats.parse_post_footer post_html_segments.footer //test
                 reraise()
         
         {
@@ -409,4 +426,5 @@ module Parse_segments_of_post =
             }
             external_source=external_source
             stats=post_stats
+            repost=reposting_user
         }

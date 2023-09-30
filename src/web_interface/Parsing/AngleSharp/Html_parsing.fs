@@ -38,9 +38,23 @@ module Html_node =
     let as_html_string (node:Html_node) =
         node.GetAttribute("outerHTML")
     
+    let matches css (node:Html_node) =
+        node.Matches css
+    
     let descendants css (node:Html_node) =
         node.QuerySelectorAll css
         |>List.ofSeq
+    
+    let descendants_with_this css (node:Html_node) =
+        let children =
+            node
+            |>descendants css
+        if
+            node|>matches css
+        then
+            node::children
+        else
+            children
     
     let direct_children (node:Html_node) =
         List.ofSeq node.Children
@@ -51,8 +65,7 @@ module Html_node =
             child.Matches css |>not
         )
         
-    let matches css (node:Html_node) =
-        node.Matches css
+    
     
     let should_be_single seq =
         if Seq.length seq = 1 then
@@ -125,7 +138,7 @@ module Html_node =
             =
             let needed_children =
                 nodes
-                |>List.collect (descendants (">"+css))
+                |>List.collect (descendants (":scope>"+css))
             match needed_children with
             |[] ->
                 nodes

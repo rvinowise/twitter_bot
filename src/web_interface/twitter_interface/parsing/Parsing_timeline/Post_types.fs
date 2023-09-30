@@ -108,7 +108,7 @@ type Media_item =
 
 type Reply_status =
     (*the author will be the same as in this message; text "show this thread" after the message *)
-    |External_thread
+    |External_thread of User_handle
     (*text "replying to..." below header *)     
     |External_message of User_handle * Post_id option
     (*there will be a replying message right after this message; vertical line in the timeline *)
@@ -129,7 +129,7 @@ type External_url = {
     page: string
     message: string
     (* the actual referenced URL is hidden, need to click in order to see it *)
-    obfuscated_url: string 
+    obfuscated_url: string option
 }
 
 type External_source =
@@ -143,6 +143,7 @@ type Main_post = {
     quotable_core: Quotable_post
     external_source: External_source option
     stats: Post_stats
+    repost: User_handle option
 }
 
 type Post =

@@ -83,13 +83,12 @@ module Find_segments_of_post =
     
     let is_reply_header node =
         node
-        |>Html_node.descend 1
-        |>fun node ->
-            Html_node.matches "div" node
-            &&
+        |>Html_node.descendants_with_this "div"
+        |>List.exists (fun node ->
             node.FirstChild.NodeType = NodeType.Text
             &&
             node.FirstChild.TextContent = "Replying to "
+        )
     
     let is_mark_of_thread node =
         node

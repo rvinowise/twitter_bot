@@ -16,8 +16,8 @@ type Browser(cookies:Cookie seq) =
                 canopy.parallell.functions.start canopy.types.BrowserStartMode.ChromeHeadless
                 //canopy.parallell.functions.start canopy.types.BrowserStartMode.FirefoxHeadless
             else
-                WebDriverManager.DriverManager().SetUpDriver(FirefoxConfig())
-                new FirefoxDriver()
+                WebDriverManager.DriverManager().SetUpDriver(ChromeConfig())
+                new ChromeDriver()
     
         browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(3))
         browser.Manage().Timeouts().PageLoad <- (TimeSpan.FromSeconds(180))
