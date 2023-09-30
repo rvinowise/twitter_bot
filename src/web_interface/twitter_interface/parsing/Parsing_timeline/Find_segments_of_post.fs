@@ -146,10 +146,16 @@ module Find_segments_of_post =
         let reply_header,rest_segments =
             match body_segments with
             |maybe_reply_header::rest_segments ->
-                if is_reply_header maybe_reply_header then
-                    Some maybe_reply_header,rest_segments
-                else
+                try 
+                    if is_reply_header maybe_reply_header then
+                        Some maybe_reply_header,rest_segments
+                    else
+                        None,body_segments
+                with
+                | :? System.NullReferenceException as e ->
+                    is_reply_header maybe_reply_header
                     None,body_segments
+                    
             |[]->raise Html_parsing_fail
         
         let message =
