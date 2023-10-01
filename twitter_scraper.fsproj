@@ -20,6 +20,7 @@
     <Compile Include="src\web_interface\parsing_infrastructure\AngleSharp\Html_parsing.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\scraping_infrastructure\Canopy\Scraping.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\scraping_infrastructure\Canopy\Browser.fs" />
+    <Compile Include="src\web_interface\twitter_interface\Scraping\scraping_infrastructure\Canopy\Scraping_parameters.fs" />
     
     
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_twitter_datatypes.fs" />

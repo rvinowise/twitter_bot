@@ -17,6 +17,7 @@ module Scrape_dynamic_list =
         item_css
         =
         //browser.Manage().Timeouts().ImplicitWait <- TimeSpan.FromSeconds(60); //test
+        use parameters = Scraping_parameters.wait_seconds 60 browser
         let items = Browser.elements item_css browser
         items
         |>List.map (fun web_element ->
