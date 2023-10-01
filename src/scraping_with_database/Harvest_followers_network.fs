@@ -2,6 +2,7 @@
 
 open System
 open OpenQA.Selenium
+open rvinowise.web_scraping
 
 module Harvest_followers_network =
     
@@ -118,7 +119,7 @@ module Harvest_followers_network =
                 browser,
                 harvest_user_adding_his_acquaintances
                     parsing_context
-                    browser.browser
+                    browser
                     db_connection
                     repeat_if_older_than
                     unknown_users_around

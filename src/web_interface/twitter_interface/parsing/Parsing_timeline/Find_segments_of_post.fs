@@ -19,7 +19,7 @@ type Html_segments_of_quoted_post = { //which quoted post? it can be big or smal
 
 type Html_segments_of_main_post = {
     header: Html_node
-    message: Html_node
+    message: Html_node option
     reply_header: Html_node option
     media_load: Html_node option
     quotation_load: Html_node option
@@ -85,9 +85,15 @@ module Find_segments_of_post =
         node
         |>Html_node.descendants_with_this "div"
         |>List.exists (fun node ->
-            node.FirstChild.NodeType = NodeType.Text
-            &&
-            node.FirstChild.TextContent = "Replying to "
+            node
+            |>Html_node.direct_children
+            |>List.tryHead
+            |>function
+            |Some child ->
+                child.NodeType = NodeType.Text
+                &&
+                child.TextContent = "Replying to "
+            |None -> false
         )
     
     let is_mark_of_thread node =
@@ -159,13 +165,9 @@ module Find_segments_of_post =
             |[]->raise Html_parsing_fail
         
         let message =
-            try    
-                rest_segments
-                |>Seq.head
-                |>Html_node.descendant "div[data-testid='tweetText']"
-            with
-            | :? System.ArgumentException as e ->
-                reraise()
+            rest_segments
+            |>Seq.head
+            |>Html_node.try_descendant "div[data-testid='tweetText']"
             
         let additional_load =
             rest_segments

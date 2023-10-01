@@ -100,7 +100,10 @@ module Parse_segments_of_post =
             with
             | :? ArgumentException as e->
                 raise
-                <| Bad_post_structure_exception("can't parse posted images from large layout",load_node)
+                <| Bad_post_structure_exception(
+                    "can't parse posted images from large layout",
+                    load_node
+                )
         
         // videos are also part of data-testid="tweetPhoto" node, like images
         let posted_videos =
@@ -262,9 +265,14 @@ module Parse_segments_of_post =
         let status_from_quotable_core =
             article_node
             |>Html_node.descendants "div[data-testid='tweetText']"
-            |>List.head
-            |>parse_reply_status_of_quotable_post
-                author
+            |>List.tryHead
+            |>function
+            |Some message_node ->
+                message_node
+                |>parse_reply_status_of_quotable_post
+                    author
+            |None -> None
+            
         match status_from_quotable_core with
         |Some reply_status -> Some reply_status
         |None->
@@ -420,8 +428,12 @@ module Parse_segments_of_post =
                 created_at=parsed_header.written_at
                 reply_status=reply_status
                 message =
-                    Post_message.from_html_node
-                        post_html_segments.message
+                    post_html_segments.message
+                    |>function
+                    |Some message_node ->
+                        Post_message.from_html_node message_node
+                    |None -> Post_message.Full ""
+                        
                 media_load = media_items
             }
             external_source=external_source

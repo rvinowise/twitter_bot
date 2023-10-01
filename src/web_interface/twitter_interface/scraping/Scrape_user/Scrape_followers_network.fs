@@ -2,6 +2,7 @@
 
 open canopy.parallell.functions
 open rvinowise.html_parsing
+open rvinowise.web_scraping
 
 module Scrape_followers_network =
     
@@ -15,11 +16,11 @@ module Scrape_followers_network =
         
     let scrape_user_catalog browser catalog_url = 
         Log.info $"reading elements of catalog {catalog_url} ... " 
-        url catalog_url browser
+        Browser.open_url catalog_url browser
         
         let user_catalog_element = "div[data-testid='UserCell']"
         let catalogue =
-            Scraping.try_element browser "div:has(>div[data-testid='cellInnerDiv'])"
+            Browser.try_element browser "div:has(>div[data-testid='cellInnerDiv'])"
         
         match catalogue with
         |Some _ ->

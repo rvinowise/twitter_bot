@@ -3,7 +3,7 @@ namespace rvinowise.twitter
 open System.Threading.Tasks
 open OpenQA.Selenium
 open rvinowise.html_parsing
-open rvinowise.twitter
+open rvinowise.web_scraping
 
 
 module Program =
@@ -37,7 +37,7 @@ module Program =
             |>Array.ofSeq
             |>Array.Parallel.iter(fun (bot_token, user_to_harvest)->
                 use db_connection = Database.open_connection() 
-                use browser = Scraping.prepare_authentified_browser bot_token
+                use browser = Browser.prepare_authentified_browser bot_token
                 use parsing_context = Html_parsing.parsing_context()
                 Harvest_followers_network.harvest_following_network_around_user
                     parsing_context
@@ -56,8 +56,8 @@ module Program =
             use browser =
                 Settings.auth_tokens
                 |>Seq.head
-                |>Scraping.prepare_authentified_browser 
-            Anounce_score.scrape_and_announce_user_state browser.browser
+                |>Browser.prepare_authentified_browser 
+            Anounce_score.scrape_and_announce_user_state browser
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't scrape state of twitter-competitors: {exc.Message}"""|>ignore

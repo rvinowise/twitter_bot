@@ -3,7 +3,7 @@
 open Xunit
 open canopy.parallell.functions
 open rvinowise.html_parsing
-open rvinowise.twitter
+open rvinowise.web_scraping
 
 
 type Timeline_tab =
@@ -35,7 +35,7 @@ module Scrape_posts_from_timeline =
         (tab: Timeline_tab)
         user
         =
-        url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
+        Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser    
         "article[data-testid='tweet']"
         |>Scrape_dynamic_list.consume_items_of_dynamic_list
@@ -52,8 +52,7 @@ module Scrape_posts_from_timeline =
                 (
                     Settings.auth_tokens
                     |>Seq.head
-                    |>Scraping.prepare_authentified_browser
-                    |>Browser.browser
+                    |>Browser.prepare_authentified_browser
                 )
                 100
                 Timeline_tab.Posts

@@ -2,11 +2,8 @@
 
 open System
 open OpenQA.Selenium
-open OpenQA.Selenium.Interactions
-open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
-open canopy.parallell.functions
-open rvinowise.twitter
+open rvinowise.web_scraping
 
 module Scrape_list_members =
     (*
@@ -21,17 +18,21 @@ module Scrape_list_members =
     
     let rec keep_skimming_elements_while_valid
         skimmed_elements
-        (user_cells: IWebElement list)
+        (user_cells: Web_element list)
         =
         match user_cells with
         |[]->skimmed_elements,false
         |user_cell::rest_cells->
             let skimmed_element =
                 try
-                    let name_field = user_cell.FindElement(
-                        By.CssSelector("div>div:nth-child(2)>div>div>div>div>a[role='link']>div>div>span>span:nth-child(1)"))
-                    let handle_field = user_cell.FindElement(
-                        By.CssSelector("div>div:nth-child(2)>div>div>div>div>a[role='link']"))
+                    let name_field =
+                        user_cell.FindElement(
+                            By.CssSelector("div>div:nth-child(2)>div>div>div>div>a[role='link']>div>div>span>span:nth-child(1)")
+                        )
+                    let handle_field =
+                        user_cell.FindElement(
+                            By.CssSelector("div>div:nth-child(2)>div>div>div>div>a[role='link']")
+                        )
                     let user_name = name_field.Text
                     let user_url = handle_field.GetAttribute("href")
                     let user_handle = User_handle.handle_from_url user_url
@@ -78,8 +79,8 @@ module Scrape_list_members =
         browser
         table_with_elements
         =
-        let actions = Actions(browser)
-        actions.SendKeys(Keys.Tab).Perform()
+        Browser.send_key Keys.Tab browser
+        
         let rec skim_and_scroll_iteration
             table_with_elements
             skimmed_sofar_elements
@@ -93,14 +94,13 @@ module Scrape_list_members =
                 skimmed_sofar_elements
                 new_skimmed_members
             then
-                actions
-                    .SendKeys(Keys.PageDown).SendKeys(Keys.PageDown).SendKeys(Keys.PageDown)
-                    .Perform()
-                sleep 1
+                Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
+                
+                Browser.sleep 1
+                
                 let progress_bar_css = "div[role='progressbar']"
-                WebDriverWait(browser, TimeSpan.FromSeconds(20)).
-                    Until(ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector(progress_bar_css)))
-                |>ignore
+                
+                Browser.wait_for_disappearance progress_bar_css 20 browser
                 
                 new_skimmed_members
                 |>Set.ofSeq
@@ -118,10 +118,10 @@ module Scrape_list_members =
         Log.info $"reading members of list {list_id} ... " 
         let members_url = 
             $"{Twitter_settings.base_url}/i/lists/{list_id}/members"
-        url members_url browser
+        Browser.open_url members_url browser
         
         let table_with_members =
-            Scraping.try_element browser "div[aria-label='Timeline: List members']" 
+            Browser.try_element browser "div[aria-label='Timeline: List members']" 
         
         match table_with_members with
         |Some table_with_members ->

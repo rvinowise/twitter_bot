@@ -2,9 +2,8 @@
 
 open System
 open OpenQA.Selenium
-open OpenQA.Selenium.Interactions
 open rvinowise.html_parsing
-open canopy.parallell.functions
+open rvinowise.web_scraping
 
 open FsUnit
 open Xunit
@@ -14,13 +13,17 @@ module Scrape_dynamic_list =
     
     
     let skim_displayed_items
-        (browser:IWebDriver)
+        browser
         item_css
         =
-        browser.Manage().Timeouts().ImplicitWait <- TimeSpan.FromSeconds(60); //test
-        let items = elements item_css browser
+        //browser.Manage().Timeouts().ImplicitWait <- TimeSpan.FromSeconds(60); //test
+        let items = Browser.elements item_css browser
         items
-        |>List.map (fun web_element -> Html_string (web_element.GetAttribute("outerHTML")))
+        |>List.map (fun web_element ->
+            web_element
+            |>Web_element.attribute_value "outerHTML"
+            |>Html_string 
+        )
         
 
     let add_new_items_to_map
@@ -101,10 +104,8 @@ module Scrape_dynamic_list =
                 (new_skimmed_items|>Seq.isEmpty|>not) &&
                 (Seq.length parsed_sofar_items < max_amount)
             then
-                Actions(browser)
-                    .SendKeys(Keys.PageDown).SendKeys(Keys.PageDown).SendKeys(Keys.PageDown)
-                    .Perform()
-                sleep 1
+                Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
+                Browser.sleep 1
                 
                 let all_parsed_items =
                     parsed_sofar_items

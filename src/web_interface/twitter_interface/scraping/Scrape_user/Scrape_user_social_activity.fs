@@ -4,7 +4,7 @@ open System
 open Xunit
 open FsUnit
 open canopy.parallell.functions
-open rvinowise.twitter
+open rvinowise.web_scraping
 
 
 type User_social_activity = {
@@ -49,7 +49,7 @@ module Scrape_user_social_activity =
     let scrape_posts_amount browser =
         let posts_qty_field =
             "div:has(>h2[role='heading']) > div[dir='ltr']"
-            |>Scraping.try_element browser
+            |>Browser.try_element browser
         
         posts_qty_field
         |>function
@@ -59,7 +59,7 @@ module Scrape_user_social_activity =
             None
         |Some posts_qty_field->
             browser
-            |>read posts_qty_field
+            |>Browser.read posts_qty_field
             |>Parsing_twitter_datatypes.try_parse_abbreviated_number 
     
     
@@ -67,7 +67,7 @@ module Scrape_user_social_activity =
     let scrape_acquaintances_amount_of_user browser user_handle link =
         let followers_qty_field = $"a[href='/{User_handle.value user_handle}/{link}'] span span"
         followers_qty_field
-        |>Scraping.try_element browser
+        |>Browser.try_element browser
         |>function
         |None->
             $"url '{User_handle.url_from_handle user_handle}' doesn't show the {link} field"
@@ -75,7 +75,7 @@ module Scrape_user_social_activity =
             None
         |Some followers_qty_field->
             browser
-            |>read followers_qty_field
+            |>Browser.read followers_qty_field
             |>Parsing_twitter_datatypes.try_parse_abbreviated_number
     
     let scrape_followers_amount_of_user browser user_handle =

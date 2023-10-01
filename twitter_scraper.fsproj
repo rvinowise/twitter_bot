@@ -17,7 +17,11 @@
     
     
 <!--    <Compile Include="src\web_interface\parsing\FSharpData\Html_parsing.fs" />-->
-    <Compile Include="src\web_interface\parsing\AngleSharp\Html_parsing.fs" />
+    <Compile Include="src\web_interface\parsing_infrastructure\AngleSharp\Html_parsing.fs" />
+    <Compile Include="src\web_interface\twitter_interface\Scraping\scraping_infrastructure\Canopy\Scraping.fs" />
+    <Compile Include="src\web_interface\twitter_interface\Scraping\scraping_infrastructure\Canopy\Browser.fs" />
+    
+    
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_twitter_datatypes.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parse_twitter_user.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parse_post_from_its_page.fs" />
@@ -29,9 +33,6 @@
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_post_from_timeline.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_twitter_post_test.fs" />
     
-    
-    <Compile Include="src\web_interface\twitter_interface\Scraping\Browser.fs" />
-    <Compile Include="src\web_interface\twitter_interface\Scraping\Scraping.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_list_members.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Reveal_user_page.fs" />
@@ -81,20 +82,18 @@
     <!--unit testing  -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
     <PackageReference Include="octokit" Version="7.1.0" />
+    <PackageReference Include="xunit" Version="2.5.0" />
+    <PackageReference Include="fsunit" Version="5.4.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
     
     <!-- Logging -->
     <PackageReference Include="Serilog" Version="3.0.1" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    
-    <PackageReference Include="xunit" Version="2.5.0" />
-    <PackageReference Include="fsunit" Version="5.4.0" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
-    
+
     <!--app  -->
     <PackageReference Include="Fparsec" Version="1.1.1" />
-<!--    <PackageReference Include="FsHttp" Version="11.0.0" />-->
     
     <!-- web scraping   -->
     <PackageReference Include="canopy" Version="2.1.5" />
