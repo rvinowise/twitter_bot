@@ -159,7 +159,6 @@ module Find_segments_of_post =
                         None,body_segments
                 with
                 | :? System.NullReferenceException as e ->
-                    is_reply_header maybe_reply_header
                     None,body_segments
                     
             |[]->raise Html_parsing_fail
@@ -188,6 +187,7 @@ module Find_segments_of_post =
                     else
                         Some media_or_quotation,None
                         
+                |[]->None,None // empty external source DIV, if there's a link in the message itself
                 | _->
                     raise
                     <| Bad_post_structure_exception 
