@@ -18,6 +18,7 @@ type Html_segments_of_quoted_post = { //which quoted post? it can be big or smal
 }
 
 type Html_segments_of_main_post = {
+    social_context_header: Html_node option
     header: Html_node
     message: Html_node option
     reply_header: Html_node option
@@ -85,15 +86,7 @@ module Find_segments_of_post =
         node
         |>Html_node.descendants_with_this "div"
         |>List.exists (fun node ->
-            node
-            |>Html_node.direct_children
-            |>List.tryHead
-            |>function
-            |Some child ->
-                child.NodeType = NodeType.Text
-                &&
-                child.TextContent = "Replying to "
-            |None -> false
+            Html_node.direct_text node = "Replying to "
         )
     
     let is_mark_of_thread node =
@@ -130,10 +123,19 @@ module Find_segments_of_post =
             |None -> false
     
     let html_segments_of_main_post
-        ``node with article[test-id='tweet']``
+        article_node
         = 
         let post_segments = 
-            valuable_segments_of_post ``node with article[test-id='tweet']``
+            valuable_segments_of_post article_node
+        
+        let social_context_header =
+            article_node
+            |>Html_node.try_descendant "span[data-testid='socialContext']"
+            |>function
+            |Some context-> Some context
+            |None ->
+                article_node
+                |>Html_node.try_descendant "div[data-testid='socialContext']"
         
         let header =
             post_segments
@@ -191,10 +193,11 @@ module Find_segments_of_post =
                 | _->
                     raise
                     <| Bad_post_structure_exception 
-                        ("additional post load has >2 children", ``node with article[test-id='tweet']``)
+                        ("additional post load has >2 children", article_node)
             |None -> None,None     
         
         {
+            social_context_header = social_context_header
             Html_segments_of_main_post.header = header
             message = message
             reply_header = reply_header
@@ -205,19 +208,20 @@ module Find_segments_of_post =
         
         
     let details_of_external_source
-        ``node with card.layoutSmall.detail or card.layoutLarge.detail``
+        ``node with card.wrapper``
         =
         let small_detail_css = "div[data-testid='card.layoutSmall.detail']"
         let large_detail_css = "div[data-testid='card.layoutLarge.detail']"
-        ``node with card.layoutSmall.detail or card.layoutLarge.detail``
+        ``node with card.wrapper``
         |>Html_node.try_descendant small_detail_css
         |>function
         |Some detail_node ->
             detail_node
             |>Html_node.direct_children
         |None->
-            ``node with card.layoutSmall.detail or card.layoutLarge.detail``
-            |>Html_node.descendant large_detail_css
-            |>Html_node.direct_children
+            ``node with card.wrapper``
+            |>Html_node.try_descendant large_detail_css
+            |>Option.map Html_node.direct_children
+            |>Option.defaultValue []
     
     

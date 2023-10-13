@@ -107,7 +107,7 @@ module Export_scores_to_googlesheet =
         input_into_sheet sheet clean_sheet
 
         
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try clean_sheet``() =
         clean_sheet
             Settings.Google_sheets.followers_amount
@@ -254,11 +254,6 @@ module Export_scores_to_googlesheet =
                 |>Option.defaultValue ""
         }
     
-    [<Fact(Skip="manual")>]
-    let ``try date as text``()=
-        let datetime = DateTime.Now
-        let str = $"last day of scores is {datetime}"
-        ()
             
     let input_history_of_amounts_to_sheet
         db_connection
@@ -322,13 +317,13 @@ module Export_scores_to_googlesheet =
             social_database.Table_with_amounts.Posts
             Settings.Google_sheets.posts_amount
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try update_googlesheets``() =
         Database.open_connection()
         |>update_googlesheets
     
    
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try input_posts_amount_to_sheet``() =
         update_googlesheet
             (Database.open_connection())

@@ -88,8 +88,8 @@ module Harvest_followers_network =
                     observed_user
         
             let new_unknown_users_around =
-                followers
-                |>Set.union followees
+                followers@followees
+                |>Set.ofList 
                 |>Set.filter(fun user->
                     rest_unknown_users
                     |>List.contains user

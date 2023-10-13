@@ -12,18 +12,18 @@ module Social_user_database =
         
     let update_user_names_in_db
         (db_connection:NpgsqlConnection)
-        (users: (User_handle*string) seq)
+        (users: Twitter_user seq)
         =
         Log.info $"writing {Seq.length users} user names to DB"
         users
-        |>Seq.iter(fun (handle,name)->
+        |>Seq.iter(fun user ->
             db_connection.Query<Db_twitter_user>(
                 @"insert into twitter_user (handle, name)
                 values (@handle, @name)
                 on conflict (handle) do update set name = @name",
                 {|
-                    handle = User_handle.db_value handle
-                    name = name
+                    handle = User_handle.db_value user.handle
+                    name = user.name
                 |}
             ) |> ignore
         )

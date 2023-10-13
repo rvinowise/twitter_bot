@@ -43,7 +43,7 @@ module User_handle =
             None
             
 type Twitter_user = {
-    handle: User_handle;
+    handle: User_handle
     name: string
 }
 

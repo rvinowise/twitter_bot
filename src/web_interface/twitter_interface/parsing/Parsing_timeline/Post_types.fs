@@ -32,7 +32,7 @@ module Post_stats =
 
 type Abbreviated_message = {
     message: string
-    show_more_url: string
+    show_more_url: string option
 }
 type Post_message =
     | Abbreviated of Abbreviated_message
@@ -40,8 +40,8 @@ type Post_message =
 
 module Post_message =
     let from_html_node (node:Html_node) = //"tweetText"
-        let show_more_css = "a[data-testid='tweet-text-show-more-link']"
-        let show_mode_node =
+        let show_more_css = "[data-testid='tweet-text-show-more-link']"
+        let show_more_node =
             node
             |>Html_node.try_descendant show_more_css
         
@@ -53,14 +53,14 @@ module Post_message =
             |>String.concat ""
             |>Html_parsing.standartize_linebreaks
             
-        match show_mode_node with
-        |Some show_mode_node ->
+        match show_more_node with
+        |Some show_more_node ->
             Post_message.Abbreviated {
                 message = message
                 show_more_url =
-                    show_mode_node
-                    |>Html_node.attribute_value "href"
-                    |>Twitter_settings.absolute_url
+                    show_more_node
+                    |>Html_node.try_attribute_value "href"
+                    |>Option.map Twitter_settings.absolute_url
             }
         |None ->
             Post_message.Full message
@@ -124,11 +124,14 @@ type Quotable_post = {
     media_load: Media_item list
 }
 
+
+//type External_url_explanation ={
+//    
+//}
 type External_url = {
-    base_url: string
-    page: string
-    message: string
-    (* the actual referenced URL is hidden, need to click in order to see it *)
+    base_url: string option
+    page: string option
+    message: string option
     obfuscated_url: string option
 }
 
@@ -144,6 +147,7 @@ type Main_post = {
     external_source: External_source option
     stats: Post_stats
     repost: User_handle option
+    is_pinned: bool
 }
 
 type Post =

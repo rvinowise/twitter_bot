@@ -34,8 +34,8 @@
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_post_from_timeline.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_twitter_post_test.fs" />
     
-    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_list_members.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list.fs" />
+    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_list_members.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Reveal_user_page.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_user_social_activity.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_user_briefing.fs" />
@@ -52,6 +52,7 @@
     <Compile Include="src\database\Social_user_database.fs" />
     <Compile Include="src\database\Social_activity_database.fs" />
     <Compile Include="src\database\Social_following_database.fs" />
+    <Compile Include="src\database\Social_post_database.fs" />
     
     
     <Compile Include="src\remarks\Remark_score_changes.fs" />

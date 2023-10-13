@@ -1,10 +1,10 @@
 ﻿namespace rvinowise.twitter
 
+open System
+open Xunit
+open rvinowise.web_scraping
 
 module Anounce_score =
-    
-    open System
-
     
    
     let scrape_and_announce_user_state browser =
@@ -12,10 +12,12 @@ module Anounce_score =
         let competitors =
             Settings.Competitors.list
             |>Scrape_list_members.scrape_twitter_list_members browser
+            |>List.map Twitter_profile_from_catalog.user
         
         let activity_of_competitors =
             competitors
-            |>Seq.map (fun (handle,_) ->
+            |>List.map (fun user ->
+                let handle = user.handle
                 Reveal_user_page.reveal_user_page browser handle
                 handle,
                 Scrape_user_social_activity.scrape_user_social_activity browser
@@ -40,4 +42,9 @@ module Anounce_score =
         Log.info "finish scraping and announcing scores."
         ()
 
-        
+    [<Fact>]
+    let ``try scrape_and_announce_user_state``()=
+        Settings.auth_tokens
+        |>Array.head
+        |>Browser.prepare_authentified_browser
+        |>scrape_and_announce_user_state

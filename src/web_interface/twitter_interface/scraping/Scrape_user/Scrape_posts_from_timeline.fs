@@ -24,24 +24,40 @@ module Scrape_posts_from_timeline =
     
     
     let parse_post previous_posts html_post =
-        html_post
-        |>Html_node.from_html_string
-        |>Parse_segments_of_post.parse_main_twitter_post
-              (List.map snd previous_posts)
-      
+        try 
+            html_post
+            |>Html_node.from_html_string
+            |>Parse_segments_of_post.parse_main_twitter_post
+                  (List.map snd previous_posts)
+            |>Result.Ok
+        with
+        | :? Bad_post_structure_exception
+        | :? Html_parsing_fail as exc ->
+            $"""exception {exc.Message} when parsing the post:
+            {html_post}
+            """
+            |>Log.error
+            |>Result.Error
+            
+    
+    let wait_for_limeline_loading browser =
+        "div[role='progressbar']"
+        |>Browser.wait_till_disappearance browser 10 |>ignore 
+            
     let scrape_timeline
         browser
-        max_amount
+        posts_amount
         (tab: Timeline_tab)
         user
         =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
-        Reveal_user_page.surpass_content_warning browser    
+        Reveal_user_page.surpass_content_warning browser
         "article[data-testid='tweet']"
-        |>Scrape_dynamic_list.consume_items_of_dynamic_list
+        |>Scrape_dynamic_list.parse_dynamic_list
             browser
+            (wait_for_limeline_loading browser)
             parse_post
-            max_amount
+            posts_amount
         
 
   
@@ -54,9 +70,9 @@ module Scrape_posts_from_timeline =
                     |>Seq.head
                     |>Browser.prepare_authentified_browser
                 )
-                100
-                Timeline_tab.Posts
-                (User_handle "RichardDawkins")
+                50
+                Timeline_tab.Likes
+                (User_handle "exmuslim_norway")
         let result = List.map snd posts
         ()
 

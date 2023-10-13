@@ -2,6 +2,7 @@
 
 open System
 open System.Globalization
+open AngleSharp.Dom
 open AngleSharp.Html.Parser
 open FSharp.Data
 open AngleSharp
@@ -55,6 +56,12 @@ module Html_node =
             node::children
         else
             children
+    
+    let direct_text (node:Html_node) =
+        node.ChildNodes
+        |>Seq.filter (fun child->child.NodeType = NodeType.Text)
+        |>Seq.map (fun text -> text.TextContent)
+        |>String.concat ""      
     
     let direct_children (node:Html_node) =
         List.ofSeq node.Children

@@ -118,40 +118,60 @@ module Parse_segments_of_post =
         posted_videos
         |>List.append posted_images
     
-    let parse_external_source_from_additional_load
+    let text_from_external_source_detail_segment segment =
+        segment
+        |>Html_node.descendant ":scope> span"
+        |>Html_parsing.readable_text_from_html_segments
+    let parse_external_source_from_its_node
+        card_wrapper_node
+        =
+        let details_segments =
+            card_wrapper_node
+            |>Find_segments_of_post.details_of_external_source
+        
+        let obfuscated_url=
+            card_wrapper_node
+            |>Html_node.try_descendant "a[role='link']"
+            |>Option.map (Html_node.attribute_value "href")
+        
+        match details_segments,obfuscated_url with
+        |[],None->
+            ("the card.wrapper node of the external url has neither details nor the url",
+            card_wrapper_node)
+            |>Bad_post_structure_exception
+            |>raise 
+        |details_segments,obfuscated_url->
+                
+            let base_url =
+                details_segments
+                |>List.tryHead
+                |>Option.map text_from_external_source_detail_segment
+                
+            let page =
+                details_segments
+                |>List.tryItem 1
+                |>Option.map text_from_external_source_detail_segment
+                
+            let message =
+                details_segments
+                |>List.tryItem 2
+                |>Option.map text_from_external_source_detail_segment
+ 
+            Some {
+                External_url.base_url = base_url
+                page=page
+                message = message
+                obfuscated_url=obfuscated_url
+            }
+    let parse_potential_external_source_from_additional_load
         ``node of potential card.wrapper``
         =
         if
             ``node of potential card.wrapper``
             |>Html_node.matches "div[data-testid='card.wrapper']"
         then
-            
-            let details_segments =
+            parse_external_source_from_its_node
                 ``node of potential card.wrapper``
-                |>Find_segments_of_post.details_of_external_source
-            
-            Some {
-                External_url.base_url =
-                    details_segments
-                    |>Seq.head
-                    |>Html_node.descendant ":scope> span"
-                    |>Html_parsing.readable_text_from_html_segments
-                page=
-                    details_segments
-                    |>Seq.item 1
-                    |>Html_node.descendant ":scope> span"
-                    |>Html_parsing.readable_text_from_html_segments
-                message=
-                    details_segments
-                    |>Seq.item 2
-                    |>Html_node.descendant ":scope> span"
-                    |>Html_parsing.readable_text_from_html_segments
-                obfuscated_url=
-                    ``node of potential card.wrapper``
-                    |>Html_node.try_descendant "a[role='link']"
-                    |>Option.map (Html_node.attribute_value "href")
-                    
-            }
         else None
     
      
@@ -215,7 +235,6 @@ module Parse_segments_of_post =
             |>Html_node.descendants "div[data-testid='Tweet-User-Avatar']"
             |>List.head
             |>Html_node.parent
-            //|>Html_node.descendant "div:has(:scope>div[data-testid='Tweet-User-Avatar'])"
             |>Html_node.direct_children
             |>List.length
             |>function
@@ -255,10 +274,12 @@ module Parse_segments_of_post =
             |false->
                 Some (Reply_status.Ending_local_thread previous_post)
         |_-> None
+    
         
+    
     let parse_reply_status_of_main_post
         author
-        is_repost
+        has_social_context_header
         article_node
         previous_post
         =
@@ -276,7 +297,9 @@ module Parse_segments_of_post =
         match status_from_quotable_core with
         |Some reply_status -> Some reply_status
         |None->
-            if is_repost then //reposted posts don't have thread-line in the timeline
+            if
+                has_social_context_header
+            then 
                 None
             else
                 check_thread_status_from_timeline
@@ -344,7 +367,7 @@ module Parse_segments_of_post =
             |>Some
         |None ->
             match
-                parse_external_source_from_additional_load
+                parse_potential_external_source_from_additional_load
                     ``node with either role=link of quotation, or card.wrapper``
             with
             |Some external_url_load ->
@@ -354,22 +377,27 @@ module Parse_segments_of_post =
             |None -> None
             
         
-    let reposting_user article_node =
-        let repost_mark_node =
-            article_node
-            |>Html_node.try_descendant "span[data-testid='socialContext']"
-        match repost_mark_node with
-        |Some repost_mark_node ->
-            repost_mark_node
-            |>Html_node.ancestors "a[role='link']"
-            |>List.head
+    let reposting_user social_context_node =
+        social_context_node
+        |>Html_node.ancestors "a[role='link']"
+        |>List.tryHead
+        |>function
+        |Some link->
+            link
             |>Html_node.attribute_value "href"
             |>User_handle.trim_potential_slash
             |>User_handle|>Some
-        |None -> None
+        |None->None
+    
+    let is_pinned social_context_node =
+        social_context_node
+        |>Html_node.try_descendant "span"
+        |>Option.map Html_node.inner_text
+        |>Option.map ((=)"Pinned")
+        |>Option.defaultValue false
     
     let parse_main_twitter_post
-        (previous_posts: Main_post list )
+        (previous_posts: Result<Main_post,string> list )
         (article_html:Html_node)
         =
         
@@ -391,15 +419,28 @@ module Parse_segments_of_post =
                 |>Bad_post_structure_exception
                 |>raise
         
-        let reposting_user = article_html|>reposting_user
+            
+        let reposting_user,is_pinned =
+            match post_html_segments.social_context_header with
+            |Some social_context ->
+                reposting_user social_context
+                ,
+                is_pinned social_context
+            |None -> None,false
         
         let reply_status =
             previous_posts
             |>List.tryHead
-            |>Option.map (fun post->post.id)
+            |>Option.bind (
+                function
+                |Ok previous_post ->
+                    Some previous_post.id
+                |Error _ ->
+                    None
+            )
             |>parse_reply_status_of_main_post
                 parsed_header.author.handle
-                reposting_user.IsSome
+                (reposting_user.IsSome || is_pinned)
                 article_html
             
         
@@ -439,4 +480,5 @@ module Parse_segments_of_post =
             external_source=external_source
             stats=post_stats
             repost=reposting_user
+            is_pinned = is_pinned
         }

@@ -122,7 +122,7 @@ module Import_referrals_from_googlesheet =
         
         
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try import_referrals_from_googlesheet``() =
         let test =
             import_referrals

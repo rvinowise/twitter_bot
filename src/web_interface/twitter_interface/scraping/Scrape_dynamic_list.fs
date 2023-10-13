@@ -16,7 +16,6 @@ module Scrape_dynamic_list =
         browser
         item_css
         =
-        //browser.Manage().Timeouts().ImplicitWait <- TimeSpan.FromSeconds(60); //test
         use parameters = Scraping_parameters.wait_seconds 60 browser
         let items = Browser.elements item_css browser
         items
@@ -25,6 +24,7 @@ module Scrape_dynamic_list =
             |>Web_element.attribute_value "outerHTML"
             |>Html_string 
         )
+        
         
 
     let add_new_items_to_map
@@ -38,7 +38,6 @@ module Scrape_dynamic_list =
         )
             map
     
-    (* 5;4;3;2;1 -> 7;6;5;4;3 -> 6;7 *)
     let new_items_from_visible_items
         (new_items: 'a array)
         all_items
@@ -64,8 +63,8 @@ module Scrape_dynamic_list =
    
     [<Fact>]
     let ``try unique_items_of_new_collection``() =
-        let all_items = [5;4;3;2;1]
         let new_items = [|7;6;5;4;3|]
+        let all_items = [5;4;3;2;1]
         new_items_from_visible_items
             new_items
             all_items 
@@ -73,26 +72,32 @@ module Scrape_dynamic_list =
             7;6
         |]
         
-        let all_items = [5;4;3;2;1;0]
         let new_items = [|5;4;3|]
+        let all_items = [5;4;3;2;1;0]
         new_items_from_visible_items
             new_items
             all_items 
         |>should equal [||]
      
-    let consume_items_of_dynamic_list
+    let parse_dynamic_list
         browser
-        (action: list<Html_string * 'Parsed_item> -> Html_string -> 'Parsed_item)
-        max_amount
+        (wait_for_loading)
+        (parse_item: list<Html_string * 'Parsed_item> -> Html_string -> 'Parsed_item)
+        needed_amount
         item_selector
         =
         let rec skim_and_scroll_iteration
             (parsed_sofar_items: list<Html_string * 'Parsed_item>)
             =
+            
+            //wait_for_loading
+            
+            
             let visible_skimmed_items =
                 skim_displayed_items
                     browser
                     item_selector
+                |>List.rev
                 |>Array.ofList
                 
             let new_skimmed_items =
@@ -103,15 +108,16 @@ module Scrape_dynamic_list =
             
             if
                 (new_skimmed_items|>Seq.isEmpty|>not) &&
-                (Seq.length parsed_sofar_items < max_amount)
+                (Seq.length parsed_sofar_items < needed_amount)
             then
                 Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
+                
                 Browser.sleep 1
                 
                 let all_parsed_items =
                     parsed_sofar_items
                     |>List.foldBack (fun item all_items ->
-                        (item, action all_items item) 
+                        (item, parse_item all_items item) 
                         ::
                         all_items
                     )
@@ -126,35 +132,37 @@ module Scrape_dynamic_list =
         skim_and_scroll_iteration []
         
     
-    let dont_parse_html_item all_items item = ()
+    let dont_parse_html_item _ _ = ()
     
-    let collect_all_items_of_dynamic_list
+    let collect_all_html_items_of_dynamic_list
         browser
+        wait_for_loading
         item_selector
         =
         item_selector
-        |>consume_items_of_dynamic_list
+        |>parse_dynamic_list
             browser
+            wait_for_loading
             dont_parse_html_item
             Int32.MaxValue
         |>List.map fst
-        |>Set.ofSeq
         
-    let collect_some_items_of_dynamic_list
+    let collect_some_html_items_of_dynamic_list
         browser
+        wait_for_loading
         max_amount
         item_selector
         =
         item_selector
-        |>consume_items_of_dynamic_list
+        |>parse_dynamic_list
             browser
+            wait_for_loading
             dont_parse_html_item
             max_amount
         |>List.map fst
-        |>Set.ofSeq         
     
         
-
+    
 
     
     
