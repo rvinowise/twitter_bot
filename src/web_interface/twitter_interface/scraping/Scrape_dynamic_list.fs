@@ -90,7 +90,7 @@ module Scrape_dynamic_list =
             (parsed_sofar_items: list<Html_string * 'Parsed_item>)
             =
             
-            //wait_for_loading
+            wait_for_loading
             
             
             let visible_skimmed_items =
@@ -112,7 +112,7 @@ module Scrape_dynamic_list =
             then
                 Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
                 
-                Browser.sleep 1
+                //Browser.sleep 1
                 
                 let all_parsed_items =
                     parsed_sofar_items

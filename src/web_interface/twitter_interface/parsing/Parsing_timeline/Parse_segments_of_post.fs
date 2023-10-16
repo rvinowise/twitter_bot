@@ -391,7 +391,8 @@ module Parse_segments_of_post =
     
     let is_pinned social_context_node =
         social_context_node
-        |>Html_node.try_descendant "span"
+        |>Html_node.first_descendants_with_css "span"
+        |>List.tryHead
         |>Option.map Html_node.inner_text
         |>Option.map ((=)"Pinned")
         |>Option.defaultValue false

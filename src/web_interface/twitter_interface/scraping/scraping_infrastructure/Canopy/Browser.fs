@@ -28,15 +28,15 @@ type Browser(cookies:Cookie seq) =
         local_browser_path
         
     let start_headless_browser (local_browser_path:string) =
-        new ChromeDriver(local_browser_path)
-        
-    let start_visible_browser (local_browser_path:string) =
         let options4 = ChromeOptions()
         options4.AddArgument("--disable-extensions")
         options4.AddArgument("disable-infobars")
         options4.AddArgument("test-type")
         options4.AddArgument("--headless")
         new ChromeDriver(local_browser_path,options4)
+        
+    let start_visible_browser (local_browser_path:string) =
+        new ChromeDriver(local_browser_path)
     
     let prepare_webdriver (cookies:Cookie seq) =
         
@@ -133,12 +133,20 @@ module Browser =
         =
         canopy.parallell.functions.elements css browser.webdriver
     
+    
     let try_element
         (browser:Browser)
         css_selector
         =
         browser.webdriver.FindElements(By.CssSelector(css_selector))
         |>Seq.tryHead
+        
+    let element_exists
+        (browser:Browser)
+        css_selector
+        =
+        (try_element browser css_selector)
+        |>Option.isSome
     
     let wait_till_disappearance
         (browser: Browser)

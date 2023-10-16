@@ -20,11 +20,9 @@ module Scrape_list_members =
         Browser.open_url members_url browser
         
         let table_css = "div[aria-label='Timeline: List members']"
-        let table_with_members =
-            Browser.try_element browser table_css
-        
-        match table_with_members with
-        |Some table_with_members ->
+        if
+            Browser.element_exists browser table_css
+        then
             Browser.send_key Keys.Tab browser
             let users =
                 $"{table_css} div[data-testid='UserCell']"
@@ -38,7 +36,7 @@ module Scrape_list_members =
                 
             Log.important $"list has {Seq.length users} members... "
             users
-        |None->
+        else
             Log.error "Timeline: Member List didn't appear, can't read users... "|>ignore
             []
 

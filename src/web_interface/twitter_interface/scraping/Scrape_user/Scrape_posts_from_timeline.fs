@@ -40,7 +40,7 @@ module Scrape_posts_from_timeline =
             |>Result.Error
             
     
-    let wait_for_limeline_loading browser =
+    let wait_for_timeline_loading browser =
         "div[role='progressbar']"
         |>Browser.wait_till_disappearance browser 10 |>ignore 
             
@@ -55,7 +55,7 @@ module Scrape_posts_from_timeline =
         "article[data-testid='tweet']"
         |>Scrape_dynamic_list.parse_dynamic_list
             browser
-            (wait_for_limeline_loading browser)
+            (wait_for_timeline_loading browser)
             parse_post
             posts_amount
         
@@ -71,9 +71,13 @@ module Scrape_posts_from_timeline =
                     |>Browser.prepare_authentified_browser
                 )
                 50
-                Timeline_tab.Likes
-                (User_handle "exmuslim_norway")
-        let result = List.map snd posts
+                Timeline_tab.Posts
+                (User_handle "HilzFuld")
+            
+        let results = List.map snd posts
+        let errors =
+            results
+            |>List.filter Result.isError
         ()
 
 
