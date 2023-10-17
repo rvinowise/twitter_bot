@@ -20,10 +20,17 @@ module Scrape_dynamic_list =
         let items = Browser.elements item_css browser
         items
         |>List.map (fun web_element ->
-            web_element
-            |>Web_element.attribute_value "outerHTML"
-            |>Html_string 
-        )
+            try
+                web_element
+                |>Web_element.attribute_value "outerHTML"
+                |>Html_string
+                |>Some
+            with
+            | :? StaleElementReferenceException as exc ->
+                None
+            | :? Exception as exc ->
+                None
+        )|>List.choose id
         
         
 

@@ -41,6 +41,7 @@ module Scrape_posts_from_timeline =
             
     
     let wait_for_timeline_loading browser =
+        Browser.sleep 1
         "div[role='progressbar']"
         |>Browser.wait_till_disappearance browser 10 |>ignore 
             
