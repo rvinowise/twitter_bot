@@ -9,6 +9,7 @@ open SeleniumExtras.WaitHelpers
 open WebDriverManager.DriverConfigs.Impl
 open WebDriverManager.Helpers
 
+open canopy.types
 open rvinowise.twitter
 
 
@@ -140,6 +141,13 @@ module Browser =
         =
         browser.webdriver.FindElements(By.CssSelector(css_selector))
         |>Seq.tryHead
+//        try
+//            browser
+//            |>element css_selector
+//            |>Some
+//        with
+//        | :? CanopyElementNotFoundException as exc ->
+//            None
         
     let element_exists
         (browser:Browser)
@@ -147,6 +155,14 @@ module Browser =
         =
         (try_element browser css_selector)
         |>Option.isSome
+    
+    let focus_element
+        (browser:Browser)
+        css_selector
+        =
+        browser
+        |>element css_selector
+        |>fun element->element.SendKeys(Keys.Shift)
     
     let wait_till_disappearance
         (browser: Browser)

@@ -317,7 +317,7 @@ module Export_scores_to_googlesheet =
             social_database.Table_with_amounts.Posts
             Settings.Google_sheets.posts_amount
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try update_googlesheets``() =
         Database.open_connection()
         |>update_googlesheets

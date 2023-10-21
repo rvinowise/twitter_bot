@@ -28,7 +28,7 @@ module Scrape_dynamic_list =
             with
             | :? StaleElementReferenceException as exc ->
                 None
-            | :? Exception as exc ->
+            | _ as exc ->
                 None
         )|>List.choose id
         
@@ -97,7 +97,7 @@ module Scrape_dynamic_list =
             (parsed_sofar_items: list<Html_string * 'Parsed_item>)
             =
             
-            wait_for_loading
+            wait_for_loading()
             
             
             let visible_skimmed_items =

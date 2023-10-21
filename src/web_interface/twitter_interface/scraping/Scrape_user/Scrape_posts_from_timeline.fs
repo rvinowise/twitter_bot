@@ -56,7 +56,7 @@ module Scrape_posts_from_timeline =
         "article[data-testid='tweet']"
         |>Scrape_dynamic_list.parse_dynamic_list
             browser
-            (wait_for_timeline_loading browser)
+            (fun () -> wait_for_timeline_loading browser)
             parse_post
             posts_amount
         
