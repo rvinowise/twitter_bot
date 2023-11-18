@@ -12,7 +12,6 @@ module Scrape_list_members =
         "div[role='progressbar'] svg circle"
         |>Browser.wait_till_disappearance browser 10 |>ignore
         
-        
     let scrape_twitter_list_members browser list_id = 
         Log.info $"reading members of list {list_id} ... " 
         let members_url = 
@@ -21,14 +20,17 @@ module Scrape_list_members =
         
         let table_css = "div[aria-label='Timeline: List members']"
         if
-            Browser.element_exists browser table_css
+            Browser.try_element_reliably browser table_css
+            |>Option.isSome
         then
-            Browser.send_key Keys.Tab browser
+            "div[data-testid='app-bar-close']"
+            |>Browser.focus_element browser
+
             let users =
                 $"{table_css} div[data-testid='UserCell']"
                 |>Scrape_dynamic_list.collect_all_html_items_of_dynamic_list
                       browser
-                      (wait_for_list_loading browser)
+                      (fun () -> wait_for_list_loading browser)
                 |>List.map (
                     Html_node.from_html_string
                     >>Parse_twitter_user.parse_twitter_user_cell

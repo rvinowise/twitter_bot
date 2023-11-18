@@ -91,7 +91,7 @@ module Import_scores_from_googlesheet =
         (sheet:Google_spreadsheet)
         columns_of_days
         =
-        use db_connection = Database.open_connection()
+        use db_connection = Twitter_database.open_connection()
         let sorted_users = row_to_user_correspondence sheet
         columns_of_days
         |>List.iter (
@@ -109,12 +109,10 @@ module Import_scores_from_googlesheet =
     
     [<Fact(Skip="manual")>]//
     let ``try import_scores_from_googlesheet``() =
-        let test =
-            import_scores_on_days
-                {
-                    Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
-                    page_id=0
-                    page_name="followers_amount"
-                }
-                ['F' .. 'N']
-        ()
+        import_scores_on_days
+            {
+                Google_spreadsheet.doc_id = "1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
+                page_id=2000980006
+                page_name="import"
+            }
+            ['F' .. 'N']

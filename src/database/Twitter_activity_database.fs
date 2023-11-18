@@ -5,14 +5,15 @@ namespace rvinowise.twitter
 open System
 open Dapper
 open Npgsql
-open rvinowise.twitter.social_database
+open rvinowise.twitter.database
+open rvinowise.twitter.database.tables
 
 module Social_activity_database =
     
     
     let write_activity_amount_of_user
         (db_connection: NpgsqlConnection)
-        (amount_of_what:Table_with_amounts)
+        (amount_of_what:Social_activity_amounts)
         (datetime:DateTime)
         user
         (amount:int)
@@ -31,7 +32,7 @@ module Social_activity_database =
     
     let write_optional_activity_amount_of_user
         (db_connection: NpgsqlConnection)
-        (amount_of_what:Table_with_amounts)
+        (amount_of_what:Social_activity_amounts)
         (datetime:DateTime)
         user
         (amount:int option)
@@ -57,21 +58,21 @@ module Social_activity_database =
         |>User_social_activity.followees_amount
         |>write_optional_activity_amount_of_user
                 db_connection
-                Table_with_amounts.Followees
+                Social_activity_amounts.Followees
                 datetime
                 user
         activity
         |>User_social_activity.followers_amount
         |>write_optional_activity_amount_of_user
                 db_connection
-                Table_with_amounts.Followers
+                Social_activity_amounts.Followers
                 datetime
                 user           
         activity
         |>User_social_activity.posts_amount
         |>write_optional_activity_amount_of_user
                 db_connection
-                Table_with_amounts.Posts
+                Social_activity_amounts.Posts
                 datetime
                 user
     
@@ -99,7 +100,7 @@ module Social_activity_database =
         |>Seq.iter(fun (user, score)-> 
             write_activity_amount_of_user
                 db_connection
-                Table_with_amounts.Followers
+                Social_activity_amounts.Followers
                 datetime 
                 user
                 score
@@ -115,7 +116,7 @@ module Social_activity_database =
         |>Seq.iter(fun (user, score)-> 
             write_activity_amount_of_user
                 db_connection
-                Table_with_amounts.Posts
+                Social_activity_amounts.Posts
                 datetime 
                 user
                 score
@@ -176,7 +177,7 @@ module Social_activity_database =
     
     let read_last_amounts_closest_to_moment
         (db_connection: NpgsqlConnection)
-        (record_with_amounts: Table_with_amounts)
+        (record_with_amounts: Social_activity_amounts)
         (moment:DateTime)
         =
         db_connection.Query<Amount_for_user>(
@@ -232,7 +233,7 @@ module Social_activity_database =
     
     let read_last_amounts_closest_to_moment_for_users
         (db_connection: NpgsqlConnection)
-        (record_with_amounts: Table_with_amounts)
+        (record_with_amounts: Social_activity_amounts)
         (last_moment: DateTime)
         (users: string Set)
         =

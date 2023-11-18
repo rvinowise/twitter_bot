@@ -18,7 +18,7 @@ module Scrape_followers_network =
         Log.info $"reading elements of catalog {catalog_url} ... " 
         Browser.open_url catalog_url browser
         
-        let user_catalog_element = "div[data-testid='UserCell']"
+        let user_catalog_element = "div[aria-label='Home timeline'] div[data-testid='UserCell']"
         let catalogue =
             Browser.try_element browser "div:has(>div[data-testid='cellInnerDiv'])"
         
@@ -27,7 +27,7 @@ module Scrape_followers_network =
             let items =
                 Scrape_dynamic_list.collect_all_html_items_of_dynamic_list
                     browser
-                    (Scrape_list_members.wait_for_list_loading browser)
+                    (fun()->Scrape_list_members.wait_for_list_loading browser)
                     user_catalog_element
             Log.important $"catalogue has {Seq.length items} items"
             items

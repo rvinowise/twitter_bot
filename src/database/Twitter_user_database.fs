@@ -5,7 +5,7 @@ namespace rvinowise.twitter
 open Dapper
 open Npgsql
 open rvinowise.twitter
-open rvinowise.twitter.social_database
+open rvinowise.twitter.database
 
 module Social_user_database =
     

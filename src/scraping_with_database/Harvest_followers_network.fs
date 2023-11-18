@@ -2,6 +2,7 @@
 
 open System
 open OpenQA.Selenium
+open canopy.types
 open rvinowise.web_scraping
 
 module Harvest_followers_network =
@@ -132,6 +133,9 @@ module Harvest_followers_network =
                 Log.error $"""was the browser closed? {exc.Message}. Restarting scraping browser"""|>ignore
                 browser.restart()
                 browser,unknown_users_around
+            | :? CanopyElementNotFoundException as exc ->
+                Log.error $"""scraping user {List.head unknown_users_around} failed: {exc.Message}. skipping this user"""|>ignore
+                browser,List.tail unknown_users_around
                 
         if new_unknown_users_around <> [] then
             resilient_step_of_harvesting_following

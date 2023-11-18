@@ -23,10 +23,11 @@ type Timeline_tab =
 module Scrape_posts_from_timeline =
     
     
-    let parse_post previous_posts html_post =
+    let parse_post previous_posts html_cell =
         try 
-            html_post
+            html_cell
             |>Html_node.from_html_string
+            |>Html_node.descendant "article[data-testid='tweet']"
             |>Parse_segments_of_post.parse_main_twitter_post
                   (List.map snd previous_posts)
             |>Result.Ok
@@ -34,11 +35,23 @@ module Scrape_posts_from_timeline =
         | :? Bad_post_structure_exception
         | :? Html_parsing_fail as exc ->
             $"""exception {exc.Message} when parsing the post:
-            {html_post}
+            {html_cell}
             """
             |>Log.error
             |>Result.Error
-            
+    
+    let is_advertisement cell_node =
+        cell_node
+        |>Html_node.try_descendant "div[data-testid='placementTracking']"
+        |>Option.isSome
+    
+    let is_cell_contains_post cell_node =
+        cell_node
+        |>is_advertisement|>not
+        &&
+        cell_node
+        |>Html_node.try_descendant "article[data-testid='tweet']"
+        |>Option.isSome
     
     let wait_for_timeline_loading browser =
         Browser.sleep 1
@@ -53,15 +66,20 @@ module Scrape_posts_from_timeline =
         =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser
-        "article[data-testid='tweet']"
+        "div[data-testid='cellInnerDiv']"
         |>Scrape_dynamic_list.parse_dynamic_list
             browser
-            (wait_for_timeline_loading browser)
+            (fun () -> wait_for_timeline_loading browser)
+            (fun item ->
+                item
+                |>Html_node.from_html_string
+                |>is_cell_contains_post)
             parse_post
             posts_amount
         
-
-  
+    
+    
+    
     [<Fact>]
     let ``try scrape_timeline``()=
         let posts = 

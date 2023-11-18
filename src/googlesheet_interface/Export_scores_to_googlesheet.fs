@@ -8,6 +8,7 @@ open Xunit
 
 open Google.Apis.Sheets.v4
 open rvinowise.twitter
+open rvinowise.twitter.database.tables
 
 
 
@@ -179,7 +180,7 @@ module Export_scores_to_googlesheet =
     
     let get_history_of_amounts_for_users
         db_connection
-        (amount_of_what: social_database.Table_with_amounts)
+        (amount_of_what: Social_activity_amounts)
         days_from_today
         =
         let last_datetime =
@@ -310,24 +311,24 @@ module Export_scores_to_googlesheet =
     let update_googlesheets social_database_connection =
         update_googlesheet
             social_database_connection
-            social_database.Table_with_amounts.Followers
+            Social_activity_amounts.Followers
             Settings.Google_sheets.followers_amount
         update_googlesheet
             social_database_connection
-            social_database.Table_with_amounts.Posts
+            Social_activity_amounts.Posts
             Settings.Google_sheets.posts_amount
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try update_googlesheets``() =
-        Database.open_connection()
+        Twitter_database.open_connection()
         |>update_googlesheets
     
    
     [<Fact(Skip="manual")>]//
     let ``try input_posts_amount_to_sheet``() =
         update_googlesheet
-            (Database.open_connection())
-            social_database.Table_with_amounts.Posts
+            (Twitter_database.open_connection())
+            Social_activity_amounts.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
                 page_id=1445243022

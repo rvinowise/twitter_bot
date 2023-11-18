@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
+open AngleSharp
 open OpenQA.Selenium
 open rvinowise.html_parsing
 open rvinowise.web_scraping
@@ -13,6 +14,7 @@ module Scrape_dynamic_list =
     
     
     let skim_displayed_items
+        (is_item_needed: Html_string -> bool) 
         browser
         item_css
         =
@@ -27,10 +29,10 @@ module Scrape_dynamic_list =
                 |>Some
             with
             | :? StaleElementReferenceException as exc ->
-                None
-            | :? Exception as exc ->
+                Log.error $"skim_displayed_items error: {exc.Message}"|>ignore
                 None
         )|>List.choose id
+        |>List.filter is_item_needed
         
         
 
@@ -46,6 +48,7 @@ module Scrape_dynamic_list =
             map
     
     let new_items_from_visible_items
+        (items_are_equal: 'a -> 'a -> bool)
         (new_items: 'a array)
         all_items
         =
@@ -53,7 +56,7 @@ module Scrape_dynamic_list =
         |last_known_item::_ ->
             
             new_items
-            |>Array.tryFindIndex ((=)last_known_item)
+            |>Array.tryFindIndex (items_are_equal last_known_item)
             |>function
             |Some i_first_previously_known_item ->
                 new_items
@@ -73,8 +76,9 @@ module Scrape_dynamic_list =
         let new_items = [|7;6;5;4;3|]
         let all_items = [5;4;3;2;1]
         new_items_from_visible_items
+            (=)
             new_items
-            all_items 
+            all_items
         |>should equal [|
             7;6
         |]
@@ -82,26 +86,65 @@ module Scrape_dynamic_list =
         let new_items = [|5;4;3|]
         let all_items = [5;4;3;2;1;0]
         new_items_from_visible_items
+            (=) 
             new_items
-            all_items 
+            all_items
         |>should equal [||]
+    
+    
+    let html_has_same_text
+        (node1: Html_node)
+        (node2: Html_node)
+        =
+        node1
+        |>Html_node.remove_parts_not_related_to_text
+        |>Html_node.to_string
+        |>(=) (
+            node2
+            |>Html_node.remove_parts_not_related_to_text
+            |>Html_node.to_string
+        )
+        
+            
+    
+    let new_nodes_from_visible_nodes
+        context
+        new_nodes
+        all_nodes
+        =
+        let new_nodes =
+            new_nodes
+            |>Array.map (Html_node.from_html_string_and_context context)
+        let all_nodes =
+            all_nodes
+            |>List.map (Html_node.from_html_string_and_context context)
+        
+        new_items_from_visible_items
+            html_has_same_text
+            new_nodes
+            all_nodes
+        |>Array.map Html_node.to_html_string
      
     let parse_dynamic_list
         browser
-        (wait_for_loading)
+        wait_for_loading
+        is_item_needed
         (parse_item: list<Html_string * 'Parsed_item> -> Html_string -> 'Parsed_item)
         needed_amount
         item_selector
         =
+        let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
+            
         let rec skim_and_scroll_iteration
             (parsed_sofar_items: list<Html_string * 'Parsed_item>)
             =
             
-            wait_for_loading
+            wait_for_loading()
             
             
             let visible_skimmed_items =
                 skim_displayed_items
+                    is_item_needed
                     browser
                     item_selector
                 |>List.rev
@@ -110,7 +153,9 @@ module Scrape_dynamic_list =
             let new_skimmed_items =
                 parsed_sofar_items
                 |>List.map fst
-                |>new_items_from_visible_items visible_skimmed_items
+                |>new_nodes_from_visible_nodes
+                      html_parsing_context
+                      visible_skimmed_items
                 |>List.ofArray
             
             if
@@ -118,8 +163,6 @@ module Scrape_dynamic_list =
                 (Seq.length parsed_sofar_items < needed_amount)
             then
                 Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
-                
-                //Browser.sleep 1
                 
                 let all_parsed_items =
                     parsed_sofar_items
@@ -141,6 +184,8 @@ module Scrape_dynamic_list =
     
     let dont_parse_html_item _ _ = ()
     
+    let all_items_are_needed _ = true
+    
     let collect_all_html_items_of_dynamic_list
         browser
         wait_for_loading
@@ -150,6 +195,7 @@ module Scrape_dynamic_list =
         |>parse_dynamic_list
             browser
             wait_for_loading
+            all_items_are_needed
             dont_parse_html_item
             Int32.MaxValue
         |>List.map fst
@@ -164,6 +210,7 @@ module Scrape_dynamic_list =
         |>parse_dynamic_list
             browser
             wait_for_loading
+            all_items_are_needed
             dont_parse_html_item
             max_amount
         |>List.map fst

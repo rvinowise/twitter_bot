@@ -1,12 +1,8 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open OpenQA.Selenium
-open rvinowise.html_parsing
 open rvinowise.web_scraping
 
-open FsUnit
-open Xunit
 
 
 type Scraping_parameters(browser: Browser) =

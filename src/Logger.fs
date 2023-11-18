@@ -25,9 +25,3 @@ module Log =
         printfn $"%s{message}"
         message
     
-    [<Fact(Skip="manual")>]
-    let ``try logging``()=
-        for i in 0..1000 do
-            info <| sprintf "%s : %i" "hello" 3
-//        log ("test1")
-//        log ("test2")

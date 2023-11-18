@@ -6,11 +6,7 @@ open rvinowise.twitter
 
 
 
-type Post_header = {
-    author:Twitter_user
-    written_at: DateTime
-    post_url: string option //quotations don't have their URL, only main posts do
-}
+
 type Post_stats = {
     replies: int
     likes: int
@@ -107,11 +103,17 @@ type Media_item =
 
 
 type Reply_status =
+    
     (*the author will be the same as in this message; text "show this thread" after the message *)
     |External_thread of User_handle
+    (* this type of reply may be identical to the next one (External_message) (is it discontinued?) *)
+    
     (*text "replying to..." below header *)     
     |External_message of User_handle * Post_id option
-    (*there will be a replying message right after this message; vertical line in the timeline *)
+    
+    (*there will be a replying message right after this message; vertical line in the timeline.
+    can not exist inside a quotation *)
+    
     |Starting_local_thread 
     |Continuing_local_thread of Post_id //replying to the previous message in the timeline
     |Ending_local_thread of Post_id
@@ -150,6 +152,3 @@ type Main_post = {
     is_pinned: bool
 }
 
-type Post =
-    |Main_post of Main_post
-    |Quoted_post of Quotable_post * Media_item list

@@ -5,6 +5,12 @@ open rvinowise.html_parsing
 open rvinowise.twitter
 
 
+type Post_header = {
+    author:Twitter_user
+    written_at: DateTime
+    post_url: string option //quotations don't have their URL, only main posts do
+}
+
 module Parse_segments_of_post =
     
     let parse_post_header

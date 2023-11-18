@@ -10,24 +10,6 @@ module Program =
 
     
     
-    let import_scores_from_googlesheet
-        parameters
-        =
-        Log.important<|sprintf
-            "updating scores from google sheet %s %d %s"
-            Settings.Google_sheets.score_table_for_import.doc_id
-            Settings.Google_sheets.score_table_for_import.page_id
-            Settings.Google_sheets.score_table_for_import.page_name
-        
-        match parameters with
-        |start_column::end_column::rest ->
-            Import_scores_from_googlesheet.import_scores_between_two_date_columns
-                Settings.Google_sheets.score_table_for_import
-                    (start_column|>Seq.head)
-                    (end_column|>Seq.head)
-        |_-> Log.important "specify Start_column and End_column with dates of scores, e.g. 'import E P'"
-    
-    
     let harvest_following
         root_users
         =
@@ -36,7 +18,7 @@ module Program =
             |>Seq.zip Settings.auth_tokens
             |>Array.ofSeq
             |>Array.Parallel.iter(fun (bot_token, user_to_harvest)->
-                use db_connection = Database.open_connection() 
+                use db_connection = Twitter_database.open_connection() 
                 use browser = Browser.prepare_authentified_browser bot_token
                 use parsing_context = Html_parsing.parsing_context()
                 Harvest_followers_network.harvest_following_network_around_user
@@ -54,9 +36,10 @@ module Program =
     let announce_competition_successes ()=
         try
             use browser =
-                Settings.auth_tokens
-                |>Seq.head
-                |>Browser.prepare_authentified_browser 
+//                Settings.auth_tokens
+//                |>Seq.head
+//                |>Browser.prepare_authentified_browser
+                Browser.open_browser ()
             Anounce_score.scrape_and_announce_user_state browser
         with
         | :? WebDriverException as exc ->
@@ -64,7 +47,7 @@ module Program =
             ()
         
         try
-            use db_connection = Database.open_connection() 
+            use db_connection = Twitter_database.open_connection() 
             Import_referrals_from_googlesheet.import_referrals
                 (Googlesheets.create_googlesheet_service())
                 db_connection
@@ -79,8 +62,6 @@ module Program =
     let main args =
         let args = args|>List.ofArray
         match args with
-        | "import"::rest ->
-            import_scores_from_googlesheet rest
         | "following"::rest ->
             //Scraping.set_canopy_configuration_directories()
             harvest_following rest

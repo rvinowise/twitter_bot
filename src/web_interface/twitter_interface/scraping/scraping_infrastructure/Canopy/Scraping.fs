@@ -1,10 +1,6 @@
 ﻿namespace rvinowise.web_scraping
 
-open System
 open OpenQA.Selenium
-open canopy.parallell.functions
-open canopy.types
-open rvinowise.twitter
 
 
 type Web_element = IWebElement

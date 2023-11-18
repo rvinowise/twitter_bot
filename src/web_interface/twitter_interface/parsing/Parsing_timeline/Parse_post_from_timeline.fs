@@ -37,11 +37,11 @@ module Parse_post_from_timeline =
         =
         let html =
             additional_load_node
-            |>Html_node.as_html_string
+            |>Html_node.to_string
             
         let urls =
             urls_to_external_source
-            |>Seq.map Html_node.as_html_string
+            |>Seq.map Html_node.to_string
             |>String.concat "; "
             
         $"additional load of tweet has different links. post:\n{html}\nlinks: {urls}"    

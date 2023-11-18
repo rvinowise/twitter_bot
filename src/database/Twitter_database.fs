@@ -4,7 +4,7 @@ open System
 open System.Data
 open Dapper
 open Npgsql
-
+open rvinowise.twitter
 
 
 type Timestamp_mapper() =
@@ -41,8 +41,53 @@ type User_handle_mapper() =
     override this.Parse(value: obj) =
         User_handle (value :?> string) 
 
+type Post_id_mapper() =
+    inherit SqlMapper.TypeHandler<Post_id>()
+    override this.SetValue(
+            parameter:IDbDataParameter ,
+            value: Post_id
+        )
+        =
+        let (Post_id value) = value 
+        parameter.Value <- value
+    
+    override this.Parse(value: obj) =
+        Post_id (value :?> int64)
 
-module Database =
+
+type Option_mapper<'T>(
+        type_mapper: SqlMapper.TypeHandler<'T> 
+    ) =
+    inherit SqlMapper.TypeHandler<option<'T>>()
+
+    override _.SetValue(param, optional_value) = 
+        match optional_value with
+        | Some value ->
+            type_mapper.SetValue(param, value)
+        | None ->
+            param.Value <- null
+
+    override _.Parse value =
+        if isNull value || value = box DBNull.Value 
+        then None
+        else Some (value :?> 'T)
+
+type Option_string_mapper() =
+    inherit SqlMapper.TypeHandler<option<string>>()
+
+    override _.SetValue(param, optional_value) = 
+        match optional_value with
+        | Some value ->
+            param.Value <- value
+        | None ->
+            param.Value <- ""
+
+    override _.Parse value =
+        if isNull value || value = box DBNull.Value || value = ""
+        then None
+        else Some (value :?> string)
+
+module Twitter_database =
 
     let set_timezone_of_this_machine
         (connection:NpgsqlConnection)
@@ -58,7 +103,11 @@ module Database =
         let db_connection = data_source.OpenConnection()
         
         set_timezone_of_this_machine db_connection
-        SqlMapper.AddTypeHandler(Timestamp_mapper()); //sometimes it's needed, sometimes not
+        SqlMapper.AddTypeHandler(Timestamp_mapper()) //sometimes it's needed, sometimes not
         SqlMapper.AddTypeHandler(User_handle_mapper())
+        SqlMapper.AddTypeHandler(Post_id_mapper())
+        SqlMapper.AddTypeHandler(Option_mapper<User_handle>(User_handle_mapper()))
+        SqlMapper.AddTypeHandler(Option_mapper<Post_id>(Post_id_mapper()))
+        SqlMapper.AddTypeHandler(Option_string_mapper())
         
         db_connection

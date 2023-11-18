@@ -10,14 +10,20 @@ type Google_spreadsheet = {
     page_name: string
 }
 
+type Browser = {
+    path: string
+    webdriver_version: string
+    profile_path: string
+    headless: bool
+}
+
 module Settings = 
     
     
-    
     let configuration_builder = (ConfigurationBuilder()).AddJsonFile("appsettings.json", false, true);
-    let configuration_root = configuration_builder.Build()
+    let configuration_root = configuration_builder.Build() :> IConfiguration
     let auth_tokens =
-        (configuration_root :> IConfiguration).GetSection("auth_tokens").Get<string[]>();
+        configuration_root.GetSection("auth_tokens").Get<string[]>()
     
     let login = configuration_root["login"]
     let password = configuration_root["password"]
@@ -30,10 +36,9 @@ module Settings =
         to avoid disappearance of participants due to twitter malfunctioning,
         they are included from the recent past*) 
         let include_from_past = int (competitors_section["include_from_past_hours"])
-    let headless =  (configuration_root["headless"]) = "true"
     let repeat_harvesting_if_older_than =
-        let days = //GetValue()
-            (configuration_root :> IConfiguration).GetValue<int>("repeat_harvesting_if_older_than_days",1)
+        let days = 
+            configuration_root.GetValue<int>("repeat_harvesting_if_older_than_days",1)
         TimeSpan.FromDays(days)
     let db_connection_string = configuration_root["db_connection_string"]
     
@@ -64,8 +69,16 @@ module Settings =
                 page_id = int posts_amount_section["page_id"]
                 page_name = posts_amount_section["page_name"]
             }
-        let score_table_for_import = {
-            Google_spreadsheet.doc_id = configuration_root["googlesheet_doc_id_for_import"]
-            page_id = int configuration_root["googlesheet_page_id_for_import"]
-            page_name = configuration_root["googlesheet_page_name_for_import"]
+    
+
+    let browser =
+        let browser_section =
+            configuration_root.GetSection("browser")
+        {
+            path = browser_section["path"]
+            webdriver_version = browser_section["webdriver_version"]
+            profile_path = browser_section["profile_path"]
+            headless = browser_section["headless"] = "true"
         }
+        
+        
