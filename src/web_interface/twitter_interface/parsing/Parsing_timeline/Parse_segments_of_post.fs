@@ -449,8 +449,6 @@ module Parse_segments_of_post =
                 parsed_header.author.handle
                 (reposting_user.IsSome || is_pinned)
                 article_html
-            
-        
         
         let media_items = 
             match post_html_segments.media_load with
