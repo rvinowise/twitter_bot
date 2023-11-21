@@ -81,7 +81,7 @@ I was about to start work on this commission, when in came an email from&nbsp;Tw
         |>should equal (DateTime(2023,9,21,0,16,44))
         
         
-        let check_quoted_post (quoted_post:Quotable_post) =
+        let check_quoted_post (quoted_post:Quotable_message) =
             
             let expected_message =
                 Post_message.Abbreviated {
@@ -153,7 +153,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |>should equal (DateTime(2023,9,21,0,51,20))
         
         
-        let check_quoted_post (quoted_post:Quotable_post) =
+        let check_quoted_post (quoted_post:Quotable_message) =
             
             let expected_message =
                 Post_message.Full """Ex-Muslim women and former hijabis are opening up about their religious trauma in this recent TikTok trend.
@@ -227,7 +227,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         ]
         
         
-        let check_quoted_post (quoted_post:Quotable_post) =
+        let check_quoted_post (quoted_post:Quotable_message) =
             
             let expected_message =
                 Post_message.Full """Ex-Muslim women and former hijabis are opening up about their religious trauma in this recent TikTok trend.
@@ -421,7 +421,7 @@ https://openlongevity.org""")
             }
         ]
         
-        let check_quoted_post (quoted_post:Quotable_post) =
+        let check_quoted_post (quoted_post:Quotable_message) =
             
             quoted_post.author
             |>should equal {
@@ -598,4 +598,4 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>parse_single_main_twitter_post
             
-        
+        ()

@@ -157,7 +157,7 @@ module Twitter_post_database =
     
     let write_textual_part_of_quotable_core
         (db_connection:NpgsqlConnection)
-        (quotable_core: Quotable_post)
+        (quotable_core: Quotable_message)
         (main_post_id:Post_id)
         (is_quotation:bool)
         =
@@ -228,7 +228,7 @@ module Twitter_post_database =
             
     let write_quotable_core
         (db_connection:NpgsqlConnection)
-        (quotable_core: Quotable_post)
+        (quotable_core: Quotable_message)
         (main_post_id:Post_id)
         (is_quotation:bool)
         =

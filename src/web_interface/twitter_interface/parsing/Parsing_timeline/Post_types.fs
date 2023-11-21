@@ -118,18 +118,35 @@ type Reply_status =
     |Continuing_local_thread of Post_id //replying to the previous message in the timeline
     |Ending_local_thread of Post_id
     
-type Quotable_post = {
+    
+type Post_header = {
     author: Twitter_user
     created_at: DateTime
     reply_status: Reply_status option
+}
+
+type Quotable_message = {
+    header: Post_header
     message: Post_message
     media_load: Media_item list
 }
 
+type Quotable_poll = {
+    header: Post_header
+    question: string
+}
 
-//type External_url_explanation ={
-//    
-//}
+type Poll_choice = {
+    text: string
+    votes_percent: float
+}
+
+type Poll = {
+    quotable_part: Quotable_poll
+    choices: Poll_choice list
+    votes_amount: int
+}
+
 type External_url = {
     base_url: string option
     page: string option
@@ -141,12 +158,16 @@ type External_source =
     |External_url of External_url
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:
     if the replying message has images of showMore button;*)
-    |Quotation of Quotable_post
+    |Quotation of Quotable_message
+    |Poll of Quotable_poll
+
+type Main_post_body =
+    |Message of Quotable_message * External_source option
+    |Poll of Poll
 
 type Main_post = {
     id: Post_id
-    quotable_core: Quotable_post
-    external_source: External_source option
+    body: Main_post_body
     stats: Post_stats
     repost: User_handle option
     is_pinned: bool

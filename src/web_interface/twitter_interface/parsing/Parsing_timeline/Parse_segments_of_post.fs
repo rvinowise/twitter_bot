@@ -5,7 +5,7 @@ open rvinowise.html_parsing
 open rvinowise.twitter
 
 
-type Post_header = {
+type Parsed_post_header = {
     author:Twitter_user
     written_at: DateTime
     post_url: string option //quotations don't have their URL, only main posts do
@@ -51,7 +51,7 @@ module Parse_segments_of_post =
             |>Html_node.try_attribute_value "href"
         
         {
-            Post_header.author = {name=author_name;handle=author_handle}
+            Parsed_post_header.author = {name=author_name;handle=author_handle}
             written_at = datetime
             post_url=url
         }
