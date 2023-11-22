@@ -173,7 +173,7 @@ module Twitter_post_database =
                 true
         
         let reply_to_user,reply_to_post =
-            match quotable_core.reply_status with
+            match quotable_core.header.reply_status with
             |Some reply_status ->
                 match reply_status with
                 |External_message (other_user, other_post) ->
@@ -181,13 +181,13 @@ module Twitter_post_database =
                 |External_thread user -> Some user,None
                 |Starting_local_thread -> None,None
                 |Continuing_local_thread other_post ->
-                    (Some quotable_core.author.handle), Some other_post
+                    (Some quotable_core.header.author.handle), Some other_post
                 |Ending_local_thread other_post ->
-                    (Some quotable_core.author.handle), Some other_post
+                    (Some quotable_core.header.author.handle), Some other_post
             |None-> None,None
         
         db_connection.Query(
-            $"insert into {tables.post.quotable_core} (
+            $"insert into {tables.post.quotable_part_of_message} (
                 main_post_id,
                 author,
                 created_at,
@@ -215,8 +215,8 @@ module Twitter_post_database =
             ",
             {|
                 main_post_id=main_post_id
-                author=quotable_core.author.handle
-                created_at=quotable_core.created_at
+                author=quotable_core.header.author.handle
+                created_at=quotable_core.header.created_at
                 message=message
                 show_more_url=show_more_url
                 is_abbreviated=is_abbreviated
@@ -226,7 +226,7 @@ module Twitter_post_database =
             |}
         ) |> ignore
             
-    let write_quotable_core
+    let write_quotable_message
         (db_connection:NpgsqlConnection)
         (quotable_core: Quotable_message)
         (main_post_id:Post_id)
@@ -280,31 +280,157 @@ module Twitter_post_database =
             |}
         ) |> ignore
      
-    let write_main_post
-        (db_connection:NpgsqlConnection)
-        (main_post: Main_post)
+    
+    let write_poll_choice
+        (db_connection: NpgsqlConnection)
+        (choice: Poll_choice)
+        (post_id: Post_id)
         =
-        write_quotable_core
+        db_connection.Query(
+            $"insert into {tables.post.poll_choice} (
+                post_id,
+                text,
+                votes_percent
+            )
+            values (
+                @post_id,
+                @text,
+                @votes_percent
+            )
+            on conflict (post_id)
+            do update set (text, votes_percent)
+            = (@text, @votes_percent)",
+            {|
+                post_id=post_id
+                text=choice.text
+                votes_percent=choice.votes_percent
+            |}
+        ) |> ignore
+    
+    
+    let write_quotable_part_of_poll
+        (db_connection: NpgsqlConnection)
+        (quotable_poll: Quotable_poll)
+        (post_id: Post_id)
+        (is_quotation: bool)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.quotable_part_of_poll} (
+                post_id,
+                question,
+                is_quotation
+            )
+            values (
+                @post_id,
+                @question,
+                @is_quotation
+            )
+            on conflict (post_id, is_quotation)
+            do update set (question)
+            = (@question)",
+            {|
+                post_id=post_id
+                is_quotation=is_quotation
+                question=quotable_poll.question
+            |}
+        ) |> ignore
+    
+    let write_poll_summary
+        (db_connection: NpgsqlConnection)
+        (poll: Poll)
+        (post_id: Post_id)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.main_post_with_poll} (
+                post_id,
+                votes_amount
+            )
+            values (
+                @post_id,
+                @votes_amount
+            )
+            on conflict (post_id)
+            do update set (votes_amount)
+            = (@votes_amount)",
+            {|
+                post_id=post_id
+                votes_amount=poll.votes_amount
+            |}
+        ) |> ignore
+    
+            
+    let write_post_body_without_poll
+        (db_connection:NpgsqlConnection)
+        post_id
+        quotable_message
+        external_source
+        =
+        write_quotable_message
             db_connection
-            main_post.quotable_core
-            main_post.id
+            quotable_message
+            post_id
             false
         
-        match main_post.external_source with
+        match external_source with
         |None -> ()
         |Some (Quotation quotation) ->
-            write_quotable_core
+            write_quotable_message
                 db_connection
                 quotation
-                main_post.id
+                post_id
                 true
-                
         |Some (External_url external_url) -> 
             write_external_url
                 db_connection
                 external_url
+                post_id
+        |Some (External_source.Poll quotable_poll) -> 
+            write_quotable_part_of_poll
+                db_connection
+                quotable_poll
+                post_id
+                true
+    
+    let write_post_body_with_poll
+        (db_connection: NpgsqlConnection)
+        (post_id: Post_id)
+        (poll: Poll)
+        =
+        poll.choices
+        |>List.iter (fun choice ->
+            write_poll_choice
+                db_connection
+                choice
+                post_id
+        )
+        write_poll_summary    
+            db_connection
+            poll
+            post_id
+            
+        write_quotable_part_of_poll
+            db_connection
+            poll.quotable_part
+            post_id
+            false
+            
+    let write_main_post
+        (db_connection:NpgsqlConnection)
+        (main_post: Main_post)
+        =
+        match main_post.body with
+        |Message(quotable_message,external_source) ->
+            write_post_body_without_poll
+                db_connection
                 main_post.id
-                
+                quotable_message
+                external_source
+        |Poll poll ->
+            write_post_body_with_poll
+                db_connection
+                main_post.id
+                poll
+                    
         write_stats
             db_connection
             main_post.id

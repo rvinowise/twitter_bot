@@ -60,6 +60,12 @@ module Post_message =
             }
         |None ->
             Post_message.Full message
+    
+    let text message =
+        match message with
+        |Abbreviated abbreviated_message ->
+            abbreviated_message.message
+        |Full text -> text
             
 type Posted_image = {
     url: string
@@ -173,3 +179,59 @@ type Main_post = {
     is_pinned: bool
 }
 
+
+module Post_header =
+    let author header =
+        header.author
+
+    let created_at header =
+        header.created_at
+
+    let reply_status header =
+        header.reply_status
+
+exception Bad_post_exception of string
+module Main_post =
+    
+    let header post =
+        match post.body with
+        |Message (quotable_message, _) ->
+            quotable_message.header
+        |Poll poll ->
+            poll.quotable_part.header
+            
+    let quotable_message post =
+        match post.body with
+        |Message (quotable_message, _) ->
+            quotable_message
+        |Poll _ ->
+            raise <| Bad_post_exception "trying to obtain the Message from a Post which is Poll"
+    
+    let message post =
+        match post.body with
+        |Message (quotable_message, _) ->
+            quotable_message.message
+        |Poll _ ->
+            raise <| Bad_post_exception "trying to obtain the Message from a Post which is Poll"
+            
+    let external_source post =
+        match post.body with
+        |Message (_, external_source) ->
+            external_source
+        |Poll _ ->
+            None
+            
+    let main_text post =
+        match post.body with
+        |Message (quotable_message, _) ->
+            quotable_message.message
+            |>Post_message.text
+        |Poll poll ->
+            poll.quotable_part.question
+            
+    let media_load post =
+        match post.body with
+        |Message (quotable_message,_) ->
+            quotable_message.media_load
+        |_ ->
+            []

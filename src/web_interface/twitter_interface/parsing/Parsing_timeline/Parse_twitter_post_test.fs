@@ -21,19 +21,26 @@ I'm not for bans on veiling, I am for consistency though.</span></div></div><div
             |>Html_node.from_text
             |>parse_single_main_twitter_post
         
-        post.quotable_core.author
+        let header,quotable_message,external_source =
+            match post.body with
+            |Message (quotable_message, external_source) ->
+                quotable_message.header, quotable_message, external_source
+            | _ -> raise Html_parsing_fail
+        
+        
+        header.author
         |>should equal {
             Twitter_user.handle=User_handle "zarakayk"
             name="Zara Kay"
         }
-        post.quotable_core.created_at
+        header.created_at
         |>should equal (
             DateTime(2023,09,12, 08,01,31,0)    
         )
         post.id
         |>should equal (Post_id 1701506309487559165L)
         
-        post.quotable_core.message
+        quotable_message.message
         |>should equal (Post_message.Full """Is Egypt also Islamophobic? 
 I'm not for bans on veiling, I am for consistency though.""")
         
@@ -46,7 +53,7 @@ I'm not for bans on veiling, I am for consistency though.""")
         post.stats.views
         |>should equal 5842
         
-        post.external_source
+        external_source
         |>function
             |None->raise (Exception "no additional load of the post")
             |Some load -> load
@@ -68,16 +75,21 @@ I was about to start work on this commission, when in came an email from&nbsp;Tw
         post.id
         |>should equal (Post_id 1704650832828940551L)
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (Post_message.Full "quoted showMore-image-post")
         
-        post.quotable_core.author
+        post
+        |>Main_post.header
+        |>Post_header.author
         |>should equal {
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
         
-        post.quotable_core.created_at
+        post
+        |>Main_post.header
+        |>Post_header.created_at
         |>should equal (DateTime(2023,9,21,0,16,44))
         
         
@@ -93,7 +105,7 @@ I was about to start work on this commission, when in came an email from Twitte
                     show_more_url=Some "https://twitter.com/RichardDawkins/status/1694009924689203219"
                 }
 
-            quoted_post.author
+            quoted_post.header.author
             |>should equal {
                 name="Richard Dawkins"
                 handle = User_handle "RichardDawkins"
@@ -108,7 +120,9 @@ I was about to start work on this commission, when in came an email from Twitte
                 }
             ]
         
-        match post.external_source with
+        post
+        |>Main_post.external_source
+        |>function
         |Some (Quotation quoted_post) ->
                 check_quoted_post quoted_post
         | _ -> raise Html_parsing_fail
@@ -140,16 +154,21 @@ It’s so empowering to see more and more courageous women finding the freedom t
         post.id
         |>should equal (Post_id 1704659543026765991L)
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (Post_message.Full "quotation of a 4-video-post")
         
-        post.quotable_core.author
+        post
+        |>Main_post.header
+        |>Post_header.author
         |>should equal {
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
         
-        post.quotable_core.created_at
+        post
+        |>Main_post.header
+        |>Post_header.created_at
         |>should equal (DateTime(2023,9,21,0,51,20))
         
         
@@ -162,7 +181,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
 
 #FreeFromHijab"""
             
-            quoted_post.author
+            quoted_post.header.author
             |>should equal {
                 name="Infidel Noodle"
                 handle = User_handle "InfidelNoodle"
@@ -172,7 +191,9 @@ It’s so empowering to see more and more courageous women finding the freedom t
             quoted_post.media_load
             |>should haveLength 4
         
-        match post.external_source with
+        post
+        |>Main_post.external_source
+        |>function
         |Some (Quotation quoted_post) ->
             check_quoted_post quoted_post
         | _ -> raise Html_parsing_fail
@@ -206,19 +227,25 @@ It’s so empowering to see more and more courageous women finding the freedom t
         post.id
         |>should equal (Post_id 1704659922464444801L)
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (Post_message.Full "image-post with a quotation of a 4-video-post")
         
-        post.quotable_core.author
+        post
+        |>Main_post.header
+        |>Post_header.author
         |>should equal {
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
         
-        post.quotable_core.created_at
+        post
+        |>Main_post.header
+        |>Post_header.created_at
         |>should equal (DateTime(2023,9,21,0,52,51))
         
-        post.quotable_core.media_load
+        post
+        |>Main_post.media_load
         |>should equal [
             Media_item.Image{
                 Posted_image.url="https://pbs.twimg.com/media/F6grJf8XYAAvmS-?format=jpg&name=900x900"
@@ -236,7 +263,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
 
 #FreeFromHijab"""
             
-            quoted_post.author
+            quoted_post.header.author
             |>should equal {
                 name="Infidel Noodle"
                 handle = User_handle "InfidelNoodle"
@@ -255,7 +282,9 @@ It’s so empowering to see more and more courageous women finding the freedom t
                 Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948928/pu/img/yT-saemhQM1qb6iP?format=jpg&name=240x240"
             ]
         
-        match post.external_source with
+        post
+        |>Main_post.external_source
+        |>function
         |Some (Quotation quoted_post) ->
             check_quoted_post quoted_post
         |_ -> raise Html_parsing_fail
@@ -280,16 +309,20 @@ It’s so empowering to see more and more courageous women finding the freedom t
         post.id
         |>should equal (Post_id 1704704306895618550L)
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (Post_message.Full """external-quotation-post""")
         
-        post.quotable_core.author
+        post
+        |>Main_post.header
+        |>Post_header.author
         |>should equal {
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
         
-        post.quotable_core.media_load
+        post
+        |>Main_post.media_load
         |>should be Empty 
         
         
@@ -310,7 +343,9 @@ It’s so empowering to see more and more courageous women finding the freedom t
             quoted_source.obfuscated_url
             |>should equal (Some "https://t.co/PsnNFlYjC7")
         
-        match post.external_source with
+        post
+        |>Main_post.external_source
+        |>function
         |Some (External_url external_source) ->
             check_quoted_source external_source
         |_ -> raise Html_parsing_fail
@@ -339,17 +374,21 @@ It’s so empowering to see more and more courageous women finding the freedom t
         post.id
         |>should equal (Post_id 1704958629932056635L)
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (Post_message.Full """post with several external sources
 https://openlongevity.org""")
         
-        post.quotable_core.author
+        post
+        |>Main_post.header
+        |>Post_header.author
         |>should equal {
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
         
-        post.quotable_core.media_load
+        post
+        |>Main_post.media_load
         |>should be Empty 
         
         
@@ -367,7 +406,9 @@ https://openlongevity.org""")
             quoted_source.obfuscated_url
             |>should equal (Some "https://t.co/px63t1jBn5")
         
-        match post.external_source with
+        post
+        |>Main_post.external_source
+        |>function
         |Some (External_url external_source) ->
             check_quoted_source external_source
         |_ -> raise Html_parsing_fail
@@ -400,16 +441,20 @@ https://openlongevity.org""")
         post.id
         |>should equal (Post_id 1706184429964513566L)
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (Post_message.Full """image-post quoting my image-reply""")
         
-        post.quotable_core.author
+        post
+        |>Main_post.header
+        |>Post_header.author
         |>should equal {
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
         
-        post.quotable_core.media_load
+        post
+        |>Main_post.media_load
         |>should equal [
             Media_item.Image {
                 url="https://pbs.twimg.com/media/F62VphrWYAEJofB?format=jpg&name=small"
@@ -423,7 +468,7 @@ https://openlongevity.org""")
         
         let check_quoted_post (quoted_post:Quotable_message) =
             
-            quoted_post.author
+            quoted_post.header.author
             |>should equal {
                 name="tehprom"
                 handle = User_handle "tehprom269887"
@@ -445,11 +490,13 @@ https://openlongevity.org""")
                 (User_handle "tehprom269887",None)
                 |>Reply_status.External_message
                 |>Some
-                |>(<>) quoted_post.reply_status
+                |>(<>) quoted_post.header.reply_status
             then
                 raise Html_parsing_fail
         
-        match post.external_source with
+        post
+        |>Main_post.external_source
+        |>function
         |Some (Quotation quoted_post) ->
             check_quoted_post quoted_post
         | _ -> raise Html_parsing_fail
@@ -462,13 +509,15 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>parse_single_main_twitter_post
         
-        match post.external_source with
+        post
+        |>Main_post.external_source
+        |>function
         |Some (Quotation quoted_post) ->
             if
                 User_handle "abdullahadam"
                 |>Reply_status.External_thread
                 |>Some
-                |>(<>) quoted_post.reply_status
+                |>(<>) quoted_post.header.reply_status
             then
                 raise Html_parsing_fail //FsUnit's "should equal" considers them ALWAYS different            
             
@@ -485,7 +534,9 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>parse_single_main_twitter_post
         
-        first_thread_post.quotable_core.reply_status
+        first_thread_post
+        |>Main_post.header
+        |>Post_header.reply_status
         |>should equal (Some Reply_status.Starting_local_thread)
         
         
@@ -494,7 +545,9 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>Parse_segments_of_post.parse_main_twitter_post [Result.Ok first_thread_post]
         
-        middle_thread_post.quotable_core.reply_status
+        middle_thread_post
+        |>Main_post.header
+        |>Post_header.reply_status
         |>should equal (Some <| Reply_status.Continuing_local_thread first_thread_post.id)
         
         
@@ -503,7 +556,9 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>Parse_segments_of_post.parse_main_twitter_post [Result.Ok middle_thread_post]
         
-        final_thread_post.quotable_core.reply_status
+        final_thread_post
+        |>Main_post.header
+        |>Post_header.reply_status
         |>should equal (Some <| Reply_status.Ending_local_thread middle_thread_post.id)
         
         
@@ -518,7 +573,8 @@ https://openlongevity.org""")
         post.repost
         |>should equal (Some <| User_handle "tehprom269887")
         
-        post.external_source
+        post
+        |>Main_post.external_source
         |>should equal (Some <| External_source.External_url {
             base_url = (Some "youtube.com")
             page = (
@@ -540,10 +596,12 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>parse_single_main_twitter_post
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (Post_message.Full "")
         
-        post.external_source
+        post
+        |>Main_post.external_source
         |>should equal (Some <| External_source.External_url {
             base_url = Some "whyevolutionistrue.com"
             page = Some "Richard Dawkins on the “simplicity” of God"
@@ -562,13 +620,15 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>parse_single_main_twitter_post
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (
             Post_message.Full
                 "Link to the article: https://richarddawkins.substack.com/p/on-being-accused-of-islamophobia…"
         )
         
-        post.external_source
+        post
+        |>Main_post.external_source
         |>should equal None
         
     
@@ -580,7 +640,8 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>parse_single_main_twitter_post
         
-        post.quotable_core.message
+        post
+        |>Main_post.message
         |>should equal (
             {
                 Abbreviated_message.message="""Do animals feel pain more than we do? What is pain for? What is consciousness and whom might we consider a conscious being? My friend, one of my favourite moral philosophers, @PeterSinger and I take a dive into the deep end. To get early access to episodes, join our membership.…"""
