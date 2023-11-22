@@ -347,9 +347,11 @@ module Parse_segments_of_post =
                         ``node with potential role=link of the quotation``
             
             Some {
-                author = quoted_header.author
-                created_at = quoted_header.written_at
-                reply_status=reply_status
+                header={
+                    author = quoted_header.author
+                    created_at = quoted_header.written_at
+                    reply_status=reply_status
+                }
                 message =
                     Post_message.from_html_node
                         quoted_message_node
@@ -469,20 +471,27 @@ module Parse_segments_of_post =
         
         {
             Main_post.id=post_id
-            quotable_core = {
-                Quotable_post.author =parsed_header.author
-                created_at=parsed_header.written_at
-                reply_status=reply_status
-                message =
-                    post_html_segments.message
-                    |>function
-                    |Some message_node ->
-                        Post_message.from_html_node message_node
-                    |None -> Post_message.Full ""
-                        
-                media_load = media_items
-            }
-            external_source=external_source
+            body=Message (
+                {
+                    Quotable_message.header = {
+                        author =parsed_header.author
+                        created_at=parsed_header.written_at
+                        reply_status=reply_status
+                    }
+                    message =
+                        post_html_segments.message
+                        |>function
+                        |Some message_node ->
+                            Post_message.from_html_node message_node
+                        |None -> Post_message.Full ""
+                            
+                    media_load = media_items
+                }
+                ,
+                external_source
+            )
+            
+            
             stats=post_stats
             repost=reposting_user
             is_pinned = is_pinned
