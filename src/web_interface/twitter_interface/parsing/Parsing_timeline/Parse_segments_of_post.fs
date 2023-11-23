@@ -311,7 +311,30 @@ module Parse_segments_of_post =
                 check_thread_status_from_timeline
                     previous_post
                     article_node
+    
+    let quotation_is_a_poll
+        ``node with role=link of the quotation``
+        =
+        let quoted_message_node =
+            ``node with role=link of the quotation``
+            |>Html_node.descendant "div[data-testid='tweetText']"
         
+        let node_with_poll_mark =
+            quoted_message_node
+            |>Html_node.parent
+            |>Html_node.direct_children
+            |>List.last
+        
+        if
+            node_with_poll_mark
+            |>Html_node.ancestors "div[data-testid='tweetText']"
+            |>List.isEmpty
+        then    
+            node_with_poll_mark
+            |>Html_node.inner_text = "Show this poll"
+        else
+            false
+            
     let parse_quoted_post_from_its_node
         ``node with potential role=link of the quotation``
         = 
@@ -346,17 +369,32 @@ module Parse_segments_of_post =
                     parse_media_from_large_layout
                         ``node with potential role=link of the quotation``
             
-            Some {
-                header={
-                    author = quoted_header.author
-                    created_at = quoted_header.written_at
-                    reply_status=reply_status
-                }
-                message =
-                    Post_message.from_html_node
-                        quoted_message_node
-                media_load = quoted_media_items
+            let header={
+                author = quoted_header.author
+                created_at = quoted_header.written_at
+                reply_status=reply_status
             }
+            
+            let message =
+                Post_message.from_html_node
+                    quoted_message_node
+            
+            if
+                quotation_is_a_poll
+                    ``node with potential role=link of the quotation``
+            then
+                Some (External_source.Quoted_poll{
+                    header=header
+                    question =
+                        message
+                        |>Post_message.text
+                })
+            else
+                Some (External_source.Quoted_message{
+                    header=header
+                    message = message
+                    media_load = quoted_media_items
+                })
         
         |None->None            
     
@@ -370,9 +408,7 @@ module Parse_segments_of_post =
                 ``node with either role=link of quotation, or card.wrapper``
         with
         |Some quoted_post -> 
-            quoted_post
-            |>External_source.Quotation
-            |>Some
+            Some quoted_post
         |None ->
             match
                 parse_potential_external_source_from_additional_load
@@ -405,6 +441,58 @@ module Parse_segments_of_post =
         |>Option.map ((=)"Pinned")
         |>Option.defaultValue false
     
+    let parse_poll_choice li_node =
+        let choice_nodes =
+            li_node
+            |>Html_node.descend 1
+            |>Html_node.direct_children
+            |>List.tail
+        
+        let text =
+            choice_nodes
+            |>List.head
+            |>Html_node.descendant "span"
+            |>Html_node.inner_text
+            
+        let votes_percent =
+            choice_nodes
+            |>List.last
+            |>Html_node.descendant "span"
+            |>Html_node.inner_text
+            |>fun text -> //68.5%
+                text.TrimEnd('%')
+                |>System.Double.Parse
+       
+        {
+            Poll_choice.text=text
+            votes_percent=votes_percent
+        }            
+        
+    let votes_amount_text_to_int (text:String) =
+        //1 vote // 10 votes
+        text.Split(" ")
+        |>Array.head
+        |>Parsing_twitter_datatypes.parse_abbreviated_number
+    
+    let parse_poll_details cardPoll_node =
+        let choices =
+            cardPoll_node
+            |>Html_node.descendant "ul[role='list']"
+            |>Html_node.descendants "li[role='listitem']"
+            |>List.map parse_poll_choice
+        
+        let votes_amount =
+            cardPoll_node
+            |>Html_node.direct_children
+            |>List.item 1
+            |>Html_node.descendants "span>span"
+            |>List.head
+            |>Html_node.inner_text
+            |>votes_amount_text_to_int
+        
+        choices,votes_amount
+        
+        
     let parse_main_twitter_post
         (previous_posts: Result<Main_post,string> list )
         (article_html:Html_node)
@@ -452,46 +540,59 @@ module Parse_segments_of_post =
                 (reposting_user.IsSome || is_pinned)
                 article_html
         
-        let media_items = 
-            match post_html_segments.media_load with
-            |Some media -> parse_media_from_large_layout media
-            |None->[]
+        let header = {
+            author =parsed_header.author
+            created_at=parsed_header.written_at
+            reply_status=reply_status
+        }
+            
+        let message =
+            post_html_segments.message
+            |>function
+            |Some message_node ->
+                Post_message.from_html_node message_node
+            |None -> Post_message.Full ""
         
-        let external_source =
-            match post_html_segments.quotation_load with
-            |Some quotation -> parse_quoted_source_from_its_node quotation
-            |None -> None
+        let body=
+            match post_html_segments.poll_choices_and_summary with
+            |Some poll_detail ->
+                let choices,votes_amount =
+                    parse_poll_details poll_detail
+                Main_post_body.Poll {
+                    Poll.quotable_part = {
+                        header=header
+                        question=message|>Post_message.text
+                    }
+                    choices= choices
+                    votes_amount=votes_amount
+                }
+            |None->
+                let media_items = 
+                    match post_html_segments.media_load with
+                    |Some media -> parse_media_from_large_layout media
+                    |None->[]
+                
+                let external_source =
+                    match post_html_segments.quotation_load with
+                    |Some quotation -> parse_quoted_source_from_its_node quotation
+                    |None -> None
+                
+                Main_post_body.Message (
+                    {
+                        Quotable_message.header = header
+                        message = message
+                        media_load = media_items
+                    }
+                    ,
+                    external_source
+                )
         
         let post_stats =
-            try
-                Parse_footer_with_stats.parse_post_footer post_html_segments.footer
-            with
-            | :? ArgumentException as e ->
-                reraise()
+            Parse_footer_with_stats.parse_post_footer post_html_segments.footer
         
         {
             Main_post.id=post_id
-            body=Message (
-                {
-                    Quotable_message.header = {
-                        author =parsed_header.author
-                        created_at=parsed_header.written_at
-                        reply_status=reply_status
-                    }
-                    message =
-                        post_html_segments.message
-                        |>function
-                        |Some message_node ->
-                            Post_message.from_html_node message_node
-                        |None -> Post_message.Full ""
-                            
-                    media_load = media_items
-                }
-                ,
-                external_source
-            )
-            
-            
+            body=body
             stats=post_stats
             repost=reposting_user
             is_pinned = is_pinned

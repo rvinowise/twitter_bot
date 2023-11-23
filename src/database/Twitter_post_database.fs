@@ -373,7 +373,7 @@ module Twitter_post_database =
         
         match external_source with
         |None -> ()
-        |Some (Quotation quotation) ->
+        |Some (Quoted_message quotation) ->
             write_quotable_message
                 db_connection
                 quotation
@@ -384,7 +384,7 @@ module Twitter_post_database =
                 db_connection
                 external_url
                 post_id
-        |Some (External_source.Poll quotable_poll) -> 
+        |Some (External_source.Quoted_poll quotable_poll) -> 
             write_quotable_part_of_poll
                 db_connection
                 quotable_poll

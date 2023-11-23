@@ -24,6 +24,7 @@ type Html_segments_of_main_post = {
     reply_header: Html_node option
     media_load: Html_node option
     quotation_load: Html_node option
+    poll_choices_and_summary: Html_node option
     footer: Html_node
 }
 
@@ -124,7 +125,8 @@ module Find_segments_of_post =
     
     let html_segments_of_main_post
         article_node
-        = 
+        =
+        //siblings with Header and Stats nodes
         let post_segments = 
             valuable_segments_of_post article_node
         
@@ -174,27 +176,39 @@ module Find_segments_of_post =
             rest_segments
             |>Seq.tryItem 1
         
-        let media_load,quotation_load = //direct children of the additional_load_node
-            match additional_load with
-            |Some additional_load ->
-                match
-                    additional_load
-                    |>Html_node.direct_children    
-                with
-                |[media;quotation] ->
-                    Some media,Some quotation
-                |[media_or_quotation] ->
-                    if is_quotation_of_external_source media_or_quotation then
-                        None,Some media_or_quotation
-                    else
-                        Some media_or_quotation,None
-                        
-                |[]->None,None // empty external source DIV, if there's a link in the message itself
-                | _->
-                    raise
-                    <| Bad_post_structure_exception 
-                        ("additional post load has >2 children", article_node)
-            |None -> None,None     
+        
+        let
+            media_load,
+            quotation_load,
+            poll_choices_and_summary
+                =
+                match additional_load with
+                |None -> None,None,None
+                |Some additional_load ->
+                    let poll_choices_and_summary =
+                        additional_load
+                        |>Html_node.try_descendant "div[data-testid='cardPoll']"
+                    match poll_choices_and_summary with
+                    |Some poll_choices_and_summary->
+                        None,None,Some poll_choices_and_summary
+                    |None->
+                        match
+                            additional_load
+                            |>Html_node.direct_children    
+                        with
+                        |[media;quotation] ->
+                            Some media,Some quotation,None
+                        |[media_or_quotation] ->
+                            if is_quotation_of_external_source media_or_quotation then
+                                None,Some media_or_quotation,None
+                            else
+                                Some media_or_quotation,None,None
+                                
+                        |[]->None,None,None // empty external source DIV, if there's a link in the message itself
+                        | _->
+                            raise
+                            <| Bad_post_structure_exception 
+                                ("additional post load has >2 children", article_node)
         
         {
             social_context_header = social_context_header
@@ -203,6 +217,7 @@ module Find_segments_of_post =
             reply_header = reply_header
             media_load = media_load
             quotation_load = quotation_load
+            poll_choices_and_summary = poll_choices_and_summary
             footer = footing_with_stats
         }
         

@@ -147,6 +147,7 @@ type Poll_choice = {
     votes_percent: float
 }
 
+(* a Poll can be a continuation of a Thread, but it can't be any other Reply *)
 type Poll = {
     quotable_part: Quotable_poll
     choices: Poll_choice list
@@ -164,8 +165,8 @@ type External_source =
     |External_url of External_url
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:
     if the replying message has images of showMore button;*)
-    |Quotation of Quotable_message
-    |Poll of Quotable_poll
+    |Quoted_message of Quotable_message
+    |Quoted_poll of Quotable_poll
 
 type Main_post_body =
     |Message of Quotable_message * External_source option
@@ -235,3 +236,10 @@ module Main_post =
             quotable_message.media_load
         |_ ->
             []
+            
+    let poll post =
+        match post.body with
+        |Poll poll ->
+            poll
+        |_ ->
+            raise <| Bad_post_exception "trying to obtain the Poll from a Post which doesn't have a Poll"

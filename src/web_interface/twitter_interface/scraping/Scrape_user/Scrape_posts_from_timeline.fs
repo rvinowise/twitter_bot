@@ -80,7 +80,7 @@ module Scrape_posts_from_timeline =
     
     
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try scrape_timeline``()=
         let posts = 
             scrape_timeline
