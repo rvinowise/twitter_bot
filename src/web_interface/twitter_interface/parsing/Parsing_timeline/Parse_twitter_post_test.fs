@@ -680,7 +680,7 @@ https://openlongevity.org""")
         poll.choices
         |>should equal [
             {
-                Poll_choice.text="long question poll 1 "
+                Poll_choice.text="long question poll 1"
                 votes_percent=100
             }
             {

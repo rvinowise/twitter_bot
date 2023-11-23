@@ -31,7 +31,7 @@ module Harvest_posts_from_timeline =
                 post
         )
     
-    [<Fact(Skip="manual")>]
+    [<Fact>]//(Skip="manual")
     let ``try harvest_posts_from_timeline``()=
        "dicortona"
         |>User_handle
