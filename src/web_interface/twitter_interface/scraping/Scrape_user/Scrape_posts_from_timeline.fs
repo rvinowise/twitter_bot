@@ -45,7 +45,7 @@ module Scrape_posts_from_timeline =
         |>Html_node.try_descendant "div[data-testid='placementTracking']"
         |>Option.isSome
     
-    let is_cell_contains_post cell_node =
+    let cell_contains_post cell_node =
         cell_node
         |>is_advertisement|>not
         &&
@@ -73,7 +73,7 @@ module Scrape_posts_from_timeline =
             (fun item ->
                 item
                 |>Html_node.from_html_string
-                |>is_cell_contains_post)
+                |>cell_contains_post)
             parse_post
             posts_amount
         

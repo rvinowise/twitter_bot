@@ -443,27 +443,6 @@ module Twitter_post_database =
             post_id
             false
             
-    let write_main_post
-        (db_connection:NpgsqlConnection)
-        (main_post: Main_post)
-        =
-        match main_post.body with
-        |Message(quotable_message,external_source) ->
-            write_post_body_without_poll
-                db_connection
-                main_post.id
-                quotable_message
-                external_source
-        |Poll poll ->
-            write_post_body_with_poll
-                db_connection
-                main_post.id
-                poll
-                    
-        write_stats
-            db_connection
-            main_post.id
-            main_post.stats
             
     let write_repost
         (db_connection:NpgsqlConnection)
@@ -509,5 +488,37 @@ module Twitter_post_database =
                 liker=liker
             |}
         ) |> ignore
+            
+    let write_main_post
+        (db_connection:NpgsqlConnection)
+        (main_post: Main_post)
+        =
+        match main_post.body with
+        |Message(quotable_message,external_source) ->
+            write_post_body_without_poll
+                db_connection
+                main_post.id
+                quotable_message
+                external_source
+        |Poll poll ->
+            write_post_body_with_poll
+                db_connection
+                main_post.id
+                poll
+        
+        match main_post.reposter with
+        |Some reposter ->
+            write_repost
+                db_connection
+                reposter
+                main_post.id
+        |None -> ()
+                    
+        write_stats
+            db_connection
+            main_post.id
+            main_post.stats
+            
+    
     
  

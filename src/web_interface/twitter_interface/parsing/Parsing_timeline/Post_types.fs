@@ -122,6 +122,7 @@ type Reply_status =
     
     |Starting_local_thread 
     |Continuing_local_thread of Post_id //replying to the previous message in the timeline
+    |Continuing_interrupted_local_thread of Post_id //replying to a hidden post, which has this post before it
     |Ending_local_thread of Post_id
     
     
