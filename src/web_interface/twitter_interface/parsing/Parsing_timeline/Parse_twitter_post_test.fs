@@ -570,7 +570,7 @@ https://openlongevity.org""")
             |>Html_node.from_text
             |>parse_single_main_twitter_post
         
-        post.repost
+        post.reposter
         |>should equal (Some <| User_handle "tehprom269887")
         
         post

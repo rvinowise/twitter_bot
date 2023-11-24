@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
+open System.Globalization
 open rvinowise.html_parsing
 open rvinowise.twitter
 
@@ -460,8 +461,10 @@ module Parse_segments_of_post =
             |>Html_node.descendant "span"
             |>Html_node.inner_text
             |>fun text -> //68.5%
-                text.TrimEnd('%')
-                |>System.Double.Parse
+                Double.Parse(
+                    text.TrimEnd('%'),
+                    CultureInfo.InvariantCulture    
+                )
        
         {
             Poll_choice.text=text
@@ -594,6 +597,6 @@ module Parse_segments_of_post =
             Main_post.id=post_id
             body=body
             stats=post_stats
-            repost=reposting_user
+            reposter=reposting_user
             is_pinned = is_pinned
         }

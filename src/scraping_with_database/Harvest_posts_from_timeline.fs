@@ -14,7 +14,8 @@ module Harvest_posts_from_timeline =
             Scrape_posts_from_timeline.scrape_timeline
                 (Browser.open_browser())
                 Int32.MaxValue
-                Timeline_tab.Posts
+                //Timeline_tab.Posts
+                Timeline_tab.Replies
                 user
         
         let results = List.map snd posts

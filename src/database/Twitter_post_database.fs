@@ -155,14 +155,65 @@ module Twitter_post_database =
                 is_quotation
         )
     
-    let write_textual_part_of_quotable_core
+    let write_post_header
         (db_connection:NpgsqlConnection)
-        (quotable_core: Quotable_message)
+        (header: Post_header)
+        (main_post_id:Post_id)
+        (is_quotation:bool)
+        =
+        let reply_to_user,reply_to_post =
+            match header.reply_status with
+            |Some reply_status ->
+                match reply_status with
+                |External_message (other_user, other_post) ->
+                    Some other_user,other_post
+                |External_thread user -> Some user,None
+                |Starting_local_thread -> None,None
+                |Continuing_local_thread other_post ->
+                    (Some header.author.handle), Some other_post
+                |Ending_local_thread other_post ->
+                    (Some header.author.handle), Some other_post
+            |None-> None,None    
+        
+        db_connection.Query(
+            $"insert into {tables.post.header} (
+                main_post_id,
+                author,
+                created_at,
+                is_quotation,
+                reply_to_user,
+                reply_to_post
+            )
+            values (
+                @main_post_id,
+                @author,
+                @created_at,
+                @is_quotation,
+                @reply_to_user,
+                @reply_to_post
+            )
+            on conflict (main_post_id, is_quotation)
+            do update set (author, created_at, reply_to_user,reply_to_post)
+            = (@author, @created_at, @reply_to_user, @reply_to_post)
+            ",
+            {|
+                main_post_id=main_post_id
+                author=header.author.handle
+                created_at=header.created_at
+                is_quotation=is_quotation
+                reply_to_user = reply_to_user
+                reply_to_post = reply_to_post
+            |}
+        ) |> ignore
+    
+    let write_quotable_message_body
+        (db_connection:NpgsqlConnection)
+        (quotable_message: Quotable_message)
         (main_post_id:Post_id)
         (is_quotation:bool)
         =
         let message,show_more_url,is_abbreviated =
-            match quotable_core.message with
+            match quotable_message.message with
             |Full text -> text,"",false
             |Abbreviated message ->
                 message.message,
@@ -172,59 +223,34 @@ module Twitter_post_database =
                 ),
                 true
         
-        let reply_to_user,reply_to_post =
-            match quotable_core.header.reply_status with
-            |Some reply_status ->
-                match reply_status with
-                |External_message (other_user, other_post) ->
-                    Some other_user,other_post
-                |External_thread user -> Some user,None
-                |Starting_local_thread -> None,None
-                |Continuing_local_thread other_post ->
-                    (Some quotable_core.header.author.handle), Some other_post
-                |Ending_local_thread other_post ->
-                    (Some quotable_core.header.author.handle), Some other_post
-            |None-> None,None
-        
         db_connection.Query(
-            $"insert into {tables.post.quotable_part_of_message} (
+            $"insert into {tables.post.quotable_message_body} (
                 main_post_id,
-                author,
-                created_at,
                 message,
                 show_more_url,
                 is_abbreviated,
-                is_quotation,
-                reply_to_user,
-                reply_to_post
+                is_quotation
             )
             values (
                 @main_post_id,
-                @author,
-                @created_at,
                 @message,
                 @show_more_url,
                 @is_abbreviated,
-                @is_quotation,
-                @reply_to_user,
-                @reply_to_post
+                @is_quotation
             )
             on conflict (main_post_id, is_quotation)
-            do update set (author, created_at, message, show_more_url, is_abbreviated,reply_to_user,reply_to_post)
-            = (@author, @created_at, @message, @show_more_url, @is_abbreviated, @reply_to_user, @reply_to_post)
+            do update set (message, show_more_url, is_abbreviated)
+            = (@message, @show_more_url, @is_abbreviated)
             ",
             {|
                 main_post_id=main_post_id
-                author=quotable_core.header.author.handle
-                created_at=quotable_core.header.created_at
                 message=message
                 show_more_url=show_more_url
                 is_abbreviated=is_abbreviated
                 is_quotation=is_quotation
-                reply_to_user = reply_to_user
-                reply_to_post = reply_to_post
             |}
-        ) |> ignore
+        ) |> ignore    
+    
             
     let write_quotable_message
         (db_connection:NpgsqlConnection)
@@ -232,20 +258,23 @@ module Twitter_post_database =
         (main_post_id:Post_id)
         (is_quotation:bool)
         =
-            
         write_media_items
             db_connection
             quotable_core.media_load
             main_post_id
             is_quotation
         
-        write_textual_part_of_quotable_core
+        write_post_header
+            db_connection
+            quotable_core.header
+            main_post_id
+            is_quotation
+        
+        write_quotable_message_body
             db_connection
             quotable_core
             main_post_id
             is_quotation
-        
-        
    
     
     let write_external_url
@@ -327,7 +356,7 @@ module Twitter_post_database =
             )
             on conflict (post_id, is_quotation)
             do update set (question)
-            = (@question)",
+            = row(@question)",
             {|
                 post_id=post_id
                 is_quotation=is_quotation
@@ -351,7 +380,7 @@ module Twitter_post_database =
             )
             on conflict (post_id)
             do update set (votes_amount)
-            = (@votes_amount)",
+            = row(@votes_amount)",
             {|
                 post_id=post_id
                 votes_amount=poll.votes_amount
@@ -435,3 +464,50 @@ module Twitter_post_database =
             db_connection
             main_post.id
             main_post.stats
+            
+    let write_repost
+        (db_connection:NpgsqlConnection)
+        (reposter: User_handle)
+        (post_id: Post_id)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.repost} (
+                post,
+                reposter
+            )
+            values (
+                @post,
+                @reposter
+            )
+            on conflict (post,reposter)
+            do nothing",
+            {|
+                post=post_id
+                reposter=reposter
+            |}
+        ) |> ignore
+        
+        
+    let write_like
+        (db_connection:NpgsqlConnection)
+        (liker: User_handle)
+        (post_id: Post_id)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.like} (
+                post,
+                liker
+            )
+            values (
+                @post,
+                @liker
+            )
+            on conflict (post,liker)
+            do nothing",
+            {|
+                post=post_id
+                liker=liker
+            |}
+        ) |> ignore
+    
+ 

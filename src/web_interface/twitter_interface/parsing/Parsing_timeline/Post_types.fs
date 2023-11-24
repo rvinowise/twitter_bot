@@ -176,7 +176,7 @@ type Main_post = {
     id: Post_id
     body: Main_post_body
     stats: Post_stats
-    repost: User_handle option
+    reposter: User_handle option
     is_pinned: bool
 }
 

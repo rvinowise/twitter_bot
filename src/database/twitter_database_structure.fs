@@ -30,7 +30,8 @@ module tables =
 
 
     type Post() =
-        member _.quotable_part_of_message = "post_quotable_core"
+        member _.quotable_message_body = "post_quotable_message_body"
+        member _.header = "post_header"
         member _.external_url = "post_external_url"
         member _.image = "post_image"
         member _.reply = "post_reply"
@@ -39,5 +40,7 @@ module tables =
         member _.poll_choice= "poll_choice"
         member _.main_post_with_poll= "main_post_with_poll"
         member _.quotable_part_of_poll= "post_quotable_poll"
+        member _.repost= "post_repost"
+        member _.like= "post_like"
         
     let post = Post()
