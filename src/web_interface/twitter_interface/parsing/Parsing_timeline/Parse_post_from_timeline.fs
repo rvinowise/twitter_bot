@@ -21,8 +21,6 @@ so that different parts of the html-hierarchy could be sent as parameters
  *)
 module Parse_post_from_timeline =
     
-    
-    
     let has_different_items items =
         if Seq.length items < 2 then
             false
@@ -48,7 +46,6 @@ module Parse_post_from_timeline =
         |>Log.error
         |>ignore
     
-    
 
     
     let long_post_has_show_more_button post_body =
@@ -69,7 +66,24 @@ module Parse_post_from_timeline =
         |>Html_node.try_descendant "span[data-testid='socialContext']"
     
     
-    
+    let try_parse_post
+        previous_context
+        html_cell
+        =
+        try 
+            html_cell
+            |>Html_node.from_html_string
+            |>Html_node.descendant "article[data-testid='tweet']"
+            |>Parse_segments_of_post.parse_main_twitter_post previous_context
+            |>Result.Ok
+        with
+        | :? Bad_post_structure_exception
+        | :? Html_parsing_fail as exc ->
+            $"""exception {exc.Message} when parsing the post:
+            {html_cell}
+            """
+            |>Log.error
+            |>Result.Error
         
         
 

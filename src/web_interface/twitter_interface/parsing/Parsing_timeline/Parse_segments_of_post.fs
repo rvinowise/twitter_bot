@@ -233,8 +233,13 @@ module Parse_segments_of_post =
             try_reply_status_from_thread_mark author ``tweetText node``
     
     
+    type Timeline_thread =
+        |Adjacent_previous_post of Post_id
+        |Distant_previous_message of Post_id
+        |None
+    
     let check_thread_status_from_timeline
-        (previous_post: Post_id option)
+        (thread: Timeline_thread)
         (article_html:Html_node)
         =
         let has_linked_post_after =
@@ -268,10 +273,10 @@ module Parse_segments_of_post =
             Some Reply_status.Starting_local_thread
         |true,_->
             let previous_post = 
-                match previous_post with
-                |Some post_id -> post_id
+                match thread with
+                |Adjacent_previous_post -> post_id
                 |None ->
-                    ("no previous post provided, but this post continues a thread",
+                    ("no data on previous posts is provided, but this post continues a thread",
                     article_html)
                     |>Bad_post_structure_exception
                     |>raise
@@ -288,7 +293,7 @@ module Parse_segments_of_post =
         author
         has_social_context_header
         article_node
-        previous_post
+        (thread: Timeline_thread)
         =
         let status_from_quotable_core =
             article_node
@@ -310,7 +315,7 @@ module Parse_segments_of_post =
                 None
             else
                 check_thread_status_from_timeline
-                    previous_post
+                    thread
                     article_node
     
     let quotation_is_a_poll
@@ -497,7 +502,7 @@ module Parse_segments_of_post =
         
         
     let parse_main_twitter_post
-        (previous_posts: Result<Main_post,string> list )
+        (thread: Timeline_thread )
         (article_html:Html_node)
         =
         
@@ -529,19 +534,11 @@ module Parse_segments_of_post =
             |None -> None,false
         
         let reply_status =
-            previous_posts
-            |>List.tryHead
-            |>Option.bind (
-                function
-                |Ok previous_post ->
-                    Some previous_post.id
-                |Error _ ->
-                    None
-            )
-            |>parse_reply_status_of_main_post
+            parse_reply_status_of_main_post
                 parsed_header.author.handle
                 (reposting_user.IsSome || is_pinned)
                 article_html
+                thread
         
         let header = {
             author =parsed_header.author

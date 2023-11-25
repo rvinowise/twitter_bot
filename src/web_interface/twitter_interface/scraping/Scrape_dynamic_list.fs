@@ -110,77 +110,130 @@ module Scrape_dynamic_list =
     let new_nodes_from_visible_nodes
         context
         new_nodes
-        all_nodes
+        previous_nodes
         =
         let new_nodes =
             new_nodes
             |>Array.map (Html_node.from_html_string_and_context context)
-        let all_nodes =
-            all_nodes
+        let previous_nodes =
+            previous_nodes
             |>List.map (Html_node.from_html_string_and_context context)
         
         new_items_from_visible_items
             html_has_same_text
             new_nodes
-            all_nodes
+            previous_nodes
         |>Array.map Html_node.to_html_string
      
-    let parse_dynamic_list
+    
+    let skim_visible_items
+        browser
+        is_item_needed
+        item_selector
+        (previous_items: list<Html_string>)
+        html_parsing_context
+        =
+        let visible_skimmed_items =
+            skim_displayed_items
+                is_item_needed
+                browser
+                item_selector
+            |>List.rev
+            |>Array.ofList
+            
+        previous_items
+        |>new_nodes_from_visible_nodes
+              html_parsing_context
+              visible_skimmed_items
+        |>List.ofArray
+    
+    let process_items_providing_previous_items
+        (context: 'Previous_context)
+        items
+        (process_item: 'Previous_context -> Html_string -> 'Previous_context)
+        =
+        context
+        |>List.foldBack (fun item context ->
+            process_item
+                context
+                item
+        )
+            items
+    
+    let parse_dynamic_list_with_previous_item
         browser
         wait_for_loading
         is_item_needed
-        (parse_item: list<Html_string * 'Parsed_item> -> Html_string -> 'Parsed_item)
-        needed_amount
+        (process_item: 'Previous_context -> Html_string -> 'Previous_context)
+        (empty_context: 'Previous_context)
         item_selector
         =
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
             
         let rec skim_and_scroll_iteration
-            (parsed_sofar_items: list<Html_string * 'Parsed_item>)
+            (previous_items: list<Html_string>)
+            (previous_context)
             =
             
             wait_for_loading()
             
-            
-            let visible_skimmed_items =
-                skim_displayed_items
-                    is_item_needed
-                    browser
-                    item_selector
-                |>List.rev
-                |>Array.ofList
-                
             let new_skimmed_items =
-                parsed_sofar_items
-                |>List.map fst
-                |>new_nodes_from_visible_nodes
-                      html_parsing_context
-                      visible_skimmed_items
-                |>List.ofArray
+                skim_visible_items
+                    browser
+                    is_item_needed
+                    item_selector
+                    previous_items
+                    html_parsing_context
             
             if
-                (new_skimmed_items|>Seq.isEmpty|>not) &&
-                (Seq.length parsed_sofar_items < needed_amount)
+                not new_skimmed_items.IsEmpty
             then
                 Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
                 
-                let all_parsed_items =
-                    parsed_sofar_items
-                    |>List.foldBack (fun item all_items ->
-                        (item, parse_item all_items item) 
-                        ::
-                        all_items
-                    )
-                        new_skimmed_items
+                process_items_providing_previous_items
+                    previous_context
+                    new_skimmed_items
+                    process_item
                         
-                skim_and_scroll_iteration
-                    all_parsed_items
+                |>skim_and_scroll_iteration
+                    new_skimmed_items
+        
+        skim_and_scroll_iteration [] empty_context
+   
+    
+    let collect_items_of_dynamic_list
+        browser
+        wait_for_loading
+        is_item_needed
+        item_selector
+        =
+        let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
+            
+        let rec skim_and_scroll_iteration
+            (all_items: list<Html_string>)
+            =
+            
+            wait_for_loading()
+            
+            let new_skimmed_items =
+                skim_visible_items
+                    browser
+                    is_item_needed
+                    item_selector
+                    all_items
+                    html_parsing_context
+            
+            if
+                not new_skimmed_items.IsEmpty
+            then
+                Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
                 
+                new_skimmed_items@all_items
+                |>skim_and_scroll_iteration
             else
-                parsed_sofar_items
+                all_items
         
-        skim_and_scroll_iteration []
-        
+        skim_and_scroll_iteration []     
     
     let dont_parse_html_item _ _ = ()
     
@@ -192,29 +245,21 @@ module Scrape_dynamic_list =
         item_selector
         =
         item_selector
-        |>parse_dynamic_list
+        |>collect_items_of_dynamic_list
             browser
             wait_for_loading
             all_items_are_needed
-            dont_parse_html_item
-            Int32.MaxValue
-        |>List.map fst
         
     let collect_some_html_items_of_dynamic_list
         browser
         wait_for_loading
-        max_amount
         item_selector
         =
         item_selector
-        |>parse_dynamic_list
+        |>collect_items_of_dynamic_list
             browser
             wait_for_loading
             all_items_are_needed
-            dont_parse_html_item
-            max_amount
-        |>List.map fst
-    
         
     
 

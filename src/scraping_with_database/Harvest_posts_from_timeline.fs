@@ -4,9 +4,68 @@ open System
 open OpenQA.Selenium
 open Xunit
 open canopy.types
+open rvinowise.html_parsing
 open rvinowise.web_scraping
 
 module Harvest_posts_from_timeline =
+    
+    
+    let harvest_post
+        database
+        previous_context
+        html_cell
+        =
+        let parsed_post =
+            Parse_post_from_timeline.try_parse_post
+                previous_context
+                html_cell
+        
+        match parsed_post with
+        |Ok post ->
+            Twitter_post_database.write_main_post    
+                database
+                post
+        |Error error ->
+            ()
+    
+    let harvest_timeline
+        browser
+        (tab: Timeline_tab)
+        user
+        =
+        Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
+        Reveal_user_page.surpass_content_warning browser
+        use database = Twitter_database.open_connection()
+        "div[data-testid='cellInnerDiv']"
+        |>Scrape_dynamic_list.parse_dynamic_list_with_previous_item
+            browser
+            (fun () -> Scrape_posts_from_timeline.wait_for_timeline_loading browser)
+            (fun item ->
+                item
+                |>Html_node.from_html_string
+                |>Scrape_posts_from_timeline.cell_contains_post)
+            (harvest_post database)
+        
+    
+    
+    
+    [<Fact(Skip="manual")>]
+    let ``try harvest_timeline``()=
+        let posts = 
+            harvest_timeline
+                (
+                    Settings.auth_tokens
+                    |>Seq.head
+                    |>Browser.prepare_authentified_browser
+                )
+                Timeline_tab.Posts
+                (User_handle "HilzFuld")
+            
+        let results = List.map snd posts
+        let errors =
+            results
+            |>List.filter Result.isError
+        ()
     
     
     let harvest_posts_from_timeline
@@ -14,9 +73,8 @@ module Harvest_posts_from_timeline =
         user
         =
         let posts = 
-            Scrape_posts_from_timeline.scrape_timeline
+            harvest_timeline
                 (Browser.open_browser())
-                Int32.MaxValue
                 timeline_tab
                 user
         
