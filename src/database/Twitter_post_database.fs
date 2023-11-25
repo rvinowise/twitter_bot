@@ -155,13 +155,42 @@ module Twitter_post_database =
                 is_quotation
         )
     
+    
+    let write_reply
+        (db_connection:NpgsqlConnection)
+        previous_post
+        next_post
+        is_direct
+        =
+        db_connection.Query(
+            $"insert into {tables.post.like} (
+                previous_post,
+                next_post,
+                is_direct
+            )
+            values (
+                @previous_post,
+                @next_post,
+                @is_direct
+            )
+            on conflict (previous_post, next_post)
+            do update set (is_direct)
+            = row(@is_direct)",
+            {|
+                previous_post=previous_post
+                next_post=next_post
+                is_direct=is_direct
+            |}
+        ) |> ignore
+        
+    
     let write_post_header
         (db_connection:NpgsqlConnection)
         (header: Post_header)
         (main_post_id:Post_id)
         (is_quotation:bool)
         =
-        let reply_to_user,reply_to_post =
+        let reply_to_post =
             match header.reply_status with
             |Some reply_status ->
                 match reply_status with
@@ -201,10 +230,13 @@ module Twitter_post_database =
                 author=header.author.handle
                 created_at=header.created_at
                 is_quotation=is_quotation
-                reply_to_user = reply_to_user
-                reply_to_post = reply_to_post
             |}
         ) |> ignore
+        
+        write_reply
+            db_connection
+            reply_to_post
+            main_post_id
     
     let write_quotable_message_body
         (db_connection:NpgsqlConnection)
@@ -488,6 +520,10 @@ module Twitter_post_database =
                 liker=liker
             |}
         ) |> ignore
+        
+            
+    
+    
             
     let write_main_post
         (db_connection:NpgsqlConnection)
