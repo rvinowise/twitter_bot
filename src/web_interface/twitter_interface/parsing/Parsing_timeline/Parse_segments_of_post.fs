@@ -215,31 +215,41 @@ module Parse_segments_of_post =
             |>List.last
             |>Find_segments_of_post.is_mark_of_thread)
         then    
-            Reply_status.External_thread user
+            {Reply.to_user = user; to_post=None; is_direct=true}
             |>Some
         else
             None
     
-    let parse_reply_status_of_quotable_post author ``tweetText node`` =
+    let parse_reply_of_quotable_post author ``tweetText node`` =
         let reply_target_from_header =
             try_reply_target_from_reply_header
                 ``tweetText node``
             
         match reply_target_from_header with
         |Some reply_target->
-            Reply_status.External_message (reply_target, None)
+            {Reply.to_user=reply_target; to_post=None; is_direct=true}
             |>Some
         |None->
             try_reply_status_from_thread_mark author ``tweetText node``
     
     
-    type Timeline_thread =
-        |Adjacent_previous_post of Post_id
-        |Distant_previous_message of Post_id
-        |None
+    type Previous_cell =
+        |Adjacent_post of Post_id * User_handle
+        |Distant_connected_message of Post_id * User_handle
+        |No_cell
+    
+    let reply_from_local_thread
+        (thread: Previous_cell)
+        =
+        match thread with
+        |Adjacent_post (post,user) ->
+            Some {Reply.to_user = user; to_post=Some post; is_direct=true}
+        |Distant_connected_message (post,user) ->
+            Some {Reply.to_user = user; to_post=Some post; is_direct=false}
+        |No_cell -> None
     
     let check_thread_status_from_timeline
-        (thread: Timeline_thread)
+        (thread: Previous_cell)
         (article_html:Html_node)
         =
         let has_linked_post_after =
@@ -268,32 +278,30 @@ module Parse_segments_of_post =
             |>Html_node.direct_children
             |>List.isEmpty|>not
         
-        match has_linked_post_before,has_linked_post_after with
-        |false,true->
-            Some Reply_status.Starting_local_thread
-        |true,_->
+        if has_linked_post_after then
             let previous_post = 
                 match thread with
-                |Adjacent_previous_post -> post_id
-                |None ->
+                |Adjacent_post (post,user) -> post
+                |Distant_connected_message (post,user)-> post
+                |No_cell ->
                     ("no data on previous posts is provided, but this post continues a thread",
                     article_html)
                     |>Bad_post_structure_exception
                     |>raise
             match has_linked_post_after with 
             |true->
-                Some (Reply_status.Continuing_local_thread previous_post)
+                Some (Reply.Continuing_local_thread previous_post)
             |false->
-                Some (Reply_status.Ending_local_thread previous_post)
-        |_-> None
+                Some (Reply.Ending_local_thread previous_post)
+        else None
     
         
     
-    let parse_reply_status_of_main_post
+    let parse_reply_of_main_post
         author
         has_social_context_header
         article_node
-        (thread: Timeline_thread)
+        (thread: Previous_cell)
         =
         let status_from_quotable_core =
             article_node
@@ -302,7 +310,7 @@ module Parse_segments_of_post =
             |>function
             |Some message_node ->
                 message_node
-                |>parse_reply_status_of_quotable_post
+                |>parse_reply_of_quotable_post
                     author
             |None -> None
             
@@ -314,9 +322,7 @@ module Parse_segments_of_post =
             then 
                 None
             else
-                check_thread_status_from_timeline
-                    thread
-                    article_node
+                reply_from_local_thread thread
     
     let quotation_is_a_poll
         ``node with role=link of the quotation``
@@ -361,8 +367,8 @@ module Parse_segments_of_post =
                 |>Html_node.descendant "div[data-testid='User-Name']"
                 |>parse_post_header
             
-            let reply_status =
-                parse_reply_status_of_quotable_post quoted_header.author.handle quoted_message_node
+            let reply =
+                parse_reply_of_quotable_post quoted_header.author.handle quoted_message_node
             
             let quoted_media_items =
                 ``node with potential role=link of the quotation``
@@ -378,7 +384,7 @@ module Parse_segments_of_post =
             let header={
                 author = quoted_header.author
                 created_at = quoted_header.written_at
-                reply_status=reply_status
+                reply=reply
             }
             
             let message =
@@ -502,7 +508,7 @@ module Parse_segments_of_post =
         
         
     let parse_main_twitter_post
-        (thread: Timeline_thread )
+        (thread: Previous_cell )
         (article_html:Html_node)
         =
         
@@ -533,8 +539,8 @@ module Parse_segments_of_post =
                 is_pinned social_context
             |None -> None,false
         
-        let reply_status =
-            parse_reply_status_of_main_post
+        let reply =
+            parse_reply_of_main_post
                 parsed_header.author.handle
                 (reposting_user.IsSome || is_pinned)
                 article_html
@@ -543,7 +549,7 @@ module Parse_segments_of_post =
         let header = {
             author =parsed_header.author
             created_at=parsed_header.written_at
-            reply_status=reply_status
+            reply=reply
         }
             
         let message =
@@ -590,10 +596,12 @@ module Parse_segments_of_post =
         let post_stats =
             Parse_footer_with_stats.parse_post_footer post_html_segments.footer
         
+        let thread = check_thread_status_from_timeline
+        
         {
             Main_post.id=post_id
             body=body
             stats=post_stats
             reposter=reposting_user
             is_pinned = is_pinned
-        }
+        },thread

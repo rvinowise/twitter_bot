@@ -2,6 +2,7 @@
 
 open rvinowise.html_parsing
 open rvinowise.twitter
+open rvinowise.twitter.Parse_segments_of_post
 
 
 
@@ -66,26 +67,56 @@ module Parse_post_from_timeline =
         |>Html_node.try_descendant "span[data-testid='socialContext']"
     
     
-    let try_parse_post
-        previous_context
+    let cell_looks_like_hidden_replies
         html_cell
         =
+        html_cell
+        |>Html_node.descendant "span"
+        |>Html_node.inner_text = "Show more replies"
+        
+        
+    type Parsed_timeline_cell =
+    |Post of Main_post*Previous_cell
+    |Hidden_post of Previous_cell
+    |Error of string
+    
+    let try_parse_post
+        thread
+        article_node
+        =
         try 
-            html_cell
-            |>Html_node.from_html_string
-            |>Html_node.descendant "article[data-testid='tweet']"
-            |>Parse_segments_of_post.parse_main_twitter_post previous_context
-            |>Result.Ok
+            article_node
+            |>Parse_segments_of_post.parse_main_twitter_post thread
+            |>Parsed_timeline_cell.Post
         with
         | :? Bad_post_structure_exception
         | :? Html_parsing_fail as exc ->
             $"""exception {exc.Message} when parsing the post:
-            {html_cell}
+            {article_node}
             """
             |>Log.error
-            |>Result.Error
+            |>Parsed_timeline_cell.Error
         
+    
+    
         
-
+    let try_parse_cell
+        html_parsing_context
+        (thread: Previous_cell)
+        (html_cell: Html_node)
+        =
+        
+        let article_node =
+            html_cell
+            |>Html_node.try_descendant "article[data-testid='tweet']"
+        
+        if
+            cell_looks_like_hidden_replies html_cell
+        then
+            Parsed_timeline_cell.Hidden_post thread
+        else
+            try_parse_post
+                thread
+                article_node
     
     

@@ -108,28 +108,17 @@ type Media_item =
     |Video_poster of string
 
 
-type Reply_status =
-    
-    (*the author will be the same as in this message; text "show this thread" after the message *)
-    |External_thread of User_handle
-    (* this type of reply may be identical to the next one (External_message) (is it discontinued?) *)
-    
-    (*text "replying to..." below header *)     
-    |External_message of User_handle * Post_id option
-    
-    (*there will be a replying message right after this message; vertical line in the timeline.
-    can not exist inside a quotation *)
-    
-    |Starting_local_thread 
-    |Continuing_local_thread of Post_id //replying to the previous message in the timeline
-    |Continuing_interrupted_local_thread of Post_id //replying to a hidden post, which has this post before it
-    |Ending_local_thread of Post_id
+type Reply = {
+    to_user: User_handle
+    to_post: Post_id option
+    is_direct: bool
+}
     
     
 type Post_header = {
     author: Twitter_user
     created_at: DateTime
-    reply_status: Reply_status option
+    reply: Reply option
 }
 
 type Quotable_message = {
@@ -190,7 +179,7 @@ module Post_header =
         header.created_at
 
     let reply_status header =
-        header.reply_status
+        header.reply
 
 exception Bad_post_exception of string
 module Main_post =

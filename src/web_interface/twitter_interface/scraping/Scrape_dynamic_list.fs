@@ -112,25 +112,17 @@ module Scrape_dynamic_list =
         new_nodes
         previous_nodes
         =
-        let new_nodes =
-            new_nodes
-            |>Array.map (Html_node.from_html_string_and_context context)
-        let previous_nodes =
-            previous_nodes
-            |>List.map (Html_node.from_html_string_and_context context)
-        
         new_items_from_visible_items
             html_has_same_text
             new_nodes
             previous_nodes
-        |>Array.map Html_node.to_html_string
      
     
     let skim_visible_items
         browser
         is_item_needed
         item_selector
-        (previous_items: list<Html_string>)
+        previous_items
         html_parsing_context
         =
         let visible_skimmed_items =
@@ -139,6 +131,7 @@ module Scrape_dynamic_list =
                 browser
                 item_selector
             |>List.rev
+            |>List.map (Html_node.from_html_string_and_context html_parsing_context)
             |>Array.ofList
             
         previous_items
@@ -150,7 +143,7 @@ module Scrape_dynamic_list =
     let process_items_providing_previous_items
         (context: 'Previous_context)
         items
-        (process_item: 'Previous_context -> Html_string -> 'Previous_context)
+        (process_item: 'Previous_context -> Html_node -> 'Previous_context)
         =
         context
         |>List.foldBack (fun item context ->
@@ -164,14 +157,14 @@ module Scrape_dynamic_list =
         browser
         wait_for_loading
         is_item_needed
-        (process_item: 'Previous_context -> Html_string -> 'Previous_context)
+        (process_item: 'Previous_context -> Html_node -> 'Previous_context)
         (empty_context: 'Previous_context)
         item_selector
         =
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
             
         let rec skim_and_scroll_iteration
-            (previous_items: list<Html_string>)
+            (previous_items: list<Html_node>)
             (previous_context)
             =
             
@@ -210,7 +203,7 @@ module Scrape_dynamic_list =
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
             
         let rec skim_and_scroll_iteration
-            (all_items: list<Html_string>)
+            (all_items: list<Html_node>)
             =
             
             wait_for_loading()

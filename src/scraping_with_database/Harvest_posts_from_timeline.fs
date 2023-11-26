@@ -5,28 +5,38 @@ open OpenQA.Selenium
 open Xunit
 open canopy.types
 open rvinowise.html_parsing
+open rvinowise.twitter.Parse_segments_of_post
 open rvinowise.web_scraping
 
 module Harvest_posts_from_timeline =
     
     
-    let harvest_post
+    
+    
+    let harvest_timeline_cell
         database
-        previous_context
+        html_parsing_context
+        thread
         html_cell
         =
-        let parsed_post =
-            Parse_post_from_timeline.try_parse_post
-                previous_context
+        let parsed_cell =
+            Parse_post_from_timeline.try_parse_cell
+                html_parsing_context
+                thread
                 html_cell
         
-        match parsed_post with
-        |Ok post ->
+        match parsed_cell with
+        |Post (post,thread) ->
             Twitter_post_database.write_main_post    
                 database
                 post
-        |Error error ->
-            ()
+            thread
+        |Hidden_post thread ->
+            thread
+        |Some (Error error) ->
+            Timeline_thread.No_thread
+            
+        
     
     let harvest_timeline
         browser
@@ -44,7 +54,8 @@ module Harvest_posts_from_timeline =
                 item
                 |>Html_node.from_html_string
                 |>Scrape_posts_from_timeline.cell_contains_post)
-            (harvest_post database)
+            (harvest_timeline_cell database)
+            Previous_cell.No_cell
         
     
     

@@ -31,10 +31,7 @@ module Scrape_list_members =
                 |>Scrape_dynamic_list.collect_all_html_items_of_dynamic_list
                       browser
                       (fun () -> wait_for_list_loading browser)
-                |>List.map (
-                    Html_node.from_html_string
-                    >>Parse_twitter_user.parse_twitter_user_cell
-                )
+                |>List.map Parse_twitter_user.parse_twitter_user_cell
                 
             Log.important $"list has {Seq.length users} members... "
             users

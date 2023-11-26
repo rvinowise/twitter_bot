@@ -488,9 +488,9 @@ https://openlongevity.org""")
             ]
             if
                 (User_handle "tehprom269887",None)
-                |>Reply_status.External_message
+                |>Reply.External_message
                 |>Some
-                |>(<>) quoted_post.header.reply_status
+                |>(<>) quoted_post.header.reply
             then
                 raise Html_parsing_fail
         
@@ -515,9 +515,9 @@ https://openlongevity.org""")
         |Some (Quoted_message quoted_post) ->
             if
                 User_handle "abdullahadam"
-                |>Reply_status.External_thread
+                |>Reply.External_thread
                 |>Some
-                |>(<>) quoted_post.header.reply_status
+                |>(<>) quoted_post.header.reply
             then
                 raise Html_parsing_fail //FsUnit's "should equal" considers them ALWAYS different            
             
@@ -537,7 +537,7 @@ https://openlongevity.org""")
         first_thread_post
         |>Main_post.header
         |>Post_header.reply_status
-        |>should equal (Some Reply_status.Starting_local_thread)
+        |>should equal (Some Reply.Starting_local_thread)
         
         
         let middle_thread_post =
@@ -548,7 +548,7 @@ https://openlongevity.org""")
         middle_thread_post
         |>Main_post.header
         |>Post_header.reply_status
-        |>should equal (Some <| Reply_status.Continuing_local_thread first_thread_post.id)
+        |>should equal (Some <| Reply.Continuing_local_thread first_thread_post.id)
         
         
         let final_thread_post =
@@ -559,7 +559,7 @@ https://openlongevity.org""")
         final_thread_post
         |>Main_post.header
         |>Post_header.reply_status
-        |>should equal (Some <| Reply_status.Ending_local_thread middle_thread_post.id)
+        |>should equal (Some <| Reply.Ending_local_thread middle_thread_post.id)
         
         
     [<Fact>]

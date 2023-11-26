@@ -191,7 +191,7 @@ module Twitter_post_database =
         (is_quotation:bool)
         =
         let reply_to_post =
-            match header.reply_status with
+            match header.reply with
             |Some reply_status ->
                 match reply_status with
                 |External_message (other_user, other_post) ->
