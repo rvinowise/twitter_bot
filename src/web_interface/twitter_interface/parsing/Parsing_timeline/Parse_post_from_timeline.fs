@@ -81,12 +81,12 @@ module Parse_post_from_timeline =
     |Error of string
     
     let try_parse_post
-        thread
+        previous_cell
         article_node
         =
         try 
             article_node
-            |>Parse_segments_of_post.parse_main_twitter_post thread
+            |>Parse_segments_of_post.parse_main_twitter_post previous_cell
             |>Parsed_timeline_cell.Post
         with
         | :? Bad_post_structure_exception
@@ -102,7 +102,7 @@ module Parse_post_from_timeline =
         
     let try_parse_cell
         html_parsing_context
-        (thread: Previous_cell)
+        (previous_cell: Previous_cell)
         (html_cell: Html_node)
         =
         
@@ -110,13 +110,19 @@ module Parse_post_from_timeline =
             html_cell
             |>Html_node.try_descendant "article[data-testid='tweet']"
         
-        if
-            cell_looks_like_hidden_replies html_cell
-        then
-            Parsed_timeline_cell.Hidden_post thread
-        else
+        match article_node with
+        |Some article_node ->
             try_parse_post
-                thread
+                previous_cell
                 article_node
+        |None->
+            if
+                cell_looks_like_hidden_replies html_cell
+            then
+                Parsed_timeline_cell.Hidden_post previous_cell
+            else
+                Parsed_timeline_cell.Error "a timeline cell has neither the article in it, nor hidden replies"
+                
+            
     
     

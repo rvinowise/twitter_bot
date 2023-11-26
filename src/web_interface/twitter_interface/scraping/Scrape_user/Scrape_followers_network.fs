@@ -43,7 +43,7 @@ module Scrape_followers_network =
         starting_user
         |>url_from_user
         |>scrape_user_catalog browser
-        |>List.map (Html_node.from_html_string>> Parse_twitter_user.parse_twitter_user_cell)
+        |>List.map Parse_twitter_user.parse_twitter_user_cell
     
     
     

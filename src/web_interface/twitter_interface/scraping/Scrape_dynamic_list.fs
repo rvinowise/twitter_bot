@@ -155,13 +155,14 @@ module Scrape_dynamic_list =
     
     let parse_dynamic_list_with_previous_item
         browser
+        html_parsing_context
         wait_for_loading
         is_item_needed
         (process_item: 'Previous_context -> Html_node -> 'Previous_context)
         (empty_context: 'Previous_context)
         item_selector
         =
-        let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
+        
             
         let rec skim_and_scroll_iteration
             (previous_items: list<Html_node>)

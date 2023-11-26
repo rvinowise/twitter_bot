@@ -238,72 +238,58 @@ module Parse_segments_of_post =
         |Distant_connected_message of Post_id * User_handle
         |No_cell
     
+    
+    let post_has_linked_post_after article_html =
+        article_html
+        |>Html_node.descendants "div[data-testid='Tweet-User-Avatar']"
+        |>List.head
+        |>Html_node.parent
+        |>Html_node.direct_children
+        |>List.length
+        |>function
+        |1 -> false
+        |2 -> true
+        |unexpected_number ->
+            (
+                $"an unexpected number ({unexpected_number}) of children at the vertical thread-line",
+                article_html
+            )
+            |>Bad_post_structure_exception
+            |>raise 
+    
+    let post_has_linked_post_before article_html =
+        article_html
+        |>Html_node.descend 2
+        |>Html_node.direct_children|>List.head
+        |>Html_node.descend 2
+        |>Html_node.direct_children
+        |>List.isEmpty|>not
+    
     let reply_from_local_thread
-        (thread: Previous_cell)
+        (previous_post: Previous_cell)
+        (article_html)
         =
-        match thread with
-        |Adjacent_post (post,user) ->
-            Some {Reply.to_user = user; to_post=Some post; is_direct=true}
-        |Distant_connected_message (post,user) ->
-            Some {Reply.to_user = user; to_post=Some post; is_direct=false}
-        |No_cell -> None
+        if
+            post_has_linked_post_before article_html
+        then
+            match previous_post with
+            |Adjacent_post (post,user) ->
+                Some {Reply.to_user = user; to_post=Some post; is_direct=true}
+            |Distant_connected_message (post,user) ->
+                Some {Reply.to_user = user; to_post=Some post; is_direct=false}
+            |No_cell -> None
+        else
+            None
     
-    let check_thread_status_from_timeline
-        (thread: Previous_cell)
-        (article_html:Html_node)
-        =
-        let has_linked_post_after =
-            article_html
-            |>Html_node.descendants "div[data-testid='Tweet-User-Avatar']"
-            |>List.head
-            |>Html_node.parent
-            |>Html_node.direct_children
-            |>List.length
-            |>function
-            |1 -> false
-            |2 -> true
-            |unexpected_number ->
-                (
-                    $"an unexpected number ({unexpected_number}) of children at the vertical thread-line",
-                    article_html
-                )
-                |>Bad_post_structure_exception
-                |>raise  
-        
-        let has_linked_post_before =
-            article_html
-            |>Html_node.descend 2
-            |>Html_node.direct_children|>List.head
-            |>Html_node.descend 2
-            |>Html_node.direct_children
-            |>List.isEmpty|>not
-        
-        if has_linked_post_after then
-            let previous_post = 
-                match thread with
-                |Adjacent_post (post,user) -> post
-                |Distant_connected_message (post,user)-> post
-                |No_cell ->
-                    ("no data on previous posts is provided, but this post continues a thread",
-                    article_html)
-                    |>Bad_post_structure_exception
-                    |>raise
-            match has_linked_post_after with 
-            |true->
-                Some (Reply.Continuing_local_thread previous_post)
-            |false->
-                Some (Reply.Ending_local_thread previous_post)
-        else None
     
-        
     
     let parse_reply_of_main_post
         author
         has_social_context_header
         article_node
-        (thread: Previous_cell)
+        (previous_cell: Previous_cell)
         =
-        let status_from_quotable_core =
+        let reply_from_quotable_core =
             article_node
             |>Html_node.descendants "div[data-testid='tweetText']"
             |>List.tryHead
@@ -314,7 +300,7 @@ module Parse_segments_of_post =
                     author
             |None -> None
             
-        match status_from_quotable_core with
+        match reply_from_quotable_core with
         |Some reply_status -> Some reply_status
         |None->
             if
@@ -322,7 +308,7 @@ module Parse_segments_of_post =
             then 
                 None
             else
-                reply_from_local_thread thread
+                reply_from_local_thread previous_cell article_node
     
     let quotation_is_a_poll
         ``node with role=link of the quotation``
@@ -596,7 +582,8 @@ module Parse_segments_of_post =
         let post_stats =
             Parse_footer_with_stats.parse_post_footer post_html_segments.footer
         
-        let thread = check_thread_status_from_timeline
+        let post_for_context =
+            Adjacent_post (post_id, header.author.handle)
         
         {
             Main_post.id=post_id
@@ -604,4 +591,5 @@ module Parse_segments_of_post =
             stats=post_stats
             reposter=reposting_user
             is_pinned = is_pinned
-        },thread
+        },post_for_context
+        

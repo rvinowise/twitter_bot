@@ -158,28 +158,30 @@ module Twitter_post_database =
     
     let write_reply
         (db_connection:NpgsqlConnection)
-        previous_post
-        next_post
-        is_direct
+        (reply:Reply)
+        (post:Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.like} (
+            $"insert into {tables.post.reply} (
                 previous_post,
+                previous_user,
                 next_post,
                 is_direct
             )
             values (
                 @previous_post,
+                @previous_user,
                 @next_post,
                 @is_direct
             )
-            on conflict (previous_post, next_post)
-            do update set (is_direct)
-            = row(@is_direct)",
+            on conflict (next_post, is_direct)
+            do update set (previous_post, previous_user)
+            = row(@previous_post, @previous_user)",
             {|
-                previous_post=previous_post
-                next_post=next_post
-                is_direct=is_direct
+                previous_post=reply.to_post
+                previous_user=reply.to_user
+                next_post=post
+                is_direct=reply.is_direct
             |}
         ) |> ignore
         
@@ -190,40 +192,22 @@ module Twitter_post_database =
         (main_post_id:Post_id)
         (is_quotation:bool)
         =
-        let reply_to_post =
-            match header.reply with
-            |Some reply_status ->
-                match reply_status with
-                |External_message (other_user, other_post) ->
-                    Some other_user,other_post
-                |External_thread user -> Some user,None
-                |Starting_local_thread -> None,None
-                |Continuing_local_thread other_post ->
-                    (Some header.author.handle), Some other_post
-                |Ending_local_thread other_post ->
-                    (Some header.author.handle), Some other_post
-            |None-> None,None    
-        
         db_connection.Query(
             $"insert into {tables.post.header} (
                 main_post_id,
                 author,
                 created_at,
-                is_quotation,
-                reply_to_user,
-                reply_to_post
+                is_quotation
             )
             values (
                 @main_post_id,
                 @author,
                 @created_at,
-                @is_quotation,
-                @reply_to_user,
-                @reply_to_post
+                @is_quotation
             )
             on conflict (main_post_id, is_quotation)
-            do update set (author, created_at, reply_to_user,reply_to_post)
-            = (@author, @created_at, @reply_to_user, @reply_to_post)
+            do update set (author, created_at)
+            = (@author, @created_at)
             ",
             {|
                 main_post_id=main_post_id
@@ -233,10 +217,13 @@ module Twitter_post_database =
             |}
         ) |> ignore
         
-        write_reply
-            db_connection
-            reply_to_post
-            main_post_id
+        match header.reply with
+        |Some reply ->
+            write_reply
+                db_connection
+                reply
+                main_post_id
+        |None->()
     
     let write_quotable_message_body
         (db_connection:NpgsqlConnection)
@@ -402,7 +389,7 @@ module Twitter_post_database =
         (post_id: Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.main_post_with_poll} (
+            $"insert into {tables.post.poll_summary} (
                 post_id,
                 votes_amount
             )
