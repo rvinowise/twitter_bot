@@ -106,7 +106,7 @@ module Twitter_post_database =
             )
             on conflict (post_id, sorting_index, is_quotation)
             do update set (url)
-            = (@url)",
+            = row(@url)",
             {|
                 post_id=main_post
                 url=video_url

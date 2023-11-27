@@ -129,7 +129,7 @@ module Parse_segments_of_post =
         segment
         |>Html_node.descendant ":scope> span"
         |>Html_parsing.readable_text_from_html_segments
-    let parse_external_source_from_its_node
+    let parse_external_website_from_its_node
         card_wrapper_node
         =
         let details_segments =
@@ -138,7 +138,8 @@ module Parse_segments_of_post =
         
         let obfuscated_url=
             card_wrapper_node
-            |>Html_node.try_descendant "a[role='link']"
+            |>Html_node.descendants "a[role='link']"
+            |>List.tryHead
             |>Option.map (Html_node.attribute_value "href")
         
         match details_segments,obfuscated_url with
@@ -170,14 +171,14 @@ module Parse_segments_of_post =
                 message = message
                 obfuscated_url=obfuscated_url
             }
-    let parse_potential_external_source_from_additional_load
+    let parse_potential_external_website_from_additional_load
         ``node of potential card.wrapper``
         =
         if
             ``node of potential card.wrapper``
             |>Html_node.matches "div[data-testid='card.wrapper']"
         then
-            parse_external_source_from_its_node
+            parse_external_website_from_its_node
                 ``node of potential card.wrapper``
         else None
     
@@ -261,7 +262,8 @@ module Parse_segments_of_post =
         article_html
         |>Html_node.descend 2
         |>Html_node.direct_children|>List.head
-        |>Html_node.descend 2
+        |>Html_node.descend 1
+        |>Html_node.direct_children|>List.head
         |>Html_node.direct_children
         |>List.isEmpty|>not
     
@@ -409,7 +411,7 @@ module Parse_segments_of_post =
             Some quoted_post
         |None ->
             match
-                parse_potential_external_source_from_additional_load
+                parse_potential_external_website_from_additional_load
                     ``node with either role=link of quotation, or card.wrapper``
             with
             |Some external_url_load ->
@@ -449,7 +451,8 @@ module Parse_segments_of_post =
         let text =
             choice_nodes
             |>List.head
-            |>Html_node.descendant "span"
+            |>Html_node.descendants "span"
+            |>List.head
             |>Html_node.inner_text
             
         let votes_percent =

@@ -12,11 +12,21 @@ open rvinowise.web_scraping
 
 module Harvest_posts_from_timeline =
     
-    
-    
+    let write_liked_post
+        liker
+        database
+        post
+        =
+        Twitter_post_database.write_main_post    
+            database
+            post
+        Twitter_post_database.write_like
+            database
+            liker
+            post.id
     
     let harvest_timeline_cell
-        database
+        (write_post: Main_post -> unit)
         html_parsing_context
         previous_cell
         html_cell
@@ -29,17 +39,12 @@ module Harvest_posts_from_timeline =
         
         match parsed_cell with
         |Parsed_timeline_cell.Post (post, previous_cell) ->
-            Twitter_post_database.write_main_post    
-                database
-                post
-            // Twitter_post_database.write_like
-            //     database
-            //     user
-            //     post.id
+            write_post post
             previous_cell
         |Hidden_post previous_cell ->
             previous_cell
         |Error error ->
+            Log.error $"failed to harvest a cell from the timeline: {error}"|>ignore
             Previous_cell.No_cell
             
         
@@ -54,6 +59,14 @@ module Harvest_posts_from_timeline =
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
         use database = Twitter_database.open_connection()
         
+        let write_post =
+            match tab with
+            |Likes ->
+                write_liked_post user database
+            |_ ->
+                Twitter_post_database.write_main_post    
+                    database
+                
         "div[data-testid='cellInnerDiv']"
         |>Scrape_dynamic_list.parse_dynamic_list_with_previous_item
             browser
@@ -63,7 +76,7 @@ module Harvest_posts_from_timeline =
                 item
                 |>Html_node.from_html_string
                 |>Scrape_posts_from_timeline.cell_contains_post)
-            (harvest_timeline_cell database html_parsing_context)
+            (harvest_timeline_cell write_post html_parsing_context)
             Previous_cell.No_cell
         
 
@@ -71,9 +84,9 @@ module Harvest_posts_from_timeline =
     
     [<Fact>]//(Skip="manual")
     let ``try harvest_posts_from_timeline``()=
-       "dicortona"
+        "RichardDawkins"
         |>User_handle
         |>harvest_timeline
               (Browser.open_browser())
-              Timeline_tab.Replies
+              Timeline_tab.Likes
    

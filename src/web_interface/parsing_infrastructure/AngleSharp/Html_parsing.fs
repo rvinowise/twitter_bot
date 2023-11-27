@@ -147,10 +147,10 @@ module Html_node =
         |>descendants css
         |>function
         |[]->None
-        |[single] -> Some single
-        |many ->
-            Log.error $"expected one element, but there's {Seq.length many}"|>ignore
-            many|>List.head|>Some
+        |descendants ->
+            descendants
+            |>should_be_single
+            |>Some
     
     
     let first_descendants_with_css css (node:Html_node) =

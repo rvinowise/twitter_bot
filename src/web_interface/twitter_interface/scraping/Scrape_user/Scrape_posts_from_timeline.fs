@@ -27,8 +27,8 @@ module Scrape_posts_from_timeline =
     
     let is_advertisement cell_node =
         cell_node
-        |>Html_node.try_descendant "div[data-testid='placementTracking']"
-        |>Option.isSome
+        |>Html_node.descendants "div[data-testid='placementTracking']"
+        <> []
     
     let cell_contains_post cell_node =
         cell_node
@@ -41,7 +41,7 @@ module Scrape_posts_from_timeline =
     let wait_for_timeline_loading browser =
         Browser.sleep 1
         "div[role='progressbar']"
-        |>Browser.wait_till_disappearance browser 10 |>ignore 
+        |>Browser.wait_till_disappearance browser 60 |>ignore 
             
     
 
