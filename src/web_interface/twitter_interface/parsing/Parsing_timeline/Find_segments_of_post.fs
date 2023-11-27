@@ -115,7 +115,12 @@ module Find_segments_of_post =
         segment
         |>Html_node.matches "div[data-testid='card.wrapper']"
         |>function
-        |true -> true
+        |true ->
+            segment
+            |>Html_node.descendants "div[aria-label='Embedded video']"
+            |>function
+            |[]->true
+            |video -> false
         |false->
             segment
             |>Html_node.try_descendant "div[data-testid='tweetText']"
