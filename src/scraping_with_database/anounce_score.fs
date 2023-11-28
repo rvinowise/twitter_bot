@@ -52,9 +52,7 @@ module Anounce_score =
         Log.info "finish scraping and announcing scores."
         ()
 
-    [<Fact(Skip="manual")>]
+    [<Fact>]//(Skip="manual")
     let ``try scrape_and_announce_user_state``()=
-        Settings.auth_tokens
-        |>Array.head
-        |>Browser.prepare_authentified_browser
+        Browser.open_browser()
         |>scrape_and_announce_user_state

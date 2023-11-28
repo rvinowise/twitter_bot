@@ -35,7 +35,7 @@ module Import_scores_from_googlesheet =
             sheet.doc_id,
             $"{sheet.page_name}!B3:B4000"
         ).Execute().Values
-        |>Googlesheets.google_column_as_array
+        |>Googlesheet.google_column_as_array
         |>Array.map (string>>User_handle.trim_potential_atsign>>User_handle)
     
     
@@ -50,7 +50,7 @@ module Import_scores_from_googlesheet =
                 sheet.doc_id,
                 $"{sheet.page_name}!{column_of_day}2:{column_of_day}4000"
             ).Execute().Values
-            |>Googlesheets.google_column_as_array
+            |>Googlesheet.google_column_as_array
         
         let string_datetime_of_scores =
             date_and_scores

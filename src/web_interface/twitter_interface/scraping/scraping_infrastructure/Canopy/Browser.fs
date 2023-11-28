@@ -35,7 +35,7 @@ type Browser(cookies:Cookie seq) =
         let options = ChromeOptions()
         options.BinaryLocation <- local_browser_path
         //options.AddArgument("disable-infobars")
-        options.AddArgument($"user-data-dir={browser_profile_path}")
+        options.AddArgument($"--user-data-dir={browser_profile_path}")
         options.AddArgument("--suppress-message-center-popups")
         options.AddArgument("--disable-notifications")
         options

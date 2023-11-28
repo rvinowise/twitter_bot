@@ -23,7 +23,7 @@ module Import_referrals_from_googlesheet =
                 sheet.doc_id,
                 $"{sheet.page_name}!{datetime_column}2:{datetime_column}4000"
             ).Execute().Values
-            |>Googlesheets.google_column_as_array
+            |>Googlesheet.google_column_as_array
         
         
         recruiting_datetimes
@@ -68,7 +68,7 @@ module Import_referrals_from_googlesheet =
                 sheet.doc_id,
                 $"""{sheet.page_name}!D{starting_row}:F4000"""
             ).Execute().Values
-            |>Googlesheets.google_range_as_arrays
+            |>Googlesheet.google_range_as_arrays
             |>Seq.mapi(fun column_i row ->
                 (
                     recruiting_datetimes[starting_index+column_i],
@@ -126,7 +126,7 @@ module Import_referrals_from_googlesheet =
     let ``try import_referrals_from_googlesheet``() =
         let test =
             import_referrals
-                (Googlesheets.create_googlesheet_service())
+                (Googlesheet.create_googlesheet_service())
                 (Twitter_database.open_connection())
                 {
                     Google_spreadsheet.doc_id = "137ExyTBgr-IL0TlxIv-V4EvWee_BDbwyh5U0M06IwsU"

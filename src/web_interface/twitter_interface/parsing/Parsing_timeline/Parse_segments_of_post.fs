@@ -121,8 +121,17 @@ module Parse_segments_of_post =
                 |>Posted_video.from_html_video_node
                 |>Media_item.Video_poster
             )
-        
+        let posted_videos_as_images =
+            load_node
+            |>Html_node.descendants "div[aria-label='Embedded video'][data-testid='previewInterstitial']"
+            |>List.map (fun video_node ->
+                video_node
+                |>Posted_video.from_div_node_with_image
+                |>Media_item.Video_poster
+            )
+            
         posted_videos
+        |>List.append posted_videos_as_images
         |>List.append posted_images
     
     let text_from_external_source_detail_segment segment =

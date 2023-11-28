@@ -93,6 +93,17 @@ module Posted_video =
         =
         ``node of video[]``
         |>Html_node.attribute_value "poster"
+    
+    let from_div_node_with_image
+        (
+            ``last node of aria-label="Embedded video"``
+                : Html_node
+        )
+        =
+        ``last node of aria-label="Embedded video"``
+        |>Html_node.descendant "img"
+        |>Html_node.attribute_value "src"
+    
     let from_poster_node
         (
             ``node with single aria-label="Embedded video" data-testid="previewInterstitial"``

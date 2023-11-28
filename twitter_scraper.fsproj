@@ -54,16 +54,16 @@
     <Compile Include="src\database\Twitter_activity_database.fs" />
     <Compile Include="src\database\Twitter_post_database.fs" />
     <Compile Include="src\database\Twitter_following_database.fs" />
-    
-    
-    <Compile Include="src\remarks\Remark_score_changes.fs" />
+    <Compile Include="src\database\User_interaction.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
     <!-- google spread sheets interface   -->
-    <Compile Include="src\googlesheet_interface\Googlesheets.fs" />
+    <Compile Include="src\googlesheet_interface\Googlesheet.fs" />
+    <Compile Include="src\googlesheet_interface\Googlesheet_for_twitter.fs" />
     <Compile Include="src\googlesheet_interface\Import_scores_from_googlesheet.fs" />
     <Compile Include="src\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
     <Compile Include="src\googlesheet_interface\Export_scores_to_googlesheet.fs" />
+    <Compile Include="src\googlesheet_interface\Export_adjacency_matrix.fs" />
     
     
     <Compile Include="src\scraping_with_database\anounce_score.fs" />

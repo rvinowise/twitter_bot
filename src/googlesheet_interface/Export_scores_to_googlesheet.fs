@@ -2,12 +2,8 @@
 
 open System
 open System.Collections.Generic
-open System.Threading.Tasks
-open Google.Apis.Sheets.v4.Data
 open Xunit
 
-open Google.Apis.Sheets.v4
-open rvinowise.twitter
 open rvinowise.twitter.database.tables
 
 
@@ -15,103 +11,7 @@ open rvinowise.twitter.database.tables
 module Export_scores_to_googlesheet =
         
         
-    let delete_rows
-        (sheet: Google_spreadsheet)
-        =
-        let request = Request (
-            DeleteDimension = DeleteDimensionRequest (
-                Range = DimensionRange (
-                    SheetId = sheet.page_id,
-                    Dimension = "ROWS",
-                    StartIndex = 0,
-                    EndIndex = 1
-                )
-            )
-        )
-            
-        let deleteRequest = BatchUpdateSpreadsheetRequest (
-            Requests = List<Request> [request]
-        )
-
-        let deletion =
-            SpreadsheetsResource.BatchUpdateRequest(
-                Googlesheets.create_googlesheet_service(), deleteRequest, sheet.doc_id
-            );
-        deletion.Execute();
     
-    
-    let sheet_row_clean = [
-        for empty in 0 .. 50 -> ""
-    ]
-        
-    let input_into_sheet
-        sheet
-        rows
-        =
-        let range = $"{sheet.page_name}!A1:ZZ";
-        let valueInputOption = "USER_ENTERED";
-        let dataValueRange = ValueRange(
-            Range = range,
-            Values = rows
-        )
-
-        let requestBody = BatchUpdateValuesRequest(
-            ValueInputOption = valueInputOption,
-            Data = List<ValueRange>[dataValueRange]
-        )
-        try
-            Googlesheets.create_googlesheet_service().Spreadsheets.Values.BatchUpdate(
-                requestBody, sheet.doc_id
-            ).Execute()|>ignore
-            ()
-        with
-        | :? TaskCanceledException as exc ->
-            Log.error $"""couldn't write to googlesheet: {exc.Message}"""|>ignore
-            ()
-    
-    let lists_to_google_obj
-        (lists: string list list)
-        =
-        lists
-        |>List.map (fun inner_list ->
-            inner_list
-            |>List.map (fun value -> value :> obj)
-            |>List :> IList<_>
-        )
-        |>List :> IList<_>
-    
-    
-    [<Fact(Skip="manual")>]
-    let ``try input_into_sheet``()=
-        input_into_sheet
-            {
-                Google_spreadsheet.doc_id="1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
-                page_id=293721268
-                page_name="test"
-            }
-            ([
-                ["test";"123"]
-            ]|>lists_to_google_obj)
-    
-    
-        
-    let clean_sheet
-        (sheet: Google_spreadsheet)
-        =
-        let clean_row = 
-            sheet_row_clean
-        
-        let clean_sheet =
-            [ for _ in 0 .. 500 -> clean_row]
-            |>lists_to_google_obj
-        
-        input_into_sheet sheet clean_sheet
-
-        
-    [<Fact(Skip="manual")>]//
-    let ``try clean_sheet``() =
-        clean_sheet
-            Settings.Google_sheets.followers_amount
             
     let sheet_row_of_total_score
         =
@@ -142,11 +42,7 @@ module Export_scores_to_googlesheet =
         ]
         |>List :> IList<obj>
     
-    let hyperlink_to_twitter_user handle =
-        sprintf
-            """=HYPERLINK("%s", "@%s")"""
-            (User_handle.url_from_handle handle)
-            (handle|>User_handle.value)
+    
     
     let sheet_row_of_competitor
         (place:int)
@@ -157,7 +53,7 @@ module Export_scores_to_googlesheet =
         let current_growth_formula = $"=E{user_row_index}-F{user_row_index}"
         [
             place :>obj
-            (hyperlink_to_twitter_user competitor.handle) :>obj
+            (Googlesheet_for_twitter.hyperlink_to_twitter_user competitor.handle) :>obj
             competitor.name :>obj
             current_growth_formula :>obj
         ]@(
@@ -293,7 +189,7 @@ module Export_scores_to_googlesheet =
             |>List
         Log.info $"inputting into google sheet: {sheet}"
             
-        input_into_sheet sheet all_rows
+        Googlesheet.input_into_sheet sheet all_rows
     
     
     let update_googlesheet
@@ -302,7 +198,7 @@ module Export_scores_to_googlesheet =
         (sheet:Google_spreadsheet)
         =
         Log.info $"updating google sheet, page '{sheet.page_name}'" 
-        clean_sheet sheet
+        Googlesheet.clean_sheet sheet
         input_history_of_amounts_to_sheet
             social_database
             table_with_amounts

@@ -49,7 +49,7 @@ module Program =
         try
             use db_connection = Twitter_database.open_connection() 
             Import_referrals_from_googlesheet.import_referrals
-                (Googlesheets.create_googlesheet_service())
+                (Googlesheet.create_googlesheet_service())
                 db_connection
                 Settings.Google_sheets.read_referrals
         with

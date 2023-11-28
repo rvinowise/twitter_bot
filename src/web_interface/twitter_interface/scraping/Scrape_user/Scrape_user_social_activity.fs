@@ -48,7 +48,7 @@ module Scrape_user_social_activity =
         
     let scrape_posts_amount browser =
         let posts_qty_field =
-            "div:has(>h2[role='heading']) > div[dir='ltr']"
+            "div[aria-label='Home timeline'] div:has(>h2[role='heading']) > div[dir='ltr']"
             |>Browser.try_element browser
         
         posts_qty_field
