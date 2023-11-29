@@ -23,14 +23,14 @@ module Announce_user_interactions =
             |>List.map (fun handle ->
                 Reveal_user_page.reveal_user_page browser handle
                 handle,
-                Scrape_user_social_activity.scrape_user_social_activity browser
+                Harvest_posts_from_timeline.harvest_timeline browser
                     handle
             )
         Log.info $"harvesting actions of competitors took {DateTime.Now-before_harvesting_actions}"
             
         
         let before_updating_googlesheet = DateTime.Now
-        Export_adjacency_matrix.update_googlesheets db_connection
+        Export_adjacency_matrix.update_googlesheet db_connection
         Log.info $"updating user interactions in googlesheet took {DateTime.Now-before_updating_googlesheet}"
 
         Log.info "finish scraping and announcing user interactions."

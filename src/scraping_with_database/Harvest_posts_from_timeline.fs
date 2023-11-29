@@ -90,3 +90,8 @@ module Harvest_posts_from_timeline =
         |>harvest_timeline
               (Browser.open_browser())
               Timeline_tab.Posts
+
+    
+    let harvest_new_posts
+        browser
+        user
