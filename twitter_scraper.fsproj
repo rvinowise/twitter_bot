@@ -66,7 +66,10 @@
     <Compile Include="src\googlesheet_interface\Export_adjacency_matrix.fs" />
     
     
-    <Compile Include="src\scraping_with_database\anounce_score.fs" />
+    <Compile Include="src\scraping_with_database\announce_score.fs" />
+    
+    
+    <Compile Include="src\scraping_with_database\announce_user_interactions.fs" />
     <Compile Include="src\scraping_with_database\Harvest_followers_network.fs" />
     <Compile Include="src\scraping_with_database\Harvest_posts_from_timeline.fs" />
     <Folder Include="src\web_interface" />

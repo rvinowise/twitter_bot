@@ -450,7 +450,21 @@ module Parse_segments_of_post =
         |>Option.map ((=)"Pinned")
         |>Option.defaultValue false
     
-    let parse_poll_choice li_node =
+    
+    let parse_ongoing_poll_choice
+        button_node //div[role="radio"]
+        =
+        let text =
+            button_node
+            |>Html_node.descendants "span"
+            |>List.head
+            |>Html_node.inner_text
+        {
+            Poll_choice.text=text
+            votes_percent=0
+        } 
+    
+    let parse_finished_poll_choice li_node =
         let choice_nodes =
             li_node
             |>Html_node.descend 1
@@ -486,12 +500,28 @@ module Parse_segments_of_post =
         |>Array.head
         |>Parsing_twitter_datatypes.parse_abbreviated_number
     
-    let parse_poll_details cardPoll_node =
+    let parse_ongoing_poll_details cardPoll_node choices_node =
         let choices =
+            choices_node
+            |>Html_node.descendants "div[role='radio']"
+            |>List.map parse_ongoing_poll_choice
+    
+        let votes_amount =
             cardPoll_node
-            |>Html_node.descendant "ul[role='list']"
+            |>Html_node.direct_children
+            |>List.item 2
+            |>Html_node.descendants "span>span"
+            |>List.head
+            |>Html_node.inner_text
+            |>votes_amount_text_to_int
+        
+        choices,votes_amount
+    
+    let parse_finished_poll_details cardPoll_node choices_node =
+        let choices =    
+            choices_node
             |>Html_node.descendants "li[role='listitem']"
-            |>List.map parse_poll_choice
+            |>List.map parse_finished_poll_choice
         
         let votes_amount =
             cardPoll_node
@@ -503,6 +533,18 @@ module Parse_segments_of_post =
             |>votes_amount_text_to_int
         
         choices,votes_amount
+     
+    let parse_poll_detail cardPoll_node =
+        let ongoing_choices_node =
+            cardPoll_node
+            |>Html_node.try_descendant "div[aria-label='Poll options']"
+        match ongoing_choices_node with
+        |Some finished_choices_node ->
+            parse_ongoing_poll_details cardPoll_node finished_choices_node
+        |None ->
+            cardPoll_node
+            |>Html_node.descendant "ul[role='list']"
+            |>parse_finished_poll_details cardPoll_node 
         
         
     let parse_main_twitter_post
@@ -561,7 +603,7 @@ module Parse_segments_of_post =
             match post_html_segments.poll_choices_and_summary with
             |Some poll_detail ->
                 let choices,votes_amount =
-                    parse_poll_details poll_detail
+                    parse_poll_detail poll_detail
                 Main_post_body.Poll {
                     Poll.quotable_part = {
                         header=header

@@ -30,7 +30,7 @@ module Parse_footer_with_stats =
                 {stats with bookmarks=int amount}
             |amount::["views"] | amount::["view"] ->
                 {stats with views=int amount}
-            |["Liked"] -> stats
+            |["Liked"]|["Reposted"] -> stats //likes and reposts are scraped separately from timelines of that user
             |unexpected ->
                 Log.error
                     $"unexpected explanation {unexpected} of post statistics: {text}"|>ignore

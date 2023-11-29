@@ -35,28 +35,33 @@ module Program =
         
     let announce_competition_successes ()=
         try
-            use browser =
-//                Settings.auth_tokens
-//                |>Seq.head
-//                |>Browser.prepare_authentified_browser
-                Browser.open_browser ()
-            Anounce_score.scrape_and_announce_user_state browser
+            announce_score.scrape_and_announce_user_state
+                (Browser.open_browser())
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't scrape state of twitter-competitors: {exc.Message}"""|>ignore
             ()
         
         try
-            use db_connection = Twitter_database.open_connection() 
             Import_referrals_from_googlesheet.import_referrals
                 (Googlesheet.create_googlesheet_service())
-                db_connection
+                (Twitter_database.open_connection())
                 Settings.Google_sheets.read_referrals
         with
         | :? TaskCanceledException as exc ->
             Log.error $"""can't read referrals from googlesheet: {exc.Message}"""|>ignore
             ()
     
+    
+    let announce_user_interactions() =
+        try
+            announce_score.scrape_and_announce_user_state
+                (Browser.open_browser())
+        with
+        | :? WebDriverException as exc ->
+            Log.error $"""can't announce interactions between users (as an adjacency matrix) : {exc.Message}"""|>ignore
+            ()
+            
     
     [<EntryPoint>]
     let main args =
@@ -65,6 +70,8 @@ module Program =
         | "following"::rest ->
             //Scraping.set_canopy_configuration_directories()
             harvest_following rest
+        | "interaction"::rest ->
+            announce_user_interactions()
         |_->
             //Scraping.set_canopy_configuration_directories()
             announce_competition_successes()

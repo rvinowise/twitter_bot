@@ -4,7 +4,7 @@ open System
 open Xunit
 open rvinowise.web_scraping
 
-module Anounce_score =
+module announce_score =
     
    
     let scrape_and_announce_user_state browser =
@@ -52,7 +52,8 @@ module Anounce_score =
         Log.info "finish scraping and announcing scores."
         ()
 
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try scrape_and_announce_user_state``()=
         Browser.open_browser()
         |>scrape_and_announce_user_state
+

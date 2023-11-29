@@ -15,39 +15,66 @@ module Export_adjacency_matrix =
         
     
     let sheet_row_of_header
-        (now: DateTime)
-        (days_from_today: int)
+        (user_names: Map<User_handle, string>)
+        all_sorted_users
         =
-        [
-            "Place" :>obj
-            "Handle" :>obj
-            "Name" :>obj
-            "Growth" :>obj
-            now.ToString("yyyy-MM-dd HH:mm")
-        ]@[
-            for day_from_today in 1 .. days_from_today ->
-                (now.Date.AddDays(-day_from_today)).ToString("yyyy-MM-dd")
-        ]
+        all_sorted_users
+        |>List.map (Map.find user_names)
+        |>List.map (fun user->user :> obj)
+        |>List.append ["" :> obj]
         |>List :> IList<obj>
     
 
     
-    let sheet_row_of_competitor
-        (place:int)
-        (competitor:Twitter_user)
-        (score_history: int list)
+    let sheet_row_of_user
+        (user_names: Map<User_handle, string>)
+        (user:User_handle)
+        (interactions: int list)
         =
-        let user_row_index = place+2
-        let current_growth_formula = $"=E{user_row_index}-F{user_row_index}"
         [
-            place :>obj
-            (Googlesheet_for_twitter.hyperlink_to_twitter_user competitor.handle) :>obj
-            competitor.name :>obj
-            current_growth_formula :>obj
+            (Googlesheet_for_twitter.hyperlink_to_twitter_user user) :>obj
+            user_names[user] :>obj
         ]@(
-            score_history
-            |>List.map (fun score -> score :> obj)
+            interactions
+            |>List.map (fun amount -> amount :> obj)
         )
         
         |>List :> IList<obj>
     
+    
+    let prepare_a_row_of_interactions_with_all_users
+        all_sorted_users
+        main_user
+        (known_interactions: Map<User_handle, int>)
+        =
+        all_sorted_users
+        |>List.map(fun other_user->
+            known_interactions
+            |>Map.tryFind other_user
+            |>Option.defaultValue 0
+        )
+    
+    let update_googlesheet
+        database
+        (read_interactions: User_handle->seq<User_handle*int>)
+        all_users
+        =
+        
+        let user_names =
+            Social_activity_database.read_user_names_from_handles
+                database
+                
+        
+        all_users
+        |>List.map (fun user->
+            user,
+            read_interactions user
+            |>Map.ofSeq
+            |>prepare_a_row_of_interactions_with_all_users
+                all_users
+                user
+            |>sheet_row_of_user
+                user_names
+                user
+        )
+            

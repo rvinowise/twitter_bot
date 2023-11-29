@@ -2,6 +2,7 @@
 
 open System
 open AngleSharp
+open BenchmarkDotNet.Engines
 open OpenQA.Selenium
 open Xunit
 open canopy.types
@@ -84,9 +85,8 @@ module Harvest_posts_from_timeline =
     
     [<Fact>]//(Skip="manual")
     let ``try harvest_posts_from_timeline``()=
-        "RichardDawkins"
+        "MikhailBatin"
         |>User_handle
         |>harvest_timeline
               (Browser.open_browser())
-              Timeline_tab.Likes
-   
+              Timeline_tab.Posts
