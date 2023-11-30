@@ -49,26 +49,30 @@ module Scrape_dynamic_list =
     
     let new_items_from_visible_items
         (items_are_equal: 'a -> 'a -> bool)
-        (new_items: 'a array)
-        all_items
+        (visible_items: 'a array)
+        old_items
         =
-        match all_items with
-        |last_known_item::_ ->
-            
-            new_items
+        let last_known_item =
+            old_items
+            |>List.tryLast
+        match last_known_item with
+        |Some last_known_item ->
+            visible_items
             |>Array.tryFindIndex (items_are_equal last_known_item)
             |>function
             |Some i_first_previously_known_item ->
-                new_items
+                visible_items
                 |>Array.splitAt i_first_previously_known_item
-                |>fst
+                |>snd
+                |>Array.tail
             |None->
                 Log.error $"""lists are not overlapping, some elements might be missed.
-                full_list={all_items};
-                new_list={new_items}"""|>ignore
-                new_items
+                full_list={old_items};
+                new_list={visible_items}"""|>ignore
+                visible_items
             
-        |[]->new_items
+        |None->
+            visible_items
         
    
     [<Fact>]
@@ -108,7 +112,6 @@ module Scrape_dynamic_list =
             
     
     let new_nodes_from_visible_nodes
-        context
         new_nodes
         previous_nodes
         =
@@ -130,43 +133,55 @@ module Scrape_dynamic_list =
                 is_item_needed
                 browser
                 item_selector
-            |>List.rev
             |>List.map (Html_node.from_html_string_and_context html_parsing_context)
             |>Array.ofList
             
         previous_items
         |>new_nodes_from_visible_nodes
-              html_parsing_context
               visible_skimmed_items
         |>List.ofArray
     
     let process_items_providing_previous_items
         (context: 'Previous_context)
         items
-        (process_item: 'Previous_context -> Html_node -> 'Previous_context)
+        (process_item: 'Previous_context -> Html_node -> 'Previous_context * bool)
         =
-        context
-        |>List.foldBack (fun item context ->
-            process_item
-                context
-                item
-        )
+        let rec iteration_of_batch_processing
+            context
             items
+            =
+            match items with
+            |next_item::rest_items ->
+                let new_context, is_finished =
+                    process_item context next_item
+                if is_finished then
+                    context,is_finished
+                else
+                    iteration_of_batch_processing
+                        context
+                        rest_items
+            |[]->context,false
+            
+        
+        iteration_of_batch_processing
+            context
+            items
+            
     
     let parse_dynamic_list_with_previous_item
         browser
         html_parsing_context
         wait_for_loading
         is_item_needed
-        (process_item: 'Previous_context -> Html_node -> 'Previous_context)
+        (process_item: 'Previous_context -> Html_node -> 'Previous_context * bool )
         (empty_context: 'Previous_context)
         item_selector
         =
         
             
         let rec skim_and_scroll_iteration
-            (previous_items: list<Html_node>)
-            (previous_context)
+            (previous_items: list<Html_node>) // sorted 0=top
+            (previous_context: 'Previous_context)
             =
             
             wait_for_loading()
@@ -184,13 +199,16 @@ module Scrape_dynamic_list =
             then
                 Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
                 
-                process_items_providing_previous_items
-                    previous_context
-                    new_skimmed_items
-                    process_item
+                let previous_context, has_finished =
+                    process_items_providing_previous_items
+                        previous_context
+                        new_skimmed_items
+                        process_item
                         
-                |>skim_and_scroll_iteration
-                    new_skimmed_items
+                if (not has_finished) then
+                    skim_and_scroll_iteration
+                        new_skimmed_items
+                        previous_context
         
         skim_and_scroll_iteration [] empty_context
    

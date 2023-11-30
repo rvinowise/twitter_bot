@@ -3,8 +3,10 @@ namespace rvinowise.twitter
 open System
 open Dapper
 open Npgsql
+open Xunit
 open rvinowise.twitter
 open rvinowise.twitter.database
+open rvinowise.web_scraping
 
 
 
@@ -543,5 +545,61 @@ module Twitter_post_database =
             main_post.stats
             
     
+    let db_table_for_last_visited_post
+        (timeline_tab: Timeline_tab) =
+        match timeline_tab with
+        | Posts -> "last_visited_post_in_timeline"
+        | Replies -> "last_visited_reply_in_timeline"
+        | Media -> raise (NotSupportedException "this timeline tab can not be scraped")
+        | Likes -> "last_visited_like_in_timeline"
     
- 
+    let write_last_visited_post
+        (db_connection:NpgsqlConnection)
+        (timeline_tab: Timeline_tab)
+        user
+        post
+        =
+        db_connection.Query(
+            $"insert into @table (
+                user,
+                post,
+                visited_at
+            )
+            values (
+                @user,
+                @post,
+                @visited_at
+            )
+            on conflict (user)
+            do update set (post, visited_at)
+            = (@post, @visited_at)",
+            {|
+                user=user
+                table=db_table_for_last_visited_post timeline_tab
+                post=post
+                visited_at=DateTime.Now
+            |}
+        ) |> ignore
+        
+    let read_last_visited_post
+        (db_connection:NpgsqlConnection)
+        (timeline_tab: Timeline_tab)
+        user
+        =
+        let table = db_table_for_last_visited_post timeline_tab
+        db_connection.Query<Post_id>(
+            $"select post from {table}
+            where user=@user",
+            {|
+                user =user
+            |}
+        )|>Seq.tryHead
+        
+    [<Fact>]
+    let ``try read_last_visited_post``() =
+        let result =
+            read_last_visited_post
+                (Twitter_database.open_connection())
+                Timeline_tab.Posts
+                (User_handle "MikhailBatin")
+        ()
