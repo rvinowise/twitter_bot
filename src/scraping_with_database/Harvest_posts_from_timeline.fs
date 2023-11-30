@@ -54,17 +54,13 @@ module Harvest_posts_from_timeline =
             Log.error $"failed to harvest a cell from the timeline: {error}"|>ignore
             Previous_cell.No_cell,false
             
-    let reached_last_visited_post
-        last_visited_post
-        (post:Main_post)
-        =
-        post.id = last_visited_post
+    
     
     let harvest_timeline
+        (tab: Timeline_tab)
+        is_finished
         browser
         database
-        is_finished
-        (tab: Timeline_tab)
         user
         =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
@@ -96,26 +92,85 @@ module Harvest_posts_from_timeline =
 
         
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try harvest_posts_from_timeline``()=
         "MikhailBatin"
         |>User_handle
         |>harvest_timeline
+              Timeline_tab.Posts
+              (fun _ -> false)
               (Browser.open_browser())
               (Twitter_database.open_connection())
-              (fun _ -> false)
-              Timeline_tab.Posts
 
+   
+    let reached_last_visited_post
+        last_visited_post
+        (post:Main_post)
+        =
+        post.id = last_visited_post
     
-    let harvest_new_posts
+    let harvest_new_posts_of_user
+        (tab: Timeline_tab)
         browser
         database
-        (tab: Timeline_tab)
         user
         =
-        let last_visited_post =
-            Twitter_post_database.read_last_visited_post
-                database
-                tab
-                user
+        Log.info $"started harvesting all new posts on timeline {tab} of user {user}"
+        let is_finished =
+            let last_visited_post =
+                Twitter_post_database.read_last_visited_post
+                    database
+                    tab
+                    user
+            match last_visited_post with
+            |Some last_post ->
+                Log.info $"harvesting new posts on timeline {tab} of user {user} will stop when post {last_visited_post} is reached"
+                (reached_last_visited_post last_post)
+            |None->
+                Log.info $"harvesting new posts on timeline {tab} of user {user} will stop when the timeline is ended"
+                (fun _ -> false)
+        
+        harvest_timeline
+            tab
+            is_finished
+            browser
+            database
+            user
+        
         ()
+        
+    
+    let harvest_all_last_actions_of_user
+        browser
+        database
+        user
+        =
+        Log.info $"started harvesting all last actions of user {user}"
+        Reveal_user_page.reveal_user_page browser user
+        harvest_new_posts_of_user
+            Timeline_tab.Posts
+            browser
+            database
+            user
+        harvest_new_posts_of_user
+            Timeline_tab.Replies
+            browser
+            database
+            user
+        harvest_new_posts_of_user
+            Timeline_tab.Likes
+            browser
+            database
+            user
+    
+    let harvest_all_last_actions_of_users
+        browser
+        database
+        users
+        =
+        users
+        |>List.iter (
+            harvest_all_last_actions_of_user
+                browser
+                database
+        )

@@ -38,6 +38,8 @@ type Browser(cookies:Cookie seq) =
         options.AddArgument($"--user-data-dir={browser_profile_path}")
         options.AddArgument("--suppress-message-center-popups")
         options.AddArgument("--disable-notifications")
+        options.AddArgument("--ignore-certificate-errors")
+        options.AddArgument("--ignore-ssl-errors")
         options
     
     let start_headless_browser 

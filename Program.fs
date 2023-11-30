@@ -55,7 +55,7 @@ module Program =
     
     let announce_user_interactions() =
         try
-            announce_score.scrape_and_announce_user_state
+            Announce_user_interactions.scrape_and_announce_user_interactions
                 (Browser.open_browser())
         with
         | :? WebDriverException as exc ->
@@ -70,7 +70,7 @@ module Program =
         | "following"::rest ->
             //Scraping.set_canopy_configuration_directories()
             harvest_following rest
-        | "interaction"::rest ->
+        | "interactions"::rest ->
             announce_user_interactions()
         |_->
             //Scraping.set_canopy_configuration_directories()

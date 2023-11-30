@@ -77,18 +77,18 @@ module Scrape_dynamic_list =
    
     [<Fact>]
     let ``try unique_items_of_new_collection``() =
-        let new_items = [|7;6;5;4;3|]
-        let all_items = [5;4;3;2;1]
+        let new_items = [|3;4;5;6;7|]
+        let all_items = [1;2;3;4;5]
         new_items_from_visible_items
             (=)
             new_items
             all_items
         |>should equal [|
-            7;6
+            6;7
         |]
         
-        let new_items = [|5;4;3|]
-        let all_items = [5;4;3;2;1;0]
+        let new_items = [|3;4;5|]
+        let all_items = [0;1;2;3;4;5]
         new_items_from_visible_items
             (=) 
             new_items
@@ -240,7 +240,10 @@ module Scrape_dynamic_list =
             then
                 Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
                 
-                new_skimmed_items@all_items
+                new_skimmed_items
+                |>List.rev
+                |>List.
+                @all_items
                 |>skim_and_scroll_iteration
             else
                 all_items
