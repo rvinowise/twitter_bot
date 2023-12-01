@@ -18,7 +18,14 @@ type Timeline_tab =
         |Replies -> "with_replies"
         |Likes -> "likes"
         |Media -> "media"
-        
+
+module Timeline_tab =
+    let human_name (tab: Timeline_tab) =
+        match tab with
+        |Posts -> "Posts"
+        |Replies -> "Replies"
+        |Likes -> "Likes"
+        |Media -> "Media"
 
 module Scrape_posts_from_timeline =
     

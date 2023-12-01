@@ -16,6 +16,7 @@ module Log =
             .CreateLogger();
     
     let info = logger.Information
+    let debug = logger.Debug
     let important message =
         logger.Information message
         printfn $"%s{message}"

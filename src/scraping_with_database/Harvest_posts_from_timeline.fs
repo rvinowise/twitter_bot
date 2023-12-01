@@ -75,29 +75,32 @@ module Harvest_posts_from_timeline =
                 Twitter_post_database.write_main_post    
                     database
         
+        let wait_for_loading = (fun () -> Scrape_posts_from_timeline.wait_for_timeline_loading browser)
+        let is_item_needed =
+            Html_node.from_html_string>>
+            Scrape_posts_from_timeline.cell_contains_post
+        let mutable item_count = 0
+        let process_item item =
+            item_count <- item_count+1
+            harvest_timeline_cell write_post is_finished html_parsing_context item
         
-                
         "div[data-testid='cellInnerDiv']"
         |>Scrape_dynamic_list.parse_dynamic_list_with_previous_item
             browser
             html_parsing_context
-            (fun () -> Scrape_posts_from_timeline.wait_for_timeline_loading browser)
-            (fun item ->
-                item
-                |>Html_node.from_html_string
-                |>Scrape_posts_from_timeline.cell_contains_post)
-            (harvest_timeline_cell write_post is_finished html_parsing_context)
+            wait_for_loading
+            is_item_needed
+            process_item
             Previous_cell.No_cell
         
+        Log.info $"""{item_count} posts have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"."""
 
-        
-    
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try harvest_posts_from_timeline``()=
-        "MikhailBatin"
+        "EvanMorgun"
         |>User_handle
         |>harvest_timeline
-              Timeline_tab.Posts
+              Timeline_tab.Replies
               (fun _ -> false)
               (Browser.open_browser())
               (Twitter_database.open_connection())
@@ -115,7 +118,7 @@ module Harvest_posts_from_timeline =
         database
         user
         =
-        Log.info $"started harvesting all new posts on timeline {tab} of user {user}"
+        Log.info $"started harvesting all new posts on timeline {Timeline_tab.human_name tab} of user {User_handle.value user}"
         let is_finished =
             let last_visited_post =
                 Twitter_post_database.read_last_visited_post
@@ -124,10 +127,10 @@ module Harvest_posts_from_timeline =
                     user
             match last_visited_post with
             |Some last_post ->
-                Log.info $"harvesting new posts on timeline {tab} of user {user} will stop when post {last_visited_post} is reached"
+                Log.info $"harvesting new posts on timeline {Timeline_tab.human_name tab} of user {User_handle.value user} will stop when post {last_visited_post} is reached"
                 (reached_last_visited_post last_post)
             |None->
-                Log.info $"harvesting new posts on timeline {tab} of user {user} will stop when the timeline is ended"
+                Log.info $"harvesting new posts on timeline {Timeline_tab.human_name tab} of user {User_handle.value user} will stop when the timeline is ended"
                 (fun _ -> false)
         
         harvest_timeline
@@ -145,7 +148,7 @@ module Harvest_posts_from_timeline =
         database
         user
         =
-        Log.info $"started harvesting all last actions of user {user}"
+        Log.info $"started harvesting all last actions of user {User_handle.value user}"
         Reveal_user_page.reveal_user_page browser user
         harvest_new_posts_of_user
             Timeline_tab.Posts
