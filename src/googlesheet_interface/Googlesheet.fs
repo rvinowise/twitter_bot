@@ -85,7 +85,7 @@ module Googlesheet =
             Log.error $"""couldn't write to googlesheet: {exc.Message}"""|>ignore
             ()
     
-    let lists_to_google_obj
+    let string_lists_to_google_obj
         (lists: string list list)
         =
         lists
@@ -96,6 +96,15 @@ module Googlesheet =
         )
         |>List :> IList<_>
     
+    let obj_lists_to_google_obj
+        (lists: obj list list)
+        =
+        lists
+        |>List.map (fun inner_list ->
+            inner_list
+            |>List :> IList<_>
+        )
+        |>List :> IList<_>
     
     [<Fact(Skip="manual")>]
     let ``try input_into_sheet``()=
@@ -107,7 +116,7 @@ module Googlesheet =
             }
             ([
                 ["test";"123"]
-            ]|>lists_to_google_obj)
+            ]|>string_lists_to_google_obj)
     
     
         
@@ -119,12 +128,21 @@ module Googlesheet =
         
         let clean_sheet =
             [ for _ in 0 .. 500 -> clean_row]
-            |>lists_to_google_obj
+            |>string_lists_to_google_obj
         
         input_into_sheet sheet clean_sheet
 
         
     [<Fact(Skip="manual")>]//
-    let ``try clean_sheet``() =
+    let ``try clean_sheet``() = 
         clean_sheet
             Settings.Google_sheets.followers_amount
+            
+            
+    let username_from_handle
+        (user_handles_to_names: Map<User_handle, string>)
+        handle
+        =
+        user_handles_to_names
+        |>Map.tryFind handle
+        |>Option.defaultValue (User_handle.value handle)

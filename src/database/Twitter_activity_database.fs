@@ -213,7 +213,7 @@ module Social_activity_database =
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<Db_twitter_user>(
-            @"select * from twitter_user"
+            @"select * from user_name"
         )
         |>Seq.map(fun user->User_handle user.handle, user.name)
         |>Map.ofSeq
