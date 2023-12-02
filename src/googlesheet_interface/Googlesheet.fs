@@ -9,6 +9,7 @@ open Google.Apis.Services
 open Google.Apis.Sheets.v4
 open Google.Apis.Sheets.v4.Data
 open Xunit
+open rvinowise.twitter
 
 
 
@@ -59,6 +60,77 @@ module Googlesheet =
     let sheet_row_clean = [
         for empty in 0 .. 50 -> ""
     ]
+    
+    let input_colors_into_sheet
+        (service: SheetsService)
+        (sheet: Google_spreadsheet)
+        =
+        let userEnteredFormat = CellFormat(
+            BackgroundColor = Color(
+                Blue = 0f,
+                Red = 1f,
+                Green = 0f,
+                Alpha = 0.6f
+            )
+        )
+        
+        let updateCellsRequest =
+            Request(
+                RepeatCell = RepeatCellRequest(
+                    Range = GridRange(
+                        SheetId = sheet.page_id,
+                        StartColumnIndex = 1,
+                        StartRowIndex = 1,
+                        EndColumnIndex = 2,
+                        EndRowIndex = 2
+                    ),
+                    Cell = CellData(
+                        UserEnteredFormat = userEnteredFormat
+                    ),
+                    Fields = "UserEnteredFormat(BackgroundColor)"
+                )
+            )
+        let updateCellsRequest2 =
+            Request(
+                RepeatCell = RepeatCellRequest(
+                    Range = GridRange(
+                        SheetId = sheet.page_id,
+                        StartColumnIndex = 2,
+                        StartRowIndex = 2,
+                        EndColumnIndex = 3,
+                        EndRowIndex = 3
+                    ),
+                    Cell = CellData(
+                        UserEnteredFormat = CellFormat(
+                            BackgroundColor = Color(
+                                Blue = 0.4f,
+                                Red = 1f,
+                                Green = 0.4f,
+                                Alpha = 0.6f
+                            )
+                        )
+                    ),
+                    Fields = "UserEnteredFormat(BackgroundColor)"
+                )
+            )
+        
+        let bussr = BatchUpdateSpreadsheetRequest()
+        bussr.Requests <- List<Request>()
+        bussr.Requests.Add(updateCellsRequest)
+        bussr.Requests.Add(updateCellsRequest2)
+        let result = service.Spreadsheets.BatchUpdate(bussr, sheet.doc_id).Execute()
+        ()
+    
+    [<Fact>]
+    let ``try input_colors_into_sheet``() =
+        input_colors_into_sheet
+            (create_googlesheet_service())
+            {
+                Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+                page_id=2108706810
+                page_name="Reposts"
+            }
+            
         
     let input_into_sheet
         sheet
