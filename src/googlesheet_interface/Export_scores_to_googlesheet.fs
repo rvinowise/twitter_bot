@@ -139,17 +139,7 @@ module Export_scores_to_googlesheet =
     
  
     
-    let twitter_user_from_handle
-        handle
-        (user_handles_to_names: Map<User_handle, string>)
-        =
-        {
-            Twitter_user.handle = handle
-            name=
-                user_handles_to_names
-                |>Map.tryFind handle
-                |>Option.defaultValue ""
-        }
+    
     
             
     let input_history_of_amounts_to_sheet
@@ -178,7 +168,10 @@ module Export_scores_to_googlesheet =
             current_scores
             |>Seq.map(fun (place,user_handle,_) ->
                 sheet_row_of_competitor_from_total_map
-                    (twitter_user_from_handle user_handle user_handles_to_names)
+                    {
+                        Twitter_user.handle = user_handle
+                        name=(Googlesheet.username_from_handle user_handles_to_names user_handle)
+                    }
                     place
                     score_hisory
             )|>List.ofSeq// :> IList<obj>
@@ -204,13 +197,13 @@ module Export_scores_to_googlesheet =
             table_with_amounts
             sheet
     
-    let update_googlesheets social_database_connection =
+    let update_googlesheets database =
         update_googlesheet
-            social_database_connection
+            database
             Social_activity_amounts.Followers
             Settings.Google_sheets.followers_amount
         update_googlesheet
-            social_database_connection
+            database
             Social_activity_amounts.Posts
             Settings.Google_sheets.posts_amount
     

@@ -15,9 +15,17 @@ module User_interaction =
     [<CLIMutable>]
     type Amount_for_user = {
         author: User_handle
-        amount: int64
+        amount: int
     }
-        
+    
+    let amounts_for_user_as_tuples
+        (amount_for_users: Amount_for_user seq)
+        =
+        amount_for_users
+        |>Seq.map (fun amount ->
+            amount.author,amount.amount    
+        )
+    
     let read_likes_by_user
         (database: NpgsqlConnection)
         liker
@@ -36,7 +44,7 @@ module User_interaction =
             ORDER BY amount DESC
             """,
             {|liker=liker|}
-        )
+        )|>amounts_for_user_as_tuples
         
     
     let read_reposts_by_user
@@ -57,7 +65,7 @@ module User_interaction =
             ORDER BY amount DESC
             """,
             {|reposter=reposter|}
-        )
+        )|>amounts_for_user_as_tuples
     
     let read_replies_by_user
         (database: NpgsqlConnection)
@@ -75,7 +83,7 @@ module User_interaction =
             ORDER BY amount DESC
             """,
             {|replier=replier|}
-        )
+        )|>amounts_for_user_as_tuples
         
         
     [<Fact>]

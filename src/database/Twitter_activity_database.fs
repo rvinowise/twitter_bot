@@ -122,25 +122,6 @@ module Social_activity_database =
                 score
         ) 
     
-    let update_user_names_in_db
-        (db_connection: NpgsqlConnection)
-        (users: Twitter_user list)
-        =
-        Log.info $"writing {List.length users} user names to DB"
-        users
-        |>List.iter(fun user->
-            db_connection.Query<Db_twitter_user>(
-                @"insert into twitter_user (handle, name)
-                values (@handle, @name)
-                on conflict (handle) do update set name = @name",
-                {|
-                    handle = User_handle.db_value user.handle
-                    name = user.name
-                |}
-            ) |> ignore
-        )
-        
-    
     
     let write_recruiting_referrals
         (db_connection: NpgsqlConnection)
@@ -213,7 +194,7 @@ module Social_activity_database =
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<Db_twitter_user>(
-            @"select * from twitter_user"
+            @"select * from user_name"
         )
         |>Seq.map(fun user->User_handle user.handle, user.name)
         |>Map.ofSeq
