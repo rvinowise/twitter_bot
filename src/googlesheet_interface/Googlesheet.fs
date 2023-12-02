@@ -71,10 +71,12 @@ module Googlesheet =
             Values = rows
         )
 
-        let requestBody = BatchUpdateValuesRequest(
-            ValueInputOption = valueInputOption,
-            Data = List<ValueRange>[dataValueRange]
-        )
+        let requestBody =
+            BatchUpdateValuesRequest(
+                ValueInputOption = valueInputOption,
+                Data = List<ValueRange>[dataValueRange]
+            )
+        
         try
             create_googlesheet_service().Spreadsheets.Values.BatchUpdate(
                 requestBody, sheet.doc_id

@@ -17,11 +17,7 @@ module Export_adjacency_matrix =
         all_sorted_users
         =
         all_sorted_users
-        |>List.map (fun handle ->
-            Map.tryFind handle user_names
-            |>Option.defaultValue (User_handle.value handle)
-            
-        )
+        |>List.map (Googlesheet.username_from_handle user_names)
         |>List.map (fun user->user :> obj)
         |>List.append ["" :> obj]
     
@@ -44,7 +40,6 @@ module Export_adjacency_matrix =
     
     let prepare_a_row_of_interactions_with_all_users
         all_sorted_users
-        main_user
         (known_interactions: Map<User_handle, int>)
         =
         all_sorted_users
@@ -60,14 +55,13 @@ module Export_adjacency_matrix =
         (read_interactions: User_handle->seq<User_handle*int>)
         user 
         =
-        ((user_names[user]) :> obj)
+        ((Googlesheet.username_from_handle user_names user) :> obj)
         ::
         (
             read_interactions user
             |>Map.ofSeq
             |>prepare_a_row_of_interactions_with_all_users
                 all_users
-                user
             |>List.map(fun amount -> amount :> obj)
         )
         
@@ -137,4 +131,14 @@ module Export_adjacency_matrix =
             database
             likes_googlesheet
             (User_interaction.read_likes_by_user database)
+            all_users
+        update_googlesheet
+            database
+            reposts_googlesheet
+            (User_interaction.read_reposts_by_user database)
+            all_users
+        update_googlesheet
+            database
+            replies_googlesheet
+            (User_interaction.read_replies_by_user database)
             all_users
