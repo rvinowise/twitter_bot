@@ -18,7 +18,7 @@ module Social_user_database =
         users
         |>Seq.iter(fun user ->
             db_connection.Query<Db_twitter_user>(
-                @"insert into twitter_user (handle, name)
+                @"insert into user_name (handle, name)
                 values (@handle, @name)
                 on conflict (handle) do update set name = @name",
                 {|

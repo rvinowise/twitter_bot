@@ -134,7 +134,7 @@ module Googlesheet =
 
         
     [<Fact(Skip="manual")>]//
-    let ``try clean_sheet``() = 
+    let ``try clean_sheet``() =  
         clean_sheet
             Settings.Google_sheets.followers_amount
             
