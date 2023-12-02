@@ -36,7 +36,7 @@ module Announce_user_interactions =
         Log.info "finish scraping and announcing user interactions."
         ()
 
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try scrape_and_announce_user_interactions``()=
         Browser.open_browser()
         |>scrape_and_announce_user_interactions

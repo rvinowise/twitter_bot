@@ -101,8 +101,9 @@ module Posted_video =
         )
         =
         ``last node of aria-label="Embedded video"``
-        |>Html_node.descendant "img"
-        |>Html_node.attribute_value "src"
+        |>Html_node.try_descendant "img"
+        |>Option.map (Html_node.attribute_value "src")
+        |>Option.defaultValue ""
     
     let from_poster_node
         (

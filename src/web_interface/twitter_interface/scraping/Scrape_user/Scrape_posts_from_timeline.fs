@@ -8,14 +8,14 @@ open rvinowise.web_scraping
 
 type Timeline_tab =
     |Posts
-    |Replies
+    |Posts_and_replies
     |Media
     |Likes
     with
     override this.ToString() =
         match this with
         |Posts -> ""
-        |Replies -> "with_replies"
+        |Posts_and_replies -> "with_replies"
         |Likes -> "likes"
         |Media -> "media"
 
@@ -23,7 +23,7 @@ module Timeline_tab =
     let human_name (tab: Timeline_tab) =
         match tab with
         |Posts -> "Posts"
-        |Replies -> "Replies"
+        |Posts_and_replies -> "Posts_and_replies"
         |Likes -> "Likes"
         |Media -> "Media"
 
@@ -46,7 +46,7 @@ module Scrape_posts_from_timeline =
         |>Option.isSome
     
     let wait_for_timeline_loading browser =
-        Browser.sleep 1
+        //Browser.sleep 1
         "div[role='progressbar']"
         |>Browser.wait_till_disappearance browser 60 |>ignore 
             

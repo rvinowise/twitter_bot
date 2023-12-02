@@ -7,6 +7,11 @@ open rvinowise.twitter
 type User_handle = User_handle of string
 type Post_id = Post_id of int64
 
+module Post_id =
+    let value (post:Post_id) =
+        let (Post_id value) = post
+        value
+
 module User_handle =
     let value (handle:User_handle) =
         let (User_handle value) = handle

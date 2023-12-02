@@ -30,7 +30,7 @@ module Scrape_list_members =
                 $"{table_css} div[data-testid='UserCell']"
                 |>Scrape_dynamic_list.collect_all_html_items_of_dynamic_list
                       browser
-                      (fun () -> wait_for_list_loading browser)
+                      (fun () -> ())//wait_for_list_loading browser)
                 |>List.map Parse_twitter_user.parse_twitter_user_cell
                 
             Log.important $"list has {Seq.length users} members... "

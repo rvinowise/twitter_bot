@@ -215,10 +215,8 @@ module Browser =
         let start_time = DateTime.UtcNow
         
         let rec check_disappearance () =
-            //Log.info $"starting check_disappearance"
             let waited_time = DateTime.UtcNow - start_time
             let is_timeout = waited_time > TimeSpan.FromSeconds(timeout_seconds)
-            //Log.info $"is_timeout is determined as: {is_timeout}"
             if
                 is_timeout
             then
@@ -228,10 +226,8 @@ module Browser =
                 |>try_element browser
                 |>function
                 |None->
-                    //Log.info $"element {disappearing_css} isn't found, return waited_time={waited_time}"
                     waited_time
                 |_ ->
-                    //Log.info $"disappearing_css {disappearing_css} is found; waited_time={waited_time}"
                     check_disappearance ()
             
         check_disappearance ()    

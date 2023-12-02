@@ -7,12 +7,15 @@ open Xunit
 
 module Log =
     let logger =
-        LoggerConfiguration().WriteTo
-            .File(
+        LoggerConfiguration()
+            .WriteTo.File(
                 "../log/log.txt",
                 rollOnFileSizeLimit = true, 
                 fileSizeLimitBytes = 1000000000
             )
+        #if DEBUG
+            .MinimumLevel.Debug()
+        #endif
             .CreateLogger();
     
     let info = logger.Information

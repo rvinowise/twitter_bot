@@ -98,7 +98,7 @@ module Parse_segments_of_post =
                     |Some _ ->false
                     |None->true
                 )
-                |>List.map (Html_node.descendant "img")
+                |>List.choose (Html_node.try_descendant "img")
                 |>List.map (fun image_node ->
                     image_node
                     |>Posted_image.from_html_image_node
@@ -248,6 +248,17 @@ module Parse_segments_of_post =
         |Distant_connected_message of Post_id * User_handle
         |No_cell
     
+    module Previous_cell =
+        let human_name (cell:Previous_cell) =
+            match cell with
+            |Adjacent_post (post,author) ->
+                $"""Adjacent_post {Post_id.value post} from "{User_handle.value author}" """
+            |Distant_connected_message (post,author) ->
+                $"""Distant_connected_message {Post_id.value post} from "{User_handle.value author}" """
+            |No_cell ->
+                "No_cell"
+            
+        
     
     let post_has_linked_post_after article_html =
         article_html
@@ -569,7 +580,6 @@ module Parse_segments_of_post =
                 ("main post doesn't have its url",article_html)
                 |>Bad_post_structure_exception
                 |>raise
-        
             
         let reposting_user,is_pinned =
             match post_html_segments.social_context_header with

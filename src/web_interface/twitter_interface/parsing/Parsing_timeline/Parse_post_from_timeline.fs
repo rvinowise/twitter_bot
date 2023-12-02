@@ -101,7 +101,6 @@ module Parse_post_from_timeline =
     
         
     let try_parse_cell
-        html_parsing_context
         (previous_cell: Previous_cell)
         (html_cell: Html_node)
         =

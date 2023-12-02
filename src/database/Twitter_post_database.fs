@@ -549,7 +549,7 @@ module Twitter_post_database =
         (timeline_tab: Timeline_tab) =
         match timeline_tab with
         | Posts -> "last_visited_post_in_timeline"
-        | Replies -> "last_visited_reply_in_timeline"
+        | Posts_and_replies -> "last_visited_reply_in_timeline"
         | Media -> raise (NotSupportedException "this timeline tab can not be scraped")
         | Likes -> "last_visited_like_in_timeline"
     

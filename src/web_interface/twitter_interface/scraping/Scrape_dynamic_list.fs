@@ -18,7 +18,7 @@ module Scrape_dynamic_list =
         browser
         item_css
         =
-        use parameters = Scraping_parameters.wait_seconds 60 browser
+        //use parameters = Scraping_parameters.wait_seconds 60 browser
         let items = Browser.elements item_css browser
         items
         |>List.map (fun web_element ->
@@ -134,10 +134,10 @@ module Scrape_dynamic_list =
     
     let skim_new_visible_items
         browser
+        html_parsing_context
         is_item_needed
         item_selector
         previous_items
-        html_parsing_context
         =
         let visible_skimmed_items =
             skim_displayed_items
@@ -169,7 +169,7 @@ module Scrape_dynamic_list =
                     context,is_finished
                 else
                     iteration_of_batch_processing
-                        context
+                        new_context
                         rest_items
             |[]->context,false
             
@@ -177,6 +177,59 @@ module Scrape_dynamic_list =
         iteration_of_batch_processing
             context
             items
+            
+    
+    let rec skim_and_scroll_iteration
+        wait_for_loading
+        (skim_new_visible_items: list<Html_node> -> list<Html_node>)
+        (process_item: 'Previous_context -> Html_node -> 'Previous_context * bool )
+        load_next_items
+        (previous_items: list<Html_node>) // sorted 0=top
+        (previous_context: 'Previous_context)
+        attempts_without_changes
+        =
+        
+        wait_for_loading()
+        
+        let new_skimmed_items =
+            skim_new_visible_items previous_items
+        
+        load_next_items()
+                
+        match new_skimmed_items with
+        |[]->
+            if attempts_without_changes > 5 then
+                previous_context
+            else
+                //Log.debug $"skim_and_scroll_iteration didn't find new items, attempts_without_changes={attempts_without_changes}; trying again "
+                skim_and_scroll_iteration
+                    wait_for_loading
+                    skim_new_visible_items
+                    process_item
+                    load_next_items
+                    previous_items
+                    previous_context
+                    (attempts_without_changes+1)
+        
+        | new_skimmed_items ->
+            
+            let previous_context, has_finished =
+                process_items_providing_previous_items
+                    previous_context
+                    new_skimmed_items
+                    process_item
+                    
+            if (not has_finished) then
+                skim_and_scroll_iteration
+                    wait_for_loading
+                    skim_new_visible_items
+                    process_item
+                    load_next_items
+                    new_skimmed_items
+                    previous_context
+                    0
+            else
+                previous_context
             
     
     let parse_dynamic_list_with_previous_item
@@ -188,64 +241,24 @@ module Scrape_dynamic_list =
         (empty_context: 'Previous_context)
         item_selector
         =
+        let skim_new_visible_items =
+            skim_new_visible_items
+                browser
+                html_parsing_context
+                is_item_needed
+                item_selector
+                   
+        let load_next_items =
+            fun () -> Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
         
-            
-        let rec skim_and_scroll_iteration
-            (previous_items: list<Html_node>) // sorted 0=top
-            (previous_context: 'Previous_context)
-            =
-            
-            wait_for_loading()
-            
-            let visible_skimmed_items =
-                skim_displayed_items
-                    is_item_needed
-                    browser
-                    item_selector
-                |>List.map (Html_node.from_html_string_and_context html_parsing_context)
-                |>Array.ofList
-            
-            let new_skimmed_items =    
-                previous_items
-                |>new_nodes_from_visible_nodes
-                      visible_skimmed_items
-                |>List.ofArray
-            
-            // let new_skimmed_items =
-            //     skim_new_visible_items
-            //         browser
-            //         is_item_needed
-            //         item_selector
-            //         previous_items
-            //         html_parsing_context
-            
-            if
-                not new_skimmed_items.IsEmpty
-            then
-                
-                let test_new_skimmed_items =    
-                    previous_items
-                    |>new_nodes_from_visible_nodes
-                          visible_skimmed_items
-                    |>List.ofArray
-                
-                Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
-                
-                let previous_context, has_finished =
-                    process_items_providing_previous_items
-                        previous_context
-                        new_skimmed_items
-                        process_item
-                        
-                if (not has_finished) then
-                    skim_and_scroll_iteration
-                        new_skimmed_items
-                        previous_context
-            else
-                Log.debug "new_skimmed_items is empty"
-            
-        skim_and_scroll_iteration [] empty_context
-   
+        skim_and_scroll_iteration
+            wait_for_loading
+            skim_new_visible_items
+            process_item
+            load_next_items
+            []
+            empty_context
+            0
     
     let collect_items_of_dynamic_list
         browser
@@ -264,10 +277,10 @@ module Scrape_dynamic_list =
             let new_skimmed_items =
                 skim_new_visible_items
                     browser
+                    html_parsing_context
                     is_item_needed
                     item_selector
                     all_items
-                    html_parsing_context
             
             if
                 not new_skimmed_items.IsEmpty
