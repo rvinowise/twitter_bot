@@ -220,7 +220,11 @@ module Browser =
             if
                 is_timeout
             then
-                raise <| TimeoutException()
+                //raise <| TimeoutException()
+                $"""reached timeout when waiting for disappearance of "{disappearing_css}" for {timeout_seconds} seconds """
+                |>Log.error
+                |>ignore
+                waited_time
             else
                 disappearing_css
                 |>try_element browser

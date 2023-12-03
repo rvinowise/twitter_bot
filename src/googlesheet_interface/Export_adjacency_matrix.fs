@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open Google.Apis.Sheets.v4.Data
 open Xunit
 
 open rvinowise.twitter.database.tables
@@ -23,20 +24,7 @@ module Export_adjacency_matrix =
     
 
     
-    let row_of_user
-        (user_names: Map<User_handle, string>)
-        (user:User_handle)
-        (interactions: int list)
-        =
-        [
-            (Googlesheet_for_twitter.hyperlink_to_twitter_user user) :>obj
-            user_names[user] :>obj
-        ]@(
-            interactions
-            |>List.map (fun amount -> amount :> obj)
-        )
         
-    
     
     let prepare_a_row_of_interactions_with_all_users
         all_sorted_users
@@ -49,14 +37,17 @@ module Export_adjacency_matrix =
             |>Option.defaultValue 0
         )
     
-    let row_of_user_interactions
+    let row_of_interactions_for_user
         (user_names: Map<User_handle, string>)
         all_users
         (read_interactions: User_handle->seq<User_handle*int>)
         user 
         =
-        ((Googlesheet.username_from_handle user_names user) :> obj)
-        ::
+        [
+            (Googlesheet_for_twitter.hyperlink_to_twitter_user user) :>obj
+            (Googlesheet.username_from_handle user_names user) :> obj
+        ]
+        @
         (
             read_interactions user
             |>Map.ofSeq
@@ -65,6 +56,20 @@ module Export_adjacency_matrix =
             |>List.map(fun amount -> amount :> obj)
         )
         
+    
+    let min_and_max_values
+        (user_interactions: Map<User_handle, Map<User_handle, int>>)
+        =
+        user_interactions
+        |>Map.values
+        |>Seq.fold (fun (min,max) (interactions:Map<User_handle, int>) ->
+            let interaction_values = 
+                interactions
+                |>Map.values
+            Seq.min interaction_values,
+            Seq.max interaction_values
+        )
+            (Int32.MaxValue,0)
     
     let update_googlesheet
         database
@@ -82,10 +87,34 @@ module Export_adjacency_matrix =
                 user_names
                 all_users
         
+        let user_interactions =
+            all_users
+            |>List.map (fun user->
+                user,
+                read_interactions user
+                |>Map.ofSeq
+            )|>Map.ofList
+        
+        let min_value,max_value =
+            min_and_max_values user_interactions
+            
+        let min_value_color = {
+            red=1
+            green=0
+            blue=0
+            alpha=0
+        }
+        let max_value_color = {
+            red=1
+            green=0
+            blue=0
+            alpha=1
+        }
+        
         let rows_of_users =
             all_users
             |>List.map (fun user->
-                row_of_user_interactions
+                row_of_interactions_for_user
                     user_names
                     all_users
                     read_interactions

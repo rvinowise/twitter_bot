@@ -102,7 +102,7 @@ module Harvest_posts_from_timeline =
                 Twitter_post_database.write_main_post    
                     database
         
-        let wait_for_loading = (fun () -> ())//Scrape_posts_from_timeline.wait_for_timeline_loading browser)
+        let wait_for_loading = (fun () -> Scrape_posts_from_timeline.wait_for_timeline_loading browser)
         let is_item_needed =
             Html_node.from_html_string>>
             Scrape_posts_from_timeline.cell_contains_post
