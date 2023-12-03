@@ -39,8 +39,8 @@ module Export_adjacency_matrix =
     
     let row_of_interactions_for_user
         (user_names: Map<User_handle, string>)
-        all_users
-        (read_interactions: User_handle->seq<User_handle*int>)
+        all_sorted_users
+        (user_interactions: Map<User_handle, int>)
         user 
         =
         [
@@ -49,10 +49,9 @@ module Export_adjacency_matrix =
         ]
         @
         (
-            read_interactions user
-            |>Map.ofSeq
+            user_interactions
             |>prepare_a_row_of_interactions_with_all_users
-                all_users
+                all_sorted_users
             |>List.map(fun amount -> amount :> obj)
         )
         
@@ -62,14 +61,17 @@ module Export_adjacency_matrix =
         =
         user_interactions
         |>Map.values
-        |>Seq.fold (fun (min,max) (interactions:Map<User_handle, int>) ->
+        |>Seq.map (fun (interactions:Map<User_handle, int>) ->
             let interaction_values = 
                 interactions
                 |>Map.values
             Seq.min interaction_values,
             Seq.max interaction_values
-        )
-            (Int32.MaxValue,0)
+        )|>List.ofSeq
+        |>List.unzip
+        |> fun (mins,maxs) ->
+            mins|>Seq.min,
+            maxs|>Seq.max
     
     let update_googlesheet
         database
@@ -117,7 +119,7 @@ module Export_adjacency_matrix =
                 row_of_interactions_for_user
                     user_names
                     all_users
-                    read_interactions
+                    user_interactions[user]
                     user
             )
         

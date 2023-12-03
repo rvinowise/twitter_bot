@@ -1,5 +1,6 @@
 ﻿namespace rvinowise.twitter
 
+open System
 open System.Collections.Generic
 open System.IO
 open System.Threading.Tasks
@@ -61,63 +62,61 @@ module Googlesheet =
         for empty in 0 .. 50 -> ""
     ]
     
+    let colored_numbers_to_google_format
+        (rows: ('Value*Color) list list)
+        =
+        rows
+        |>List.map (fun cells ->
+            cells
+            |>List.map (fun (cell_value,color) ->
+                CellData(
+                    UserEnteredFormat =
+                        Color.to_googlesheet_cell_background color,
+                    UserEnteredValue = ExtendedValue(
+                        NumberValue=Nullable cell_value
+                    )
+                )
+            )|>(fun cells ->
+                RowData(
+                    Values=(
+                        cells
+                        |>List :> IList<_>
+                    )
+                )
+            )
+                
+        )|>List :> IList<_>
+    
     let input_colors_into_sheet
         (service: SheetsService)
         (sheet: Google_spreadsheet)
         =
-        let userEnteredFormat = CellFormat(
-            BackgroundColor = Color(
-                Blue = 0f,
-                Red = 1f,
-                Green = 0f,
-                Alpha = 0.6f
-            )
-        )
+        let red = {red=1;green=0;blue=0;alpha=1}
+        let green = {red=0;green=1;blue=0;alpha=1}
         
         let updateCellsRequest =
             Request(
-                RepeatCell = RepeatCellRequest(
+                UpdateCells = UpdateCellsRequest(
                     Range = GridRange(
                         SheetId = sheet.page_id,
-                        StartColumnIndex = 1,
-                        StartRowIndex = 1,
-                        EndColumnIndex = 2,
-                        EndRowIndex = 2
+                        StartColumnIndex = 0,
+                        StartRowIndex = 0,
+                        EndColumnIndex = 10,
+                        EndRowIndex = 5
                     ),
-                    Cell = CellData(
-                        UserEnteredFormat = userEnteredFormat
-                    ),
-                    Fields = "UserEnteredFormat(BackgroundColor)"
-                )
-            )
-        let updateCellsRequest2 =
-            Request(
-                RepeatCell = RepeatCellRequest(
-                    Range = GridRange(
-                        SheetId = sheet.page_id,
-                        StartColumnIndex = 2,
-                        StartRowIndex = 2,
-                        EndColumnIndex = 3,
-                        EndRowIndex = 3
-                    ),
-                    Cell = CellData(
-                        UserEnteredFormat = CellFormat(
-                            BackgroundColor = Color(
-                                Blue = 0.4f,
-                                Red = 1f,
-                                Green = 0.4f,
-                                Alpha = 0.6f
-                            )
-                        )
-                    ),
-                    Fields = "UserEnteredFormat(BackgroundColor)"
+                    Rows =
+                        colored_numbers_to_google_format [
+                            [1,red;2,green]
+                            [3,red;4,green]
+                        ]
+                    ,
+                    Fields = "*"
                 )
             )
         
         let bussr = BatchUpdateSpreadsheetRequest()
         bussr.Requests <- List<Request>()
         bussr.Requests.Add(updateCellsRequest)
-        bussr.Requests.Add(updateCellsRequest2)
         let result = service.Spreadsheets.BatchUpdate(bussr, sheet.doc_id).Execute()
         ()
     
@@ -130,7 +129,8 @@ module Googlesheet =
                 page_id=2108706810
                 page_name="Reposts"
             }
-            
+    
+    
         
     let input_into_sheet
         sheet
