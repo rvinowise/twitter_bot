@@ -24,14 +24,12 @@ module Color =
             Alpha= float32 color.alpha
         )
     
-    let to_googlesheet_cell_background (color:Color) =
-        CellFormat(
-            BackgroundColor = Color(
-                Blue = float32 color.blue,
-                Red = float32 color.red,
-                Green = float32 color.green,
-                Alpha = float32 color.alpha
-            )
+    let to_google_color (color:Color) =
+        Color(
+            Blue = float32 color.blue,
+            Red = float32 color.red,
+            Green = float32 color.green,
+            Alpha = float32 color.alpha
         )
 
 module Colors =
