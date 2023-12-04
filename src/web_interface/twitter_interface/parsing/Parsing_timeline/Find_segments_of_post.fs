@@ -18,6 +18,8 @@ type Html_segments_of_quoted_post = { //which quoted post? it can be big or smal
 }
 
 
+   
+
 type Html_segments_of_main_post = {
     social_context_header: Html_node option
     header: Html_node
