@@ -106,11 +106,7 @@ module Parse_segments_of_post =
                 )
             with
             | :? ArgumentException as e->
-                raise
-                <| Bad_post_structure_exception(
-                    "can't parse posted images from large layout",
-                    load_node
-                )
+                raise <| Bad_post_exception("can't parse posted images from large layout", load_node)
         
         // videos are also part of data-testid="tweetPhoto" node, like images
         let posted_videos =
@@ -155,7 +151,7 @@ module Parse_segments_of_post =
         |[],None->
             ("the card.wrapper node of the external url has neither details nor the url",
             card_wrapper_node)
-            |>Bad_post_structure_exception
+            |>Bad_post_exception
             |>raise 
         |details_segments,obfuscated_url->
                 
@@ -275,7 +271,7 @@ module Parse_segments_of_post =
                 $"an unexpected number ({unexpected_number}) of children at the vertical thread-line",
                 article_html
             )
-            |>Bad_post_structure_exception
+            |>Bad_post_exception
             |>raise 
     
     let post_has_linked_post_before article_html =
@@ -578,7 +574,7 @@ module Parse_segments_of_post =
                 |>int64|>Post_id
             |None ->
                 ("main post doesn't have its url",article_html)
-                |>Bad_post_structure_exception
+                |>Bad_post_exception
                 |>raise
             
         let reposting_user,is_pinned =

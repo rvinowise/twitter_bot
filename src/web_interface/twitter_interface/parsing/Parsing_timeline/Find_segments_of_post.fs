@@ -4,12 +4,33 @@ open AngleSharp.Dom
 open rvinowise.html_parsing
 
 
-exception Bad_post_structure_exception of string*Html_node
-    with
-        override this.ToString() =
-            this.Data0+this.Data1.OuterHtml
 
-exception Html_parsing_fail
+
+
+type Harvesting_exception(message: string) =
+    inherit System.Exception(message)
+
+type Bad_post_exception(message: string, html_node: Html_node option) =
+    inherit Harvesting_exception(message)
+    
+    member this.html_node = html_node
+    
+    new(message: string, html_node: Html_node) =
+        Bad_post_exception(message, Some html_node)
+        
+    new(message: string) =
+        Bad_post_exception(message, None)
+        
+    new() =
+        Bad_post_exception("Bad post structure", None)
+        
+    override this.ToString() =
+        match html_node with
+        |Some html ->
+            $"""{this.Message}
+            {html.OuterHtml}
+            """
+        |None -> this.Message
 
 type Html_segments_of_quoted_post = { //which quoted post? it can be big or small, with different layouts
     header: Html_node
@@ -173,7 +194,7 @@ module Find_segments_of_post =
                 | :? System.NullReferenceException as e ->
                     None,body_segments
                     
-            |[]->raise Html_parsing_fail
+            |[]->raise <| Bad_post_exception()
         
         let message =
             rest_segments
@@ -214,9 +235,9 @@ module Find_segments_of_post =
                                 
                         |[]->None,None,None // empty external source DIV, if there's a link in the message itself
                         | _->
-                            raise
-                            <| Bad_post_structure_exception 
-                                ("additional post load has >2 children", article_node)
+                            let exc = Bad_post_exception("additional post load has >2 children", article_node)
+                            exc|>string|>Log.error|>ignore
+                            raise exc
         
         {
             social_context_header = social_context_header

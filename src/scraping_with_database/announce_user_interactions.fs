@@ -10,11 +10,22 @@ module Announce_user_interactions =
         let database = Twitter_database.open_connection()
         
         let before_scraping_users = DateTime.Now
-        let users =
+        let all_users =
             Settings.Competitors.list
             |>Scrape_list_members.scrape_twitter_list_members browser
             |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)
+            
+            
+        let users =
+            all_users
+            |>List.splitAt(
+                let last_harvested_user=
+                    all_users
+                    |>List.findIndex (fun user -> user = User_handle "RokoMijic")
+                last_harvested_user+1
+            )|>snd
         
+            
         Log.info $"reading list of users took {DateTime.Now-before_scraping_users}"
         
         let before_harvesting_actions = DateTime.Now

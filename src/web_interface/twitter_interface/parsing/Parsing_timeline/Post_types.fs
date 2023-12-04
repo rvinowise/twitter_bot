@@ -193,7 +193,6 @@ module Post_header =
     let reply_status header =
         header.reply
 
-exception Bad_post_exception of string
 module Main_post =
     
     let header post =

@@ -89,17 +89,11 @@ module Parse_post_from_timeline =
             |>Parse_segments_of_post.parse_main_twitter_post previous_cell
             |>Parsed_timeline_cell.Post
         with
-        | :? Bad_post_structure_exception
-        | :? Html_parsing_fail as exc ->
-            $"""exception {exc.Message} when parsing the post:
-            {article_node}
-            """
-            |>Log.error
-            |>Parsed_timeline_cell.Error
+        | :? Bad_post_exception as exc ->
+            Parsed_timeline_cell.Error exc.Message
+           
         
-    
-    
-        
+ 
     let try_parse_cell
         (previous_cell: Previous_cell)
         (html_cell: Html_node)

@@ -52,36 +52,7 @@ module Harvest_posts_from_timeline =
             Log.error $"failed to harvest a cell from the timeline: {error}"|>ignore
             Previous_cell.No_cell,false
             
-    
-    let skip_timelines =
-        [
-            "rejuicey", None
-            "FedorovIdeas", None
-            "SayForeverOrg", None
-            "SF_Longevity", None
-            "AlexLarionov", None
-            "madiyar_123", None
-            "FeelixNoel", None
-            "DanilaImmortal", None
-            "Cancel_Aging", Some Timeline_tab.Posts_and_replies
-        ]
-        |>Map.ofList
-    
-    let timeline_should_be_harvested
-        (timeline_tab:Timeline_tab)
-        user
-        =
-        skip_timelines
-        |>Map.tryFind (User_handle.value user)
-        |>function
-        |None -> true
-        |Some skipped_tab ->
-            match skipped_tab with
-            |None -> false
-            |Some particular_skipped_tab ->
-                particular_skipped_tab <> timeline_tab
-            
-        
+
     
     let harvest_timeline
         (tab: Timeline_tab)
@@ -186,18 +157,16 @@ module Harvest_posts_from_timeline =
         //     browser
         //     database
         //     user
-        if timeline_should_be_harvested Timeline_tab.Posts_and_replies user then
-            harvest_new_posts_of_user
-                Timeline_tab.Posts_and_replies
-                browser
-                database
-                user
-        if timeline_should_be_harvested Timeline_tab.Likes user then
-            harvest_new_posts_of_user
-                Timeline_tab.Likes
-                browser
-                database
-                user
+        harvest_new_posts_of_user
+            Timeline_tab.Posts_and_replies
+            browser
+            database
+            user
+        harvest_new_posts_of_user
+            Timeline_tab.Likes
+            browser
+            database
+            user
     
     let harvest_all_last_actions_of_users
         browser

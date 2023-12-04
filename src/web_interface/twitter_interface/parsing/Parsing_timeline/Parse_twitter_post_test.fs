@@ -29,7 +29,7 @@ I'm not for bans on veiling, I am for consistency though.</span></div></div><div
             match post.body with
             |Message (quotable_message, external_source) ->
                 quotable_message.header, quotable_message, external_source
-            | _ -> raise Html_parsing_fail
+            | _ -> raise <| Bad_post_exception()
         
         
         header.author
@@ -129,7 +129,7 @@ I was about to start work on this commission, when in came an email from Twitte
         |>function
         |Some (Quoted_message quoted_post) ->
                 check_quoted_post quoted_post
-        | _ -> raise Html_parsing_fail
+        | _ -> raise <| Bad_post_exception()
         
         
         post.stats.likes
@@ -200,7 +200,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |>function
         |Some (Quoted_message quoted_post) ->
             check_quoted_post quoted_post
-        | _ -> raise Html_parsing_fail
+        | _ -> raise <| Bad_post_exception()
         
         
         post.stats.likes
@@ -291,7 +291,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |>function
         |Some (Quoted_message quoted_post) ->
             check_quoted_post quoted_post
-        |_ -> raise Html_parsing_fail
+        |_ -> raise <| Bad_post_exception()
         
         
         post.stats.likes
@@ -352,7 +352,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |>function
         |Some (External_url external_source) ->
             check_quoted_source external_source
-        |_ -> raise Html_parsing_fail
+        |_ -> raise <| Bad_post_exception()
         
         
         post.stats.likes
@@ -415,7 +415,7 @@ https://openlongevity.org""")
         |>function
         |Some (External_url external_source) ->
             check_quoted_source external_source
-        |_ -> raise Html_parsing_fail
+        |_ -> raise <| Bad_post_exception()
         
         
         post.stats.likes
@@ -499,14 +499,14 @@ https://openlongevity.org""")
                 |>Some
                 |>(<>) quoted_post.header.reply
             then
-                raise Html_parsing_fail
+                raise <| Bad_post_exception()
         
         post
         |>Main_post.external_source
         |>function
         |Some (Quoted_message quoted_post) ->
             check_quoted_post quoted_post
-        | _ -> raise Html_parsing_fail
+        | _ -> raise <| Bad_post_exception()
         
     [<Fact>]
     let ``parse quotation of a reply which is part of a thread``()=
@@ -529,9 +529,9 @@ https://openlongevity.org""")
                 |>Some
                 |>(<>) quoted_post.header.reply
             then
-                raise Html_parsing_fail //FsUnit's "should equal" considers them ALWAYS different            
+                raise <| Bad_post_exception() //FsUnit's "should equal" considers them ALWAYS different            
             
-        | _ -> raise Html_parsing_fail
+        | _ -> raise <| Bad_post_exception()
         
         
     [<Fact>]
@@ -755,7 +755,7 @@ https://openlongevity.org""")
             |>function
             |Some (External_source.Quoted_poll quotable_poll) ->
                 quotable_poll
-            |_->raise Html_parsing_fail
+            |_->raise <| Bad_post_exception()
         
         quoted_poll.question
         |>should equal "test poll"
@@ -787,8 +787,8 @@ https://openlongevity.org""")
             |[Video_poster url] ->
                 url
                 |>should equal "https://pbs.twimg.com/media/Dwc9gPVWsAEmdvM?format=webp&name=tiny"
-            |_ -> raise Html_parsing_fail
-        |Poll _ -> raise Html_parsing_fail
+            |_ -> raise <| Bad_post_exception()
+        |Poll _ -> raise <| Bad_post_exception()
         
         
     [<Fact>]
@@ -809,7 +809,7 @@ https://openlongevity.org""")
         |>Main_post.header
         |>Post_header.reply_status
         |>function
-        |None-> raise Html_parsing_fail
+        |None-> raise <| Bad_post_exception()
         |Some reply ->
             reply.to_post
             |>should equal (1729746276768530504L|>Post_id|>Some)
