@@ -553,7 +553,7 @@ module Twitter_post_database =
         | Media -> raise (NotSupportedException "this timeline tab can not be scraped")
         | Likes -> "last_visited_like_in_timeline"
     
-    let write_last_visited_post
+    let write_newest_last_visited_post
         (db_connection:NpgsqlConnection)
         (timeline_tab: Timeline_tab)
         user
@@ -581,7 +581,7 @@ module Twitter_post_database =
             |}
         ) |> ignore
         
-    let read_last_visited_post
+    let read_newest_last_visited_post
         (db_connection:NpgsqlConnection)
         (timeline_tab: Timeline_tab)
         user
@@ -598,7 +598,7 @@ module Twitter_post_database =
     [<Fact>]
     let ``try read_last_visited_post``() =
         let result =
-            read_last_visited_post
+            read_newest_last_visited_post
                 (Twitter_database.open_connection())
                 Timeline_tab.Posts
                 (User_handle "MikhailBatin")

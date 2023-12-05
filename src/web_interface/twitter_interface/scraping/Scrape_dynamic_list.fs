@@ -233,12 +233,12 @@ module Scrape_dynamic_list =
             
     
     let parse_dynamic_list_with_previous_item
-        browser
-        html_parsing_context
         wait_for_loading
         is_item_needed
         (process_item: 'Previous_context -> Html_node -> 'Previous_context * bool )
         (empty_context: 'Previous_context)
+        browser
+        html_parsing_context
         item_selector
         =
         let skim_new_visible_items =

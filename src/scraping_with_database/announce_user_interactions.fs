@@ -21,7 +21,7 @@ module Announce_user_interactions =
             |>List.splitAt(
                 let last_harvested_user=
                     all_users
-                    |>List.findIndex (fun user -> user = User_handle "RokoMijic")
+                    |>List.findIndex (fun user -> user = User_handle "OttoMller12")
                 last_harvested_user+1
             )|>snd
         
