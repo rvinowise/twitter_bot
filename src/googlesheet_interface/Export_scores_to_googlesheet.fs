@@ -182,7 +182,7 @@ module Export_scores_to_googlesheet =
             |>List
         Log.info $"inputting into google sheet: {sheet}"
             
-        Googlesheet.input_into_sheet sheet all_rows
+        Googlesheet.input_obj_into_sheet sheet all_rows
     
     
     let update_googlesheet

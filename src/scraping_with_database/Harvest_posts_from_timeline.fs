@@ -138,43 +138,43 @@ module Harvest_posts_from_timeline =
         the last timeline cell is {Previous_cell.human_name last_cell}
         """
    
-    let write_newest_post_on_timeline
-        browser
-        html_parsing_context
-        database
-        tab
-        user
-        =
-        let remember_as_first_post
-            post
-            =
-            if post.is_pinned then
-                ()//Previous_cell.No_cell, false
-            else
-                Twitter_post_database.write_newest_last_visited_post
-                    database
-                    tab
-                    user
-                    post
-                ()
-                //Previous_cell.No_cell, true
+//    let write_newest_post_on_timeline
+//        browser
+//        html_parsing_context
+//        database
+//        tab
+//        user
+//        =
+//        let remember_as_first_post
+//            post
+//            =
+//            if post.is_pinned then
+//                ()//Previous_cell.No_cell, false
+//            else
+//                Twitter_post_database.write_newest_last_visited_post
+//                    database
+//                    tab
+//                    user
+//                    post
+//                ()
+//                //Previous_cell.No_cell, true
+//        
+//        let is_post_after_the_first_one post =
+//            if post.is_pinned then
+//                Previous_cell.No_cell, false
+//            else
+//                Previous_cell.No_cell, false
         
-        let is_post_after_the_first_one post =
-            if post.is_pinned then
-                Previous_cell.No_cell, false
-            else
-                Previous_cell.No_cell, false
-        
-        let harvest_first_post
-            previous_cell
-            html_node
-            =
-            
-        
-        parse_timeline
-            (harvest_timeline_cell remember_as_first_post is_post_after_the_first_one)
-            browser
-            html_parsing_context
+//        let harvest_first_post
+//            previous_cell
+//            html_node
+//            =
+//            
+//        
+//        parse_timeline
+//            (harvest_timeline_cell remember_as_first_post is_post_after_the_first_one)
+//            browser
+//            html_parsing_context
         
         
 
@@ -218,10 +218,10 @@ module Harvest_posts_from_timeline =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser
         
-        write_newest_post_on_timeline
-            browser
-            html_parsing_context
-            database
+//        write_newest_post_on_timeline
+//            browser
+//            html_parsing_context
+//            database
         
         harvest_timeline_tab_of_user
             browser

@@ -22,37 +22,21 @@ module Export_adjacency_matrix =
         |>List.map (fun user->user :> obj)
         |>List.append ["" :> obj]
     
-
-    
         
     
-    let prepare_a_row_of_interactions_with_all_users
+    let row_of_interactions_with_all_users
+        (value_to_color: int -> rvinowise.twitter.Color)
         all_sorted_users
         (known_interactions: Map<User_handle, int>)
         =
         all_sorted_users
         |>List.map(fun other_user->
-            known_interactions
-            |>Map.tryFind other_user
-            |>Option.defaultValue 0
-        )
-    
-    let row_of_interactions_for_user
-        (user_names: Map<User_handle, string>)
-        all_sorted_users
-        (user_interactions: Map<User_handle, int>)
-        user 
-        =
-        [
-            (Googlesheet_for_twitter.hyperlink_to_twitter_user user) :>obj
-            (Googlesheet.username_from_handle user_names user) :> obj
-        ]
-        @
-        (
-            user_interactions
-            |>prepare_a_row_of_interactions_with_all_users
-                all_sorted_users
-            |>List.map(fun amount -> amount :> obj)
+            let interaction_intencity =
+                known_interactions
+                |>Map.tryFind other_user
+                |>Option.defaultValue 0
+            interaction_intencity,
+            value_to_color interaction_intencity
         )
         
     
@@ -65,13 +49,19 @@ module Export_adjacency_matrix =
             let interaction_values = 
                 interactions
                 |>Map.values
-            Seq.min interaction_values,
-            Seq.max interaction_values
+            if Seq.isEmpty interaction_values then
+                0,0
+            else
+                Seq.min interaction_values,
+                Seq.max interaction_values
         )|>List.ofSeq
         |>List.unzip
         |> fun (mins,maxs) ->
             mins|>Seq.min,
             maxs|>Seq.max
+    
+
+        
     
     let update_googlesheet
         database
@@ -79,16 +69,10 @@ module Export_adjacency_matrix =
         (read_interactions: User_handle->seq<User_handle*int>)
         all_users
         =
-        
         let user_names =
             Social_activity_database.read_user_names_from_handles
                 database
-        
-        let row_of_header =
-            row_of_header
-                user_names
-                all_users
-        
+
         let user_interactions =
             all_users
             |>List.map (fun user->
@@ -102,9 +86,9 @@ module Export_adjacency_matrix =
             
         let min_value_color = {
             red=1
-            green=0
-            blue=0
-            alpha=0
+            green=1
+            blue=1
+            alpha=1
         }
         let max_value_color = {
             red=1
@@ -113,19 +97,39 @@ module Export_adjacency_matrix =
             alpha=1
         }
         
-        let rows_of_users =
+        let header_or_users =
+            all_users
+            |>List.map (Googlesheet.username_from_handle user_names)
+            |>Googlesheet_writing.text_row_to_google_vertical_cells
+        
+        let left_column_of_users =
+            all_users
+            |>List.map (Googlesheet.username_from_handle user_names)
+            |>List.append [""]
+            |>Googlesheet_writing.text_row_to_google_cells
+        
+        let value_to_intencity_color =
+            Color.cell_color_for_value
+                min_value_color
+                max_value_color
+                min_value
+                max_value
+        
+        let rows_of_interactions =
             all_users
             |>List.map (fun user->
-                row_of_interactions_for_user
-                    user_names
+                row_of_interactions_with_all_users
+                    value_to_intencity_color
                     all_users
                     user_interactions[user]
-                    user
-            )
+            )|>Googlesheet_writing.colored_numbers_to_google_cells
         
-        (row_of_header::rows_of_users)
-        |>Googlesheet.obj_lists_to_google_obj
-        |>Googlesheet.input_into_sheet
+        (header_or_users::rows_of_interactions)
+        |>Table.transpose Googlesheet.empty_cell
+        |>List.append [left_column_of_users]
+        |>Table.transpose Googlesheet.empty_cell
+        |>Googlesheet_writing.write_table
+            (Googlesheet.create_googlesheet_service())
             googlesheet
         
     

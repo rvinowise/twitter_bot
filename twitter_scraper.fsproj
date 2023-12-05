@@ -59,8 +59,9 @@
     
     <!-- google spread sheets interface   -->
     <Compile Include="src\googlesheet_interface\Table.fs" />
-    <Compile Include="src\googlesheet_interface\Colors.fs" />
+    <Compile Include="src\googlesheet_interface\Color.fs" />
     <Compile Include="src\googlesheet_interface\Googlesheet.fs" />
+    <Compile Include="src\googlesheet_interface\Googlesheet_writing.fs" />
     <Compile Include="src\googlesheet_interface\Googlesheet_for_twitter.fs" />
     <Compile Include="src\googlesheet_interface\Import_scores_from_googlesheet.fs" />
     <Compile Include="src\googlesheet_interface\Import_referrals_from_googlesheet.fs" />

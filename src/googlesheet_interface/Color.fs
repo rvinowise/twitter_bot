@@ -31,8 +31,6 @@ module Color =
             Green = float32 color.green,
             Alpha = float32 color.alpha
         )
-
-module Colors =
         
     let coefficient_between_values
         (value_from: int)
