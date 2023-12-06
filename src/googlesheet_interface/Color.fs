@@ -49,12 +49,12 @@ module Color =
         (value_to: int)
         (value_between: int)
         =
-        let multiplier_from =
+        let multiplier_to =
             coefficient_between_values
                 value_from
                 value_to
                 value_between
-        let multiplier_to = 1.0-multiplier_from
+        let multiplier_from = 1.0-multiplier_to
         
         {
             red=color_from.red * multiplier_from + color_to.red*multiplier_to

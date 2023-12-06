@@ -127,6 +127,49 @@ module Googlesheet_writing =
         let result = service.Spreadsheets.BatchUpdate(bussr, sheet.doc_id).Execute()
         ()
     
+    let write_sheet_dimension
+        (service: SheetsService)
+        (sheet: Google_spreadsheet)
+        columns_amount
+        rows_amount
+        =
+        let batch_request = BatchUpdateSpreadsheetRequest(
+            Requests =([
+                Request(
+                    AppendDimension = AppendDimensionRequest(
+                        SheetId=sheet.page_id,
+                        Dimension = "COLUMNS",
+                        Length = Nullable columns_amount
+                    )
+                )
+                Request(
+                    AppendDimension = AppendDimensionRequest(
+                        SheetId=sheet.page_id,
+                        Dimension = "ROWS",
+                        Length = Nullable rows_amount
+                    )
+                )
+            ]|>List)
+        )
+        
+        let response =
+                service.Spreadsheets.BatchUpdate(batch_request, sheet.doc_id).Execute()
+        
+        response
+    
+    [<Fact>]
+    let ``try write_sheet_dimension``()=
+        write_sheet_dimension
+            (Googlesheet.create_googlesheet_service())
+            {
+                Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+                page_id=0
+                page_name="Likes"
+            }
+            100
+            100
+        
+        
     let write_table
         (service: SheetsService)
         (sheet: Google_spreadsheet)
@@ -139,6 +182,13 @@ module Googlesheet_writing =
             
         let max_y =    
             List.length table
+        
+        let result_adding_dimensions=
+            write_sheet_dimension
+                service
+                sheet
+                max_x
+                max_y
         
         let updateCellsRequest =
             Request(

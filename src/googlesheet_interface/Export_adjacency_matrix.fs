@@ -40,7 +40,7 @@ module Export_adjacency_matrix =
         )
         
     
-    let min_and_max_values
+    let min_and_max_values_from_maps
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
         =
         user_interactions
@@ -61,28 +61,60 @@ module Export_adjacency_matrix =
             maxs|>Seq.max
     
 
+    let min_and_max_values_from_lists
+        (lists: int list list)
+        =
+        lists
+        |>List.map (fun inner_list ->
+            List.min inner_list,    
+            List.max inner_list
+        )
+        |>List.unzip
+        |> fun (mins,maxs) ->
+            mins|>Seq.min,
+            maxs|>Seq.max
+    
+    let interactions_with_other_users
+        (read_interactions: User_handle->seq<User_handle*int>)
+        (other_sorted_users: User_handle list)
+        user
+        =
+        let interactions_with_all_users =
+            read_interactions user
         
+        other_sorted_users
+        |>List.map(fun other_sorted_user ->
+            interactions_with_all_users
+            |>Seq.tryPick(fun (user,interaction_amount) ->
+                if user = other_sorted_user then
+                    Some interaction_amount
+                else
+                    None
+            )
+            |>Option.defaultValue 0
+        )
     
     let update_googlesheet
         database
         googlesheet
         (read_interactions: User_handle->seq<User_handle*int>)
-        all_users
+        all_sorted_users
         =
         let user_names =
             Social_activity_database.read_user_names_from_handles
                 database
-
+        
         let user_interactions =
-            all_users
+            all_sorted_users
             |>List.map (fun user->
-                user,
-                read_interactions user
-                |>Map.ofSeq
-            )|>Map.ofList
+                interactions_with_other_users
+                    read_interactions
+                    all_sorted_users
+                    user
+            )
         
         let min_value,max_value =
-            min_and_max_values user_interactions
+            min_and_max_values_from_lists user_interactions
             
         let min_value_color = {
             red=1
@@ -98,12 +130,12 @@ module Export_adjacency_matrix =
         }
         
         let header_or_users =
-            all_users
+            all_sorted_users
             |>List.map (Googlesheet.username_from_handle user_names)
             |>Googlesheet_writing.text_row_to_google_vertical_cells
         
         let left_column_of_users =
-            all_users
+            all_sorted_users
             |>List.map (Googlesheet.username_from_handle user_names)
             |>List.append [""]
             |>Googlesheet_writing.text_row_to_google_cells
@@ -116,12 +148,13 @@ module Export_adjacency_matrix =
                 max_value
         
         let rows_of_interactions =
-            all_users
-            |>List.map (fun user->
-                row_of_interactions_with_all_users
-                    value_to_intencity_color
-                    all_users
-                    user_interactions[user]
+            user_interactions
+            |>List.map (fun sorted_interactions->
+                sorted_interactions
+                |>List.map(fun interaction_value ->
+                    interaction_value,
+                    value_to_intencity_color interaction_value
+                )
             )|>Googlesheet_writing.colored_numbers_to_google_cells
         
         (header_or_users::rows_of_interactions)
@@ -161,6 +194,11 @@ module Export_adjacency_matrix =
                 "RichardDawkins"
             ]
             |>List.map User_handle
+        
+        let all_users =
+            User_interaction.read_all_users database
+            |>List.ofSeq
+            |>List.take 100
         
         update_googlesheet
             database

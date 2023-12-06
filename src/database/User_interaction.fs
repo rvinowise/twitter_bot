@@ -14,7 +14,7 @@ module User_interaction =
         
     [<CLIMutable>]
     type Amount_for_user = {
-        author: User_handle
+        user: User_handle
         amount: int
     }
     
@@ -23,7 +23,7 @@ module User_interaction =
         =
         amount_for_users
         |>Seq.map (fun amount ->
-            amount.author,amount.amount    
+            amount.user,amount.amount    
         )
     
     let read_likes_by_user
@@ -31,7 +31,7 @@ module User_interaction =
         liker
         =
         database.Query<Amount_for_user>($"""
-            SELECT post_header.author, count(*) as amount FROM post_like
+            SELECT post_header.author as user, count(*) as amount FROM post_like
 
             inner join post_header on 
 	            post_like.post = post_header.main_post_id
@@ -52,7 +52,7 @@ module User_interaction =
         reposter
         =
         database.Query<Amount_for_user>($"""
-            SELECT post_header.author, count(*) as amount FROM post_repost
+            SELECT post_header.author as user, count(*) as amount FROM post_repost
 
             inner join post_header on 
 	            post_repost.post = post_header.main_post_id
@@ -72,7 +72,7 @@ module User_interaction =
         replier
         =
         database.Query<Amount_for_user>($"""
-            SELECT post_reply.previous_user, count(*) as amount FROM post_reply
+            SELECT post_reply.previous_user as user, count(*) as amount FROM post_reply
 
             inner join post_header as replying_header on
 	            replying_header.main_post_id = post_reply.next_post
@@ -91,5 +91,23 @@ module User_interaction =
         let result = 
             read_replies_by_user
                 (Twitter_database.open_connection())
-                "MikhailBatin"
+                "yangranat"
+        ()
+        
+    let read_all_users
+        (database: NpgsqlConnection)
+        =
+        database.Query<User_handle>($"""
+            SELECT post_header.author FROM post_header
+
+            group by post_header.author
+
+            """
+        )
+   
+    [<Fact>]
+    let ``try read_all_users``()=
+        let result = 
+            read_all_users
+                (Twitter_database.open_connection())
         ()
