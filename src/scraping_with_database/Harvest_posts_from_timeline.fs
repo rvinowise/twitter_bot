@@ -38,24 +38,24 @@ module Harvest_posts_from_timeline =
                 html_cell
         
         match parsed_cell with
-        |Parsed_timeline_cell.Post (post, previous_cell) ->
+        |Parsed_timeline_cell.Post (post, cell_summary) ->
             if
                 is_first_ignored_post post
             then
-                previous_cell,true
+                None
             else
                 write_post post
-                previous_cell,false
+                Some cell_summary
         |Hidden_post previous_cell ->
-            previous_cell,false
+            Some previous_cell
         |Error error ->
             Log.error $"failed to harvest a cell from the timeline: {error}"|>ignore
-            Previous_cell.No_cell,false
+            Some Previous_cell.No_cell
     
     let harvest_timeline_cell_for_first_post
         database
-        user
         tab
+        user
         previous_cell
         html_cell
         =
@@ -65,30 +65,41 @@ module Harvest_posts_from_timeline =
                 html_cell
         
         match parsed_cell with
-        |Parsed_timeline_cell.Post (post, previous_cell) ->
+        |Parsed_timeline_cell.Post (post, cell_summary) ->
             if
                 post.is_pinned
             then
-                previous_cell,false
+                Some cell_summary
             else
                 Twitter_post_database.write_newest_last_visited_post
                     database
                     tab
                     user
+                    post.id
+                
+                let author =
                     post
-                    
-                previous_cell,true
+                    |>Main_post.header
+                    |>Post_header.author
+                
+                Log.info $"""
+                the newest post on timeline {Timeline_tab.human_name tab} of user {User_handle.value user}
+                is {Post_id.value post.id} by {User_handle.value author.handle}"""
+                
+                None
                 
         |Hidden_post previous_cell ->
-            previous_cell,false
+            Some previous_cell
         |Error error ->
             Log.error $"failed to harvest a cell from the timeline: {error}"|>ignore
-            Previous_cell.No_cell,false
+            Some Previous_cell.No_cell
+            
             
     let parse_timeline
-        process_item
+        (process_item: Previous_cell -> Html_node -> Previous_cell option)
         browser
         parsing_context
+        scrolling_repetitions
         =
         
         let wait_for_loading = (fun () -> Scrape_posts_from_timeline.wait_for_timeline_loading browser)
@@ -101,9 +112,9 @@ module Harvest_posts_from_timeline =
             wait_for_loading
             is_item_needed
             process_item
-            Previous_cell.No_cell
             browser
             parsing_context
+            scrolling_repetitions
             
     
     let harvest_timeline_tab_of_user
@@ -128,53 +139,29 @@ module Harvest_posts_from_timeline =
             item_count <- item_count+1
             harvest_timeline_cell write_post is_finished item
         
-        let last_cell =
-            parse_timeline
-                harvest_cell_with_counter
-                browser
-                html_parsing_context
+        parse_timeline
+            harvest_cell_with_counter
+            browser
+            html_parsing_context
+            5
+            
         Log.info $"""
         {item_count} posts have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".
-        the last timeline cell is {Previous_cell.human_name last_cell}
         """
    
-//    let write_newest_post_on_timeline
-//        browser
-//        html_parsing_context
-//        database
-//        tab
-//        user
-//        =
-//        let remember_as_first_post
-//            post
-//            =
-//            if post.is_pinned then
-//                ()//Previous_cell.No_cell, false
-//            else
-//                Twitter_post_database.write_newest_last_visited_post
-//                    database
-//                    tab
-//                    user
-//                    post
-//                ()
-//                //Previous_cell.No_cell, true
-//        
-//        let is_post_after_the_first_one post =
-//            if post.is_pinned then
-//                Previous_cell.No_cell, false
-//            else
-//                Previous_cell.No_cell, false
+    let write_newest_post_on_timeline
+        browser
+        html_parsing_context
+        database
+        tab
+        user
+        =
+        parse_timeline
+            (harvest_timeline_cell_for_first_post database tab user)
+            browser
+            html_parsing_context
+            0
         
-//        let harvest_first_post
-//            previous_cell
-//            html_node
-//            =
-//            
-//        
-//        parse_timeline
-//            (harvest_timeline_cell remember_as_first_post is_post_after_the_first_one)
-//            browser
-//            html_parsing_context
         
         
 
@@ -184,8 +171,6 @@ module Harvest_posts_from_timeline =
         =
         post.id = last_visited_post
     
-    
-            
             
     
     let harvest_updates_on_timeline_of_user
@@ -201,16 +186,19 @@ module Harvest_posts_from_timeline =
                     database
                     tab
                     user
+            let work_description =
+                $"""harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"""
+            
             match newest_last_visited_post with
             |Some last_post ->
-                Log.info $"""
-                harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"
-                will stop when post "{newest_last_visited_post}" is reached"""
+                Log.info
+                    $"""{work_description}
+                    will stop when post "{Post_id.value last_post}" is reached"""
                 (reached_last_visited_post last_post)
             |None->
-                Log.info $"""
-                harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"
-                will stop when the timeline is ended"""
+                Log.info
+                    $"""{work_description}
+                    will stop when the timeline is ended"""
                 (fun _ -> false)
         
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
@@ -218,10 +206,12 @@ module Harvest_posts_from_timeline =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser
         
-//        write_newest_post_on_timeline
-//            browser
-//            html_parsing_context
-//            database
+        write_newest_post_on_timeline
+            browser
+            html_parsing_context
+            database
+            tab
+            user
         
         harvest_timeline_tab_of_user
             browser
@@ -283,3 +273,14 @@ module Harvest_posts_from_timeline =
         |>resilient_step_of_harvesting_timelines
             browser
             database
+    
+    
+    [<Fact>]
+    let ``try harvest_all_last_actions_of_users``()=
+        let result =
+            harvest_updates_on_timeline_of_user
+                (Browser.open_browser())
+                (Twitter_database.open_connection())
+                Timeline_tab.Posts_and_replies
+                (User_handle "petrenko_ai")
+        ()

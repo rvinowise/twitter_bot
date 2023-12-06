@@ -168,13 +168,13 @@ module Browser =
         css
         (browser: Browser)
         =
-        try
-            canopy.parallell.functions.elements css browser.webdriver
-        with
-        | :? CanopyElementNotFoundException as exc ->
-            []
-        //browser.webdriver.FindElements(By.CssSelector(css))
-        //|>Seq.toList
+        // try
+        //     canopy.parallell.functions.elements css browser.webdriver
+        // with
+        // | :? CanopyElementNotFoundException as exc ->
+        //     []
+        browser.webdriver.FindElements(By.CssSelector(css))
+        |>Seq.toList
         
     
     let try_element

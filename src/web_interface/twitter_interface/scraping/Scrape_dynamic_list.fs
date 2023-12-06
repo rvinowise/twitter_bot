@@ -4,6 +4,7 @@ open System
 open AngleSharp
 open OpenQA.Selenium
 open rvinowise.html_parsing
+open rvinowise.twitter.Parse_segments_of_post
 open rvinowise.web_scraping
 
 open FsUnit
@@ -152,10 +153,10 @@ module Scrape_dynamic_list =
               visible_skimmed_items
         |>List.ofArray
     
-    let process_items_providing_previous_items
-        (context: 'Previous_context)
+    let process_item_batch_providing_previous_items
+        (context: Previous_cell)
         items
-        (process_item: 'Previous_context -> Html_node -> 'Previous_context * bool)
+        (process_item: Previous_cell -> Html_node -> Previous_cell option)
         =
         let rec iteration_of_batch_processing
             context
@@ -163,15 +164,15 @@ module Scrape_dynamic_list =
             =
             match items with
             |next_item::rest_items ->
-                let new_context, is_finished =
+                let new_context =
                     process_item context next_item
-                if is_finished then
-                    context,is_finished
-                else
+                match new_context with
+                |None->None
+                |Some context ->
                     iteration_of_batch_processing
-                        new_context
+                        context
                         rest_items
-            |[]->context,false
+            |[]->Some context
             
         
         iteration_of_batch_processing
@@ -182,11 +183,12 @@ module Scrape_dynamic_list =
     let rec skim_and_scroll_iteration
         wait_for_loading
         (skim_new_visible_items: list<Html_node> -> list<Html_node>)
-        (process_item: 'Previous_context -> Html_node -> 'Previous_context * bool )
+        (process_item: Previous_cell -> Html_node -> Previous_cell option)
         load_next_items
         (previous_items: list<Html_node>) // sorted 0=top
-        (previous_context: 'Previous_context)
-        attempts_without_changes
+        (previous_context: Previous_cell)
+        scrolling_repetitions
+        repetitions_left
         =
         
         wait_for_loading()
@@ -198,10 +200,10 @@ module Scrape_dynamic_list =
                 
         match new_skimmed_items with
         |[]->
-            if attempts_without_changes > 5 then
-                previous_context
+            if repetitions_left = 0 then
+                None
             else
-                //Log.debug $"skim_and_scroll_iteration didn't find new items, attempts_without_changes={attempts_without_changes}; trying again "
+                Log.debug $"skim_and_scroll_iteration didn't find new items, attempts left={repetitions_left}; trying again "
                 skim_and_scroll_iteration
                     wait_for_loading
                     skim_new_visible_items
@@ -209,36 +211,38 @@ module Scrape_dynamic_list =
                     load_next_items
                     previous_items
                     previous_context
-                    (attempts_without_changes+1)
-        
+                    scrolling_repetitions
+                    (repetitions_left-1)
         | new_skimmed_items ->
             
-            let previous_context, has_finished =
-                process_items_providing_previous_items
+            let next_context =
+                process_item_batch_providing_previous_items
                     previous_context
                     new_skimmed_items
                     process_item
                     
-            if (not has_finished) then
+            match next_context with
+            |Some next_context ->
                 skim_and_scroll_iteration
                     wait_for_loading
                     skim_new_visible_items
                     process_item
                     load_next_items
                     new_skimmed_items
-                    previous_context
-                    0
-            else
-                previous_context
+                    next_context
+                    scrolling_repetitions
+                    scrolling_repetitions
+            |None->
+                None
             
     
     let parse_dynamic_list_with_previous_item
         wait_for_loading
         is_item_needed
-        (process_item: 'Previous_context -> Html_node -> 'Previous_context * bool )
-        (empty_context: 'Previous_context)
+        (process_item: Previous_cell -> Html_node -> Previous_cell option)
         browser
         html_parsing_context
+        scrolling_repetitions
         item_selector
         =
         let skim_new_visible_items =
@@ -257,8 +261,10 @@ module Scrape_dynamic_list =
             process_item
             load_next_items
             []
-            empty_context
-            0
+            Previous_cell.No_cell
+            scrolling_repetitions
+            scrolling_repetitions
+        |>ignore
     
     let collect_items_of_dynamic_list
         browser

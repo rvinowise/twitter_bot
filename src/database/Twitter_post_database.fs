@@ -557,11 +557,12 @@ module Twitter_post_database =
         (db_connection:NpgsqlConnection)
         (timeline_tab: Timeline_tab)
         user
-        post
+        (post: Post_id)
         =
+        let table=db_table_for_last_visited_post timeline_tab
         db_connection.Query(
-            $"insert into @table (
-                user,
+            $"insert into {table} (
+                twitter_user,
                 post,
                 visited_at
             )
@@ -570,12 +571,11 @@ module Twitter_post_database =
                 @post,
                 @visited_at
             )
-            on conflict (user)
+            on conflict (twitter_user)
             do update set (post, visited_at)
             = (@post, @visited_at)",
             {|
                 user=user
-                table=db_table_for_last_visited_post timeline_tab
                 post=post
                 visited_at=DateTime.Now
             |}
@@ -589,7 +589,7 @@ module Twitter_post_database =
         let table = db_table_for_last_visited_post timeline_tab
         db_connection.Query<Post_id>(
             $"select post from {table}
-            where user=@user",
+            where twitter_user=@user",
             {|
                 user =user
             |}
