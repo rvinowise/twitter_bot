@@ -1,11 +1,7 @@
 ﻿namespace rvinowise.twitter
 
-open System
-open System.Collections.Generic
-open Google.Apis.Sheets.v4.Data
+open rvinowise.web_scraping
 open Xunit
-
-open rvinowise.twitter.database.tables
 
 
 
@@ -166,7 +162,7 @@ module Export_adjacency_matrix =
             googlesheet
         
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {
@@ -186,19 +182,13 @@ module Export_adjacency_matrix =
         }
             
         let database = Twitter_database.open_connection()
-        let all_users =
-            [
-                "yangranat"
-                "MikhailBatin"
-                "Nst_Egorova"
-                "RichardDawkins"
-            ]
-            |>List.map User_handle
+        
         
         let all_users =
-            User_interaction.read_all_users database
-            |>List.ofSeq
-            |>List.take 100
+            Settings.Competitors.list
+            |>Scrape_list_members.scrape_twitter_list_members
+                (Browser.open_browser())
+            |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)
         
         update_googlesheet
             database

@@ -58,6 +58,7 @@
     <Compile Include="src\database\Twitter_user_database.fs" />
     <Compile Include="src\database\Twitter_activity_database.fs" />
     <Compile Include="src\database\Twitter_post_database.fs" />
+    <Folder Include="src\database\Twitter_post_database" />
     <Compile Include="src\database\Twitter_following_database.fs" />
     <Compile Include="src\database\User_interaction.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
@@ -87,7 +88,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\canopy\src\canopy\canopy.fsproj" />
+<!--    <ProjectReference Include="..\canopy\src\canopy\canopy.fsproj" />-->
   </ItemGroup>
   
   <ItemGroup>
@@ -115,7 +116,7 @@
     <PackageReference Include="Fparsec" Version="1.1.1" />
     
     <!-- web scraping   -->
-<!--    <PackageReference Include="canopy" Version="2.1.5" />-->
+    <PackageReference Include="canopy" Version="2.1.5" />
     
     <PackageReference Include="Selenium.Support" Version="4.11.0" />
     <PackageReference Include="Selenium.WebDriver" Version="4.11.0" />

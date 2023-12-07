@@ -829,6 +829,8 @@ https://openlongevity.org""")
         |>Main_post.external_source
         |>function
         |Some (Twitter_event event) ->
+            event.id
+            |>should equal (Event_id 934127888156250112L)
             event.title
             |>should equal "New Worlds Space"
             event.user
@@ -847,9 +849,10 @@ https://openlongevity.org""")
             |>parse_single_main_twitter_post   
         
         post
-        |>Main_post.external_source
+        |>Main_post.quotable_message
+        |>fun core->core.twitter_space
         |>function
-        |Some (Twitter_audio_space space) ->
+        |Some space ->
             space.title
             |>should equal "late night e/acc space"
             space.host
@@ -873,12 +876,14 @@ https://openlongevity.org""")
         |>function
         |Some (Quoted_message quotation) ->
             
-            quotation
-            |>
-            space.title
-            |>should equal "late night e/acc space"
-            space.host
-            |>should equal "Beff Jezos — e/acc ⏩"
-            space.audience_amount
-            |>should equal 2700
+            quotation.twitter_space
+            |>function
+            |Some space ->
+                space.title
+                |>should equal "late night e/acc space"
+                space.host
+                |>should equal "Beff Jezos — e/acc ⏩"
+                space.audience_amount
+                |>should equal 2700
+            |None->raise (Bad_post_exception("no twitter audio space in quotation"))
         |wrong_source -> raise (Bad_post_exception($"this post should contain a quotation but here's {wrong_source}"))

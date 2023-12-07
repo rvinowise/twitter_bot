@@ -6,10 +6,16 @@ open rvinowise.twitter
 
 type User_handle = User_handle of string
 type Post_id = Post_id of int64
+type Event_id = Event_id of int64
 
 module Post_id =
     let value (post:Post_id) =
         let (Post_id value) = post
+        value
+
+module Event_id =
+    let value (value:Event_id) =
+        let (Event_id value) = value
         value
 
 module User_handle =

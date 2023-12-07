@@ -189,6 +189,7 @@ type External_url = {
 }
 
 type Twitter_event = {
+    id: Event_id
     user: Twitter_user
     title: string
 }
@@ -202,7 +203,6 @@ type External_source =
     |Quoted_message of Quotable_message
     |Quoted_poll of Quotable_poll
     |Twitter_event of Twitter_event
-    |Twitter_audio_space of Twitter_audio_space
 
 type Main_post_body =
     |Message of Quotable_message * External_source option

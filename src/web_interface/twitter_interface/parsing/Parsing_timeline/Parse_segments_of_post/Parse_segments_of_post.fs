@@ -117,6 +117,7 @@ module Parse_segments_of_post =
                         Quotable_message.header = header
                         message = message
                         media_load = media_items
+                        twitter_space = None
                     }
                     ,
                     external_source

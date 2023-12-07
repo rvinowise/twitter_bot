@@ -71,13 +71,68 @@ module Parse_quotation =
         else None
     
     
-    let parse_twitter_event html_node =
-        
+    let parse_twitter_event card_node event_id =
+        card_node
+        |>Html_node.direct_children
+        |>function
+        |user_node::[ title_node ] ->
+            let name =
+                user_node
+                |>Html_node.descendants "span"
+                |>List.head
+                |>Html_parsing.readable_text_from_html_segments
+            let handle =
+                user_node
+                |>Html_node.descend 1
+                |>Html_node.direct_children
+                |>List.item 1
+                |>Html_node.descendant "span"
+                |>Html_node.inner_text
+                |>User_handle.trim_potential_atsign
+                |>User_handle
+            let title =
+                title_node
+                |>Html_node.descendants "span"
+                |>List.head
+                |>Html_parsing.readable_text_from_html_segments
+            External_source.Twitter_event {
+                id=event_id
+                user={
+                    handle=handle
+                    name=name
+                }
+                title=title
+            }
+        |wrong_nodes->
+            raise (Bad_post_exception($"the Card node of a twitter event should have User and Title, but there was {wrong_nodes}"))
     
     let try_parse_twitter_event html_node =
         html_node
         |>Html_node.descendants "a[role='link']"
-        |>
+        |>List.tryItem 1
+        |>function
+        |Some link_node ->
+            link_node
+            |>Html_node.attribute_value "href"
+            |>fun url->url.Split("/")
+            |>List.ofArray
+            |>List.rev
+            |>function
+            |id::keyword::rest ->
+                if keyword = "events" then
+                    link_node
+                    |>Html_node.try_descendant "div[data-testid='card.layoutSmall.detail']"
+                    |>function
+                    |Some card_node ->
+                        id
+                        |>int64|>Event_id
+                        |>parse_twitter_event card_node
+                        |>Some
+                    |None ->None
+                else
+                    None
+            | _ -> None
+        |None -> None
         
     
     let parse_twitter_audio_space placement_tracking_node =
@@ -127,7 +182,6 @@ module Parse_quotation =
                     (potential_follow_button|>Html_node.inner_text = "Follow host")
                 then
                     parse_twitter_audio_space placement_tracking_node
-                    |>External_source.Twitter_audio_space
                     |>Some
                 else None
             |None -> None
@@ -157,9 +211,7 @@ module Parse_quotation =
             
         let twitter_space =
             try_parse_twitter_audio_space html_node
-            |>function
-            |Some (External_source.Twitter_audio_space twitter_space) -> Some twitter_space
-            |_ -> None
+            
         
         let header={
             author = quoted_header.author
@@ -199,10 +251,7 @@ module Parse_quotation =
             parse_quoted_post html_node quoted_message_node
         |None->None
     
-    
-    
-    
-        
+ 
     
     let parse_external_source_from_its_node
         //either a quoted-post, or an external-url; node with either role=link of quotation, or card.wrapper
@@ -212,7 +261,6 @@ module Parse_quotation =
             try_parse_quoted_post;
             try_parse_external_website;
             try_parse_twitter_event;
-            try_parse_twitter_audio_space;
         ]
         |>List.pick (fun parser ->
             parser html_node

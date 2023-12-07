@@ -33,6 +33,7 @@ module tables =
         member _.quotable_message_body = "post_quotable_message_body"
         member _.header = "post_header"
         member _.external_url = "post_external_url"
+        member _.twitter_space = "post_twitter_space"
         member _.image = "post_image"
         member _.reply = "post_reply"
         member _.stats = "post_stats"

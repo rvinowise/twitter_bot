@@ -227,6 +227,70 @@ module Twitter_post_database =
                 main_post_id
         |None->()
     
+    let write_twitter_space
+        (db_connection:NpgsqlConnection)
+        (twitter_space: Twitter_audio_space)
+        (main_post_id:Post_id)
+        (is_quotation:bool)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.twitter_space} (
+                main_post_id,
+                is_quotation,
+                host,
+                title,
+                audience_amount,
+            )
+            values (
+                @main_post_id,
+                @is_quotation,
+                @host,
+                @title,
+                @audience_amount,
+            )
+            on conflict (main_post_id, is_quotation)
+            do update set (message, show_more_url, is_abbreviated)
+            = (@message, @show_more_url, @is_abbreviated)
+            ",
+            {|
+                main_post_id=main_post_id
+                is_quotation=is_quotation
+                host=twitter_space.host
+                title=twitter_space.title
+                audience_amount=twitter_space.audience_amount
+            |}
+        ) |> ignore
+    
+    let write_twitter_event
+        (db_connection:NpgsqlConnection)
+        (twitter_event: Twitter_event)
+        (main_post_id:Post_id)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.twitter_space} (
+                main_post_id,
+                id,
+                host,
+                title,
+            )
+            values (
+                @main_post_id,
+                @id,
+                @host,
+                @title,
+            )
+            on conflict (main_post_id, is_quotation)
+            do update set (message, show_more_url, is_abbreviated)
+            = (@message, @show_more_url, @is_abbreviated)
+            ",
+            {|
+                main_post_id=main_post_id
+                id=twitter_event.id
+                host=twitter_event.user.handle
+                title=twitter_event.title
+            |}
+        ) |> ignore
+    
     let write_quotable_message_body
         (db_connection:NpgsqlConnection)
         (quotable_message: Quotable_message)
@@ -243,7 +307,7 @@ module Twitter_post_database =
                     |>Option.defaultValue ""
                 ),
                 true
-        
+
         db_connection.Query(
             $"insert into {tables.post.quotable_message_body} (
                 main_post_id,
@@ -279,15 +343,15 @@ module Twitter_post_database =
         (main_post_id:Post_id)
         (is_quotation:bool)
         =
-        write_media_items
-            db_connection
-            quotable_core.media_load
-            main_post_id
-            is_quotation
-        
         write_post_header
             db_connection
             quotable_core.header
+            main_post_id
+            is_quotation
+        
+        write_media_items
+            db_connection
+            quotable_core.media_load
             main_post_id
             is_quotation
         
@@ -297,6 +361,12 @@ module Twitter_post_database =
             main_post_id
             is_quotation
    
+        if quotable_core.twitter_space.IsSome then
+            write_twitter_space
+                (db_connection:NpgsqlConnection)
+                quotable_core.twitter_space.Value
+                (main_post_id:Post_id)
+                (is_quotation:bool)
     
     let write_external_url
         (db_connection:NpgsqlConnection)
@@ -440,7 +510,12 @@ module Twitter_post_database =
                 quotable_poll
                 post_id
                 true
-    
+        |Some (Twitter_event event) ->    
+            write_twitter_event
+                db_connection
+                event
+                post_id
+            
     let write_post_body_with_poll
         (db_connection: NpgsqlConnection)
         (post_id: Post_id)
