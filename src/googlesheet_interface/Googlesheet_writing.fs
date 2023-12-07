@@ -157,7 +157,7 @@ module Googlesheet_writing =
         
         response
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try write_sheet_dimension``()=
         write_sheet_dimension
             (Googlesheet.create_googlesheet_service())
@@ -183,7 +183,7 @@ module Googlesheet_writing =
         let max_y =    
             List.length table
         
-        let result_adding_dimensions=
+        let adding_dimensions_result =
             write_sheet_dimension
                 service
                 sheet
@@ -212,7 +212,7 @@ module Googlesheet_writing =
         ()
     
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try input_colors_into_sheet``() =
         input_colors_into_sheet
             (Googlesheet.create_googlesheet_service())

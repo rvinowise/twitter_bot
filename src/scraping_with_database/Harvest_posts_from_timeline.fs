@@ -275,7 +275,7 @@ module Harvest_posts_from_timeline =
             database
     
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try harvest_all_last_actions_of_users``()=
         let result =
             harvest_updates_on_timeline_of_user

@@ -21,10 +21,10 @@ module Announce_user_interactions =
             |>List.splitAt(
                 let last_harvested_user=
                     all_users
-                    |>List.findIndex (fun user -> user = User_handle "OttoMller12")
+                    |>List.findIndex (fun user -> user = User_handle "petrenko_ai")
                 last_harvested_user+1
             )|>snd
-        
+        //Likes of petrenko_ai are skipped
             
         Log.info $"reading list of users took {DateTime.Now-before_scraping_users}"
         
@@ -47,7 +47,7 @@ module Announce_user_interactions =
         Log.info "finish scraping and announcing user interactions."
         ()
 
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try scrape_and_announce_user_interactions``()=
         Browser.open_browser()
         |>scrape_and_announce_user_interactions

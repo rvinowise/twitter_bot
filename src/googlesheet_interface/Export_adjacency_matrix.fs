@@ -129,7 +129,7 @@ module Export_adjacency_matrix =
             alpha=1
         }
         
-        let header_or_users =
+        let header_of_users =
             all_sorted_users
             |>List.map (Googlesheet.username_from_handle user_names)
             |>Googlesheet_writing.text_row_to_google_vertical_cells
@@ -140,7 +140,7 @@ module Export_adjacency_matrix =
             |>List.append [""]
             |>Googlesheet_writing.text_row_to_google_cells
         
-        let value_to_intencity_color =
+        let value_to_intensity_color =
             Color.cell_color_for_value
                 min_value_color
                 max_value_color
@@ -153,11 +153,11 @@ module Export_adjacency_matrix =
                 sorted_interactions
                 |>List.map(fun interaction_value ->
                     interaction_value,
-                    value_to_intencity_color interaction_value
+                    value_to_intensity_color interaction_value
                 )
             )|>Googlesheet_writing.colored_numbers_to_google_cells
         
-        (header_or_users::rows_of_interactions)
+        (header_of_users::rows_of_interactions)
         |>Table.transpose Googlesheet.empty_cell
         |>List.append [left_column_of_users]
         |>Table.transpose Googlesheet.empty_cell
@@ -166,7 +166,7 @@ module Export_adjacency_matrix =
             googlesheet
         
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {

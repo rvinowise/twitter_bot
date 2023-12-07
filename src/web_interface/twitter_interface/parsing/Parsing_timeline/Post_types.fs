@@ -5,7 +5,25 @@ open rvinowise.html_parsing
 open rvinowise.twitter
 
 
+(*
+posted urls sometimes create a beautiful rectangle with details of that url:
+    Events, Spaces, External_websites  
 
+Media-items (images, videos and Gifs): 
+    scramble Events, Spaces, and External_websites (the link will be represented as plain text)
+    (in both, Main posts and Quoted posts) 
+
+    both, Main post and its Quoted post, can have 4 media-items each
+
+External_websites:
+    don't exist in quotations
+
+Events:
+    don't exist in quotations
+    
+Spaces: 
+    exist in quotations, if the main post doesn't have Media-items
+*)
 
 type Post_stats = {
     replies: int
@@ -133,10 +151,17 @@ type Post_header = {
     reply: Reply option
 }
 
+type Twitter_audio_space = {
+    host: string
+    title: string
+    audience_amount: int
+}
+
 type Quotable_message = {
     header: Post_header
     message: Post_message
     media_load: Media_item list
+    twitter_space: Twitter_audio_space option
 }
 
 type Quotable_poll = {
@@ -163,12 +188,21 @@ type External_url = {
     obfuscated_url: string option
 }
 
+type Twitter_event = {
+    user: Twitter_user
+    title: string
+}
+
+
+
 type External_source =
     |External_url of External_url
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:
     if the replying message has images of showMore button;*)
     |Quoted_message of Quotable_message
     |Quoted_poll of Quotable_poll
+    |Twitter_event of Twitter_event
+    |Twitter_audio_space of Twitter_audio_space
 
 type Main_post_body =
     |Message of Quotable_message * External_source option
@@ -244,3 +278,20 @@ module Main_post =
             poll
         |_ ->
             raise <| Bad_post_exception "trying to obtain the Poll from a Post which doesn't have a Poll"
+
+
+
+type Previous_cell =
+    |Adjacent_post of Post_id * User_handle
+    |Distant_connected_message of Post_id * User_handle
+    |No_cell
+
+module Previous_cell =
+    let human_name (cell:Previous_cell) =
+        match cell with
+        |Adjacent_post (post,author) ->
+            $"""Adjacent_post {Post_id.value post} from "{User_handle.value author}" """
+        |Distant_connected_message (post,author) ->
+            $"""Distant_connected_message {Post_id.value post} from "{User_handle.value author}" """
+        |No_cell ->
+            "No_cell"

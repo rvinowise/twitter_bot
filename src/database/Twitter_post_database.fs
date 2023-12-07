@@ -567,7 +567,7 @@ module Twitter_post_database =
                 visited_at
             )
             values (
-                @user,
+                @twitter_user,
                 @post,
                 @visited_at
             )
@@ -575,7 +575,7 @@ module Twitter_post_database =
             do update set (post, visited_at)
             = (@post, @visited_at)",
             {|
-                user=user
+                twitter_user=user
                 post=post
                 visited_at=DateTime.Now
             |}

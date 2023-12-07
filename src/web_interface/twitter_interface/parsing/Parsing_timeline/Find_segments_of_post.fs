@@ -130,11 +130,7 @@ module Find_segments_of_post =
             |>Html_node.inner_text = "Show this thread"
         |None -> false
         
-//    let has_reply_header segment =
-//        segment
-//        |>Html_node.descend 1
-        
-    
+
     let is_quotation_of_external_source segment =
         segment
         |>Html_node.matches "div[data-testid='card.wrapper']"
