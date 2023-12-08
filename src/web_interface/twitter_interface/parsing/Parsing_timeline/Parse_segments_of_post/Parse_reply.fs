@@ -8,7 +8,28 @@ open rvinowise.twitter
 
 module Parse_reply =
     
+    let is_reply_header node =
+        node
+        |>Html_node.descendants_with_this "div"
+        |>List.exists (fun node ->
+            Html_node.direct_text node = "Replying to "
+        )
     
+    let is_mark_of_thread node =
+        node
+        |>Html_node.matches "div"
+        &&
+        node
+        |>Html_node.direct_children
+        |>List.tryHead
+        |>function
+        |Some span ->
+            span
+            |>Html_node.matches "span"
+            &&
+            span
+            |>Html_node.inner_text = "Show this thread"
+        |None -> false
      
     let parse_reply_header reply_header =
         reply_header
@@ -26,7 +47,7 @@ module Parse_reply =
         |>List.head
         |>fun potential_header ->
             if
-                Find_segments_of_post.is_reply_header potential_header
+                is_reply_header potential_header
             then
                 let reply_author =
                     potential_header
@@ -41,7 +62,7 @@ module Parse_reply =
             |>Html_node.parent
             |>Html_node.direct_children
             |>List.last
-            |>Find_segments_of_post.is_mark_of_thread)
+            |>is_mark_of_thread)
         then    
             {Reply.to_user = user; to_post=None; is_direct=true}
             |>Some

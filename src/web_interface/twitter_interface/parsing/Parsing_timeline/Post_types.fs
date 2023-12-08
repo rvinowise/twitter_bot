@@ -12,8 +12,10 @@ posted urls sometimes create a beautiful rectangle with details of that url:
 Media-items (images, videos and Gifs): 
     scramble Events, Spaces, and External_websites (the link will be represented as plain text)
     (in both, Main posts and Quoted posts) 
-
-    both, Main post and its Quoted post, can have 4 media-items each
+    but:
+        both, Main post and its Quoted post, can have 4 media-items each;
+        Main post can have a Space, even if its quoted post has media-items
+        
 
 External_websites:
     don't exist in quotations
@@ -23,6 +25,13 @@ Events:
     
 Spaces: 
     exist in quotations, if the main post doesn't have Media-items
+
+External_websites, Events and Spaces can't coexist with each other within one Article
+    
+Quoted_post
+    scramble External_websites and Events in the Main post, and can't have either themselves
+    can have Spaces, unless its Main post has media-items
+    
 *)
 
 type Post_stats = {

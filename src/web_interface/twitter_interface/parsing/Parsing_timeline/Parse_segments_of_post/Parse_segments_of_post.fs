@@ -33,6 +33,9 @@ module Parse_segments_of_post =
     
     
     
+    let parse_quotable_part_of_post
+        html_node
+        =
         
         
     let parse_main_twitter_post
@@ -106,9 +109,9 @@ module Parse_segments_of_post =
                     |None->[]
                 
                 let external_source =
-                    match post_html_segments.quotation_load with
+                    match post_html_segments.external_source with
                     |Some quotation ->
-                         Parse_quotation.parse_external_source_from_its_node quotation
+                         Parse_external_source.parse_external_source_of_main_post quotation
                          |>Some
                     |None -> None
                 

@@ -47,7 +47,7 @@ type Html_segments_of_main_post = {
     message: Html_node option
     reply_header: Html_node option
     media_load: Html_node option
-    quotation_load: Html_node option
+    external_source: Html_node option
     poll_choices_and_summary: Html_node option
     footer: Html_node
 }
@@ -93,43 +93,7 @@ module Find_segments_of_post =
             message=message
         }
     
-    
-    
-    let try_reply_header_segment segment =
-        segment
-        |>Html_node.descend 1
-        |>fun node ->
-            if
-                node.FirstChild.NodeType = NodeType.Text &&
-                node.FirstChild.TextContent = "Replying to "
-            then
-                Some segment
-            else None
-            
-    
-    let is_reply_header node =
-        node
-        |>Html_node.descendants_with_this "div"
-        |>List.exists (fun node ->
-            Html_node.direct_text node = "Replying to "
-        )
-    
-    let is_mark_of_thread node =
-        node
-        |>Html_node.matches "div"
-        &&
-        node
-        |>Html_node.direct_children
-        |>List.tryHead
-        |>function
-        |Some span ->
-            span
-            |>Html_node.matches "span"
-            &&
-            span
-            |>Html_node.inner_text = "Show this thread"
-        |None -> false
-        
+     
 
     let is_quotation_of_external_source segment =
         segment
@@ -241,7 +205,7 @@ module Find_segments_of_post =
             message = message
             reply_header = reply_header
             media_load = media_load
-            quotation_load = quotation_load
+            external_source = quotation_load
             poll_choices_and_summary = poll_choices_and_summary
             footer = footing_with_stats
         }

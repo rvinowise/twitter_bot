@@ -6,7 +6,7 @@ open rvinowise.html_parsing
 open rvinowise.twitter
 
 
-module Parse_quotation =
+module Parse_external_source =
     
     
     
@@ -253,7 +253,7 @@ module Parse_quotation =
     
  
     
-    let parse_external_source_from_its_node
+    let parse_external_source_of_main_post
         //either a quoted-post, or an external-url; node with either role=link of quotation, or card.wrapper
         html_node 
         =
