@@ -899,11 +899,12 @@ https://openlongevity.org""")
             
         let quote_node =
             article
-            |>Parse_quoted_post.try_quotation_node
+            |>Parse_external_source.external_source_node_of_main_post
             |>fun node -> node.Value
         
         
         quote_node
-        |>Html_node.detach_from_parent
+        |>External_source_node.html_node
+        |>Html_node.detach_from_parent|>ignore
         
         ()

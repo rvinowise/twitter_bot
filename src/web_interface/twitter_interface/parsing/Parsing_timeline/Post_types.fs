@@ -212,6 +212,16 @@ type External_source_node =
     |Quoted_poll of Html_node
     |External_website of Html_node
     |Twitter_event of Html_node * Event_id
+    
+module External_source_node =
+    let html_node (node:External_source_node) =
+        match node with
+        |Quoted_message html
+        |Quoted_poll html
+        |External_website html
+        |Twitter_event (html,_) ->
+            html
+
 type External_source =
     |External_website of External_website
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:

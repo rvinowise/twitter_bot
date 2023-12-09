@@ -138,17 +138,17 @@ module Parse_article =
             Parse_external_source.external_source_node_of_main_post
                 article_node
         
-        let main_post_node,quotation_node =
-            article_node
-            |>Parse_quoted_post.try_quotation_node
+        let main_post_node =
+            external_source_node
             |>function
-            |None->article_node,None
-            |Some quotation_node ->
-                article_node
-                ,
-                quotation_node
+            |None->article_node
+            |Some external_source_node ->
+                external_source_node
+                |>External_source_node.html_node
                 |>Html_node.detach_from_parent
-                |>Some
+                |>ignore
+                article_node
+                
         
         let main_message =
             parse_message main_post_node
