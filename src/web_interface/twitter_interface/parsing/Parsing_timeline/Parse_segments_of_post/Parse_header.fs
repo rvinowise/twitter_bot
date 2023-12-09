@@ -15,10 +15,14 @@ type Parsed_post_header = {
 module Parse_header =
     
     let parse_post_header
-        ``node of data-testid="User-Name"``
+        node
         =
+        let header_node =
+            node
+            |>Html_node.descendant "div[data-testid='User-Name']"
+        
         let author_name =
-            ``node of data-testid="User-Name"``
+            header_node
             |>Html_node.direct_children
             |>List.head
             |>Html_node.descendants "span"
@@ -26,7 +30,7 @@ module Parse_header =
             |>Html_parsing.readable_text_from_html_segments
             
         let author_handle =
-            ``node of data-testid="User-Name"``
+            header_node
             |>Html_node.direct_children
             |>List.item 1
             |>Html_node.descendants "span"
@@ -36,7 +40,7 @@ module Parse_header =
             |>User_handle
         
         let datetime_node =
-            ``node of data-testid="User-Name"``
+            header_node
             |>Html_node.direct_children
             |>List.item 1
             |>Html_node.descendant "time"

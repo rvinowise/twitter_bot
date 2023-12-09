@@ -30,14 +30,16 @@
     
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Find_segments_of_post.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Post_types.fs" />
-    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_footer_with_stats.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_header.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_media.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_poll.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_reply.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_twitter_audio_space.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_quoted_post.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_external_source.fs" />
-    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_segments_of_post.fs" />
-    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_post_from_timeline.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_footer_with_stats.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_main_post.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_timeline_cell.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_twitter_post_test.fs" />
     
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list.fs" />

@@ -93,6 +93,9 @@ module Post_message =
         |Abbreviated abbreviated_message ->
             abbreviated_message.message
         |Full text -> text
+    
+    let empty =
+        Post_message.Full ""
             
 type Posted_image = {
     url: string
@@ -190,7 +193,7 @@ type Poll = {
     votes_amount: int
 }
 
-type External_url = {
+type External_website = {
     base_url: string option
     page: string option
     message: string option
@@ -206,7 +209,7 @@ type Twitter_event = {
 
 
 type External_source =
-    |External_url of External_url
+    |External_website of External_website
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:
     if the replying message has images of showMore button;*)
     |Quoted_message of Quotable_message

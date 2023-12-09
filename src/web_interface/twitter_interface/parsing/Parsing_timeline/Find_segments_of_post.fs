@@ -55,19 +55,29 @@ type Html_segments_of_main_post = {
 
 module Find_segments_of_post =
     
-    let valuable_segments_of_post
-        article_html //article[data-testid="tweet"] 
-        = //header / body / stats
+    
+    (*
+    header
+    [social_header]
+    body
+    [additional_load]
+    stats
+    *)
+    let top_level_segments_of_main_post
+        article_html 
+        = 
         article_html
         |>Html_node.descend 2
         |>Html_node.direct_children |> Seq.item 1
         |>Html_node.direct_children |> Seq.item 1
         |>Html_node.direct_children
    
-    
-    let post_header_node node =
-        node
-        |>Html_node.descendants "data-testid='User-Name'"
+    let header_node_of_quoted_post
+        link_html 
+        = 
+        link_html
+        |>Html_node.descend 1
+        |>Html_node.direct_children |> Seq.head
         
         
     let html_segments_of_quoted_post
@@ -115,28 +125,12 @@ module Find_segments_of_post =
     let html_segments_of_main_post
         article_node
         =
-        //siblings with Header and Stats nodes
-        let post_segments = 
-            valuable_segments_of_post article_node
-        
-        let social_context_header =
-            article_node
-            |>Html_node.try_descendant "span[data-testid='socialContext']"
-            |>function
-            |Some context-> Some context
-            |None ->
-                article_node
-                |>Html_node.try_descendant "div[data-testid='socialContext']"
         
         let header =
             post_segments
             |>List.head
             |>Html_node.descendant "div[data-testid='User-Name']"
         
-        let footing_with_stats =
-            post_segments
-            |>List.last
-            |>Html_node.descendant "div[role='group']"
             
         let body_segments =
             post_segments
@@ -156,10 +150,7 @@ module Find_segments_of_post =
                     
             |[]->raise <| Bad_post_exception()
         
-        let message =
-            rest_segments
-            |>Seq.head
-            |>Html_node.try_descendant "div[data-testid='tweetText']"
+        
             
         let additional_load =
             rest_segments

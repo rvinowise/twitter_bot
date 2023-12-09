@@ -330,7 +330,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |>should be Empty 
         
         
-        let check_quoted_source (quoted_source:External_url) =
+        let check_quoted_source (quoted_source:External_website) =
             
             quoted_source.base_url
             |>should equal (Some "github.com")
@@ -350,7 +350,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         post
         |>Main_post.external_source
         |>function
-        |Some (External_url external_source) ->
+        |Some (External_website external_source) ->
             check_quoted_source external_source
         |_ -> raise <| Bad_post_exception()
         
@@ -396,7 +396,7 @@ https://openlongevity.org""")
         |>should be Empty 
         
         
-        let check_quoted_source (quoted_source:External_url) =
+        let check_quoted_source (quoted_source:External_website) =
             
             quoted_source.base_url
             |>should equal (Some "effectiveacceleration.org")
@@ -413,7 +413,7 @@ https://openlongevity.org""")
         post
         |>Main_post.external_source
         |>function
-        |Some (External_url external_source) ->
+        |Some (External_website external_source) ->
             check_quoted_source external_source
         |_ -> raise <| Bad_post_exception()
         
@@ -593,7 +593,7 @@ https://openlongevity.org""")
         
         post
         |>Main_post.external_source
-        |>should equal (Some <| External_source.External_url {
+        |>should equal (Some <| External_source.External_website {
             base_url = (Some "youtube.com")
             page = (
                 Some
@@ -620,7 +620,7 @@ https://openlongevity.org""")
         
         post
         |>Main_post.external_source
-        |>should equal (Some <| External_source.External_url {
+        |>should equal (Some <| External_source.External_website {
             base_url = Some "whyevolutionistrue.com"
             page = Some "Richard Dawkins on the “simplicity” of God"
             message =

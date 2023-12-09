@@ -255,7 +255,10 @@ module Html_node =
         
         node
         
-    
+    let remove
+        (removed_node: Html_node) 
+        =
+        removed_node.Remove()
     
                 
     [<Fact>]

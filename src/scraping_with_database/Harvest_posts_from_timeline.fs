@@ -7,7 +7,7 @@ open OpenQA.Selenium
 open Xunit
 open canopy.types
 open rvinowise.html_parsing
-open rvinowise.twitter.Parse_post_from_timeline
+open rvinowise.twitter.Parse_timeline_cell
 open rvinowise.twitter.Parse_segments_of_post
 open rvinowise.web_scraping
 
@@ -33,7 +33,7 @@ module Harvest_posts_from_timeline =
         html_cell
         =
         let parsed_cell =
-            Parse_post_from_timeline.try_parse_cell
+            Parse_timeline_cell.try_parse_cell
                 previous_cell
                 html_cell
         
@@ -60,7 +60,7 @@ module Harvest_posts_from_timeline =
         html_cell
         =
         let parsed_cell =
-            Parse_post_from_timeline.try_parse_cell
+            Parse_timeline_cell.try_parse_cell
                 previous_cell
                 html_cell
         

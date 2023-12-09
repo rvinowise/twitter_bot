@@ -370,7 +370,7 @@ module Twitter_post_database =
     
     let write_external_url
         (db_connection:NpgsqlConnection)
-        (external_url: External_url)
+        (external_url: External_website)
         (post_id:Post_id)
         =
         db_connection.Query(
@@ -499,7 +499,7 @@ module Twitter_post_database =
                 quotation
                 post_id
                 true
-        |Some (External_url external_url) -> 
+        |Some (External_website external_url) -> 
             write_external_url
                 db_connection
                 external_url

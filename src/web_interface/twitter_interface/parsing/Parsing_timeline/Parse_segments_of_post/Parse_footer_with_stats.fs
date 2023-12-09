@@ -9,9 +9,6 @@ open Xunit
 module Parse_footer_with_stats =
 
 
-    //let number_from_explanation text =
-        
-    
     
     (* 4308 replies, 9439 reposts, 63913 likes, 452 bookmarks, 5006309 views *)
     let stats_from_explanation (text:string) =
@@ -79,44 +76,10 @@ module Parse_footer_with_stats =
         |>stats_from_explanation
     
     
-    let number_inside_footer_element stat_segment =
-        stat_segment
-        |>Html_node.try_descendant ":scope>span>span"
-        |>function
-        |None -> 0
-        |Some node ->
-            node
-            |>Html_node.inner_text
-            |>Parsing_twitter_datatypes.parse_abbreviated_number
-            
-    let stats_from_html_children_of_footer
-        footer //node with all app-text-transition-container of a post (and role="group")
-        =
-        //it's not precise, because shown numbers are abbreviated
-        let stat_segments =
-            footer
-            |>Html_node.descendants "span[data-testid='app-text-transition-container']"
-        {
-            Post_stats.replies=
-                stat_segments
-                |>Seq.head
-                |>number_inside_footer_element
-            reposts=
-                stat_segments
-                |>Seq.item 1
-                |>number_inside_footer_element
-            likes=
-                stat_segments
-                |>Seq.item 2
-                |>number_inside_footer_element
-            views= //may not exist!
-                stat_segments
-                |>Seq.item 3
-                |>number_inside_footer_element
-            bookmarks=0
-        }
     
     let parse_post_footer
-        footer //role="group"
+        footer
         =
-        stats_from_hidden_explanation_of_footer footer
+        footer
+        |>Html_node.descendant "div[role='group']"
+        |>stats_from_hidden_explanation_of_footer
