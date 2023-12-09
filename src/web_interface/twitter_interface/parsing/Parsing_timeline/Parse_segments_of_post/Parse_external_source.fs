@@ -6,7 +6,10 @@ open rvinowise.html_parsing
 open rvinowise.twitter
 
 
+
+    
 module Parse_external_source =
+
     
     
     
@@ -59,6 +62,14 @@ module Parse_external_source =
                     obfuscated_url=obfuscated_url
                 }
             )
+    
+    let try_external_website_node
+        article_node
+        =
+        article_node
+        |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+        |>Option.map External_source_node.External_website
+    
     let try_parse_external_website
         ``node of potential card.wrapper``
         =
@@ -106,8 +117,8 @@ module Parse_external_source =
         |wrong_nodes->
             raise (Bad_post_exception($"the Card node of a twitter event should have User and Title, but there was {wrong_nodes}"))
     
-    let try_parse_twitter_event html_node =
-        html_node
+    let try_twitter_event_node article_node =
+        article_node
         |>Html_node.descendants "a[role='link']"
         |>List.tryItem 1
         |>function
@@ -124,29 +135,28 @@ module Parse_external_source =
                     |>Html_node.try_descendant "div[data-testid='card.layoutSmall.detail']"
                     |>function
                     |Some card_node ->
-                        id
-                        |>int64|>Event_id
-                        |>parse_twitter_event card_node
+                        External_source_node.Twitter_event(
+                            card_node
+                            ,
+                            id
+                            |>int64|>Event_id
+                        )
                         |>Some
                     |None ->None
                 else
                     None
             | _ -> None
         |None -> None
-        
-  
+    
 
-    let parse_external_source_of_main_post
-        //either a quoted-post, or an external-url; node with either role=link of quotation, or card.wrapper
-        html_node 
+    let external_source_node_of_main_post
+        article_node 
         =
         [
-            Parse_quoted_post.try_parse_quoted_post;
-            try_parse_external_website;
-            try_parse_twitter_event;
+            Parse_quoted_post.try_quotation_node;
+            try_external_website_node;
+            try_twitter_event_node;
         ]
-        |>List.pick (fun parser ->
-            parser html_node
+        |>List.tryPick (fun parser ->
+            parser article_node
         )
-            
-    

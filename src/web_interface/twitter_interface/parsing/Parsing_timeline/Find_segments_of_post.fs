@@ -122,85 +122,85 @@ module Find_segments_of_post =
             |Some quoted_message -> true
             |None -> false
     
-    let html_segments_of_main_post
-        article_node
-        =
-        
-        let header =
-            post_segments
-            |>List.head
-            |>Html_node.descendant "div[data-testid='User-Name']"
-        
-            
-        let body_segments =
-            post_segments
-            |>List.skip 1|>List.take (List.length post_segments - 2)
-            
-        let reply_header,rest_segments =
-            match body_segments with
-            |maybe_reply_header::rest_segments ->
-                try 
-                    if is_reply_header maybe_reply_header then
-                        Some maybe_reply_header,rest_segments
-                    else
-                        None,body_segments
-                with
-                | :? System.NullReferenceException as e ->
-                    None,body_segments
-                    
-            |[]->raise <| Bad_post_exception()
-        
-        
-            
-        let additional_load =
-            rest_segments
-            |>Seq.tryItem 1
-        
-        
-        let
-            media_load,
-            quotation_load,
-            poll_choices_and_summary
-                =
-                match additional_load with
-                |None -> None,None,None
-                |Some additional_load ->
-                    let poll_choices_and_summary =
-                        additional_load
-                        |>Html_node.try_descendant "div[data-testid='cardPoll']"
-                    match poll_choices_and_summary with
-                    |Some poll_choices_and_summary->
-                        None,None,Some poll_choices_and_summary
-                    |None->
-                        match
-                            additional_load
-                            |>Html_node.direct_children    
-                        with
-                        |[media;quotation] ->
-                            Some media,Some quotation,None
-                        |[media_or_quotation] ->
-                            if is_quotation_of_external_source media_or_quotation then
-                                None,Some media_or_quotation,None
-                            else
-                                Some media_or_quotation,None,None
-                                
-                        |[]->None,None,None // empty external source DIV, if there's a link in the message itself
-                        | _->
-                            let exc = Bad_post_exception("additional post load has >2 children", article_node)
-                            exc|>string|>Log.error|>ignore
-                            raise exc
-        
-        {
-            social_context_header = social_context_header
-            Html_segments_of_main_post.header = header
-            message = message
-            reply_header = reply_header
-            media_load = media_load
-            external_source = quotation_load
-            poll_choices_and_summary = poll_choices_and_summary
-            footer = footing_with_stats
-        }
-        
+    // let html_segments_of_main_post
+    //     article_node
+    //     =
+    //     
+    //     let header =
+    //         post_segments
+    //         |>List.head
+    //         |>Html_node.descendant "div[data-testid='User-Name']"
+    //     
+    //         
+    //     let body_segments =
+    //         post_segments
+    //         |>List.skip 1|>List.take (List.length post_segments - 2)
+    //         
+    //     let reply_header,rest_segments =
+    //         match body_segments with
+    //         |maybe_reply_header::rest_segments ->
+    //             try 
+    //                 if is_reply_header maybe_reply_header then
+    //                     Some maybe_reply_header,rest_segments
+    //                 else
+    //                     None,body_segments
+    //             with
+    //             | :? System.NullReferenceException as e ->
+    //                 None,body_segments
+    //                 
+    //         |[]->raise <| Bad_post_exception()
+    //     
+    //     
+    //         
+    //     let additional_load =
+    //         rest_segments
+    //         |>Seq.tryItem 1
+    //     
+    //     
+    //     let
+    //         media_load,
+    //         quotation_load,
+    //         poll_choices_and_summary
+    //             =
+    //             match additional_load with
+    //             |None -> None,None,None
+    //             |Some additional_load ->
+    //                 let poll_choices_and_summary =
+    //                     additional_load
+    //                     |>Html_node.try_descendant "div[data-testid='cardPoll']"
+    //                 match poll_choices_and_summary with
+    //                 |Some poll_choices_and_summary->
+    //                     None,None,Some poll_choices_and_summary
+    //                 |None->
+    //                     match
+    //                         additional_load
+    //                         |>Html_node.direct_children    
+    //                     with
+    //                     |[media;quotation] ->
+    //                         Some media,Some quotation,None
+    //                     |[media_or_quotation] ->
+    //                         if is_quotation_of_external_source media_or_quotation then
+    //                             None,Some media_or_quotation,None
+    //                         else
+    //                             Some media_or_quotation,None,None
+    //                             
+    //                     |[]->None,None,None // empty external source DIV, if there's a link in the message itself
+    //                     | _->
+    //                         let exc = Bad_post_exception("additional post load has >2 children", article_node)
+    //                         exc|>string|>Log.error|>ignore
+    //                         raise exc
+    //     
+    //     {
+    //         social_context_header = social_context_header
+    //         Html_segments_of_main_post.header = header
+    //         message = message
+    //         reply_header = reply_header
+    //         media_load = media_load
+    //         external_source = quotation_load
+    //         poll_choices_and_summary = poll_choices_and_summary
+    //         footer = footing_with_stats
+    //     }
+    //     
         
     let details_of_external_source
         ``node with card.wrapper``

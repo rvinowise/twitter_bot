@@ -25,6 +25,7 @@ module Parse_quoted_post =
                 |> (=) "Quote"
             |_ ->false
         )
+        |>Option.map External_source_node.Quoted_message
         
             
     let parse_quoted_post
@@ -48,7 +49,7 @@ module Parse_quoted_post =
             Parse_media.parse_media_items_from_quotation html_node
             
         let twitter_space =
-            Parse_external_source.try_parse_twitter_audio_space html_node
+            Parse_twitter_audio_space.try_parse_twitter_audio_space html_node
             
         
         let header={

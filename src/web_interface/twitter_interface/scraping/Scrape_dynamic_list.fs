@@ -4,7 +4,7 @@ open System
 open AngleSharp
 open OpenQA.Selenium
 open rvinowise.html_parsing
-open rvinowise.twitter.Parse_segments_of_post
+open rvinowise.twitter.Parse_article
 open rvinowise.web_scraping
 
 open FsUnit

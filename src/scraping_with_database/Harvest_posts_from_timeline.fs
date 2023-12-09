@@ -8,7 +8,7 @@ open Xunit
 open canopy.types
 open rvinowise.html_parsing
 open rvinowise.twitter.Parse_timeline_cell
-open rvinowise.twitter.Parse_segments_of_post
+open rvinowise.twitter.Parse_article
 open rvinowise.web_scraping
 
 module Harvest_posts_from_timeline =

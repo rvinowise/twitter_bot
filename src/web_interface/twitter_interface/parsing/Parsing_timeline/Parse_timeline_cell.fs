@@ -2,7 +2,7 @@
 
 open rvinowise.html_parsing
 open rvinowise.twitter
-open rvinowise.twitter.Parse_segments_of_post
+open rvinowise.twitter.Parse_article
 
 
 
@@ -41,7 +41,7 @@ module Parse_timeline_cell =
         =
         try 
             article_node
-            |>Parse_segments_of_post.parse_main_twitter_post previous_cell
+            |>Parse_article.parse_twitter_article previous_cell
             |>Parsed_timeline_cell.Post
         with
         | :? Bad_post_exception as exc ->

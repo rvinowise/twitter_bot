@@ -255,10 +255,11 @@ module Html_node =
         
         node
         
-    let remove
+    let detach_from_parent
         (removed_node: Html_node) 
         =
         removed_node.Remove()
+        removed_node
     
                 
     [<Fact>]

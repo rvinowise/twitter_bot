@@ -207,7 +207,11 @@ type Twitter_event = {
 }
 
 
-
+type External_source_node =
+    |Quoted_message of Html_node
+    |Quoted_poll of Html_node
+    |External_website of Html_node
+    |Twitter_event of Html_node * Event_id
 type External_source =
     |External_website of External_website
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:
