@@ -54,14 +54,12 @@ module Parse_external_source =
                 |>List.tryItem 2
                 |>Option.map text_from_external_source_detail_segment
  
-            Some (
-                External_source.External_website{
-                    base_url = base_url
-                    page=page
-                    message = message
-                    obfuscated_url=obfuscated_url
-                }
-            )
+            External_source.External_website{
+                base_url = base_url
+                page=page
+                message = message
+                obfuscated_url=obfuscated_url
+            }
     
     let try_external_website_node
         article_node
@@ -70,16 +68,7 @@ module Parse_external_source =
         |>Html_node.try_descendant "div[data-testid='card.wrapper']"
         |>Option.map External_source_node.External_website
     
-    let try_parse_external_website
-        ``node of potential card.wrapper``
-        =
-        if
-            ``node of potential card.wrapper``
-            |>Html_node.matches "div[data-testid='card.wrapper']"
-        then
-            parse_external_website
-                ``node of potential card.wrapper``
-        else None
+
     
     
     let parse_twitter_event card_node event_id =
@@ -160,3 +149,16 @@ module Parse_external_source =
         |>List.tryPick (fun parser ->
             parser article_node
         )
+
+    let parse_external_source_of_main_post
+        (external_source_node: External_source_node)
+        =
+        match external_source_node with
+        |External_source_node.Quoted_message node ->
+            Parse_quoted_post.parse_quoted_post node
+        |External_source_node.Quoted_poll node ->
+            Parse_quoted_post.parse_quoted_post node
+        |External_source_node.External_website node ->
+            parse_external_website node
+        |External_source_node.Twitter_event (node, event_id) ->
+            parse_twitter_event node event_id

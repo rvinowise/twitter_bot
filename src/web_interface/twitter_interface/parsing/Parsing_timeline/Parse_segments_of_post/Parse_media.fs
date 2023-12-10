@@ -32,11 +32,6 @@ module Parse_media =
         )
     
     let parse_media_from_large_layout //the layout of either a main-post, or a big-quotation
-        (*node with all
-            img[]
-            and
-            video[]
-        of the post, excluding a potential quoted post and images outside of the load (e.g. user picture)*)
         load_node
         = 
         

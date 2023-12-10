@@ -6,38 +6,7 @@ open rvinowise.html_parsing
 open rvinowise.twitter
 
 
-module Parse_reply =
-    
-    let is_reply_header node =
-        node
-        |>Html_node.descendants_with_this "div"
-        |>List.exists (fun node ->
-            Html_node.direct_text node = "Replying to "
-        )
-    
-    let is_mark_of_thread node =
-        node
-        |>Html_node.matches "div"
-        &&
-        node
-        |>Html_node.direct_children
-        |>List.tryHead
-        |>function
-        |Some span ->
-            span
-            |>Html_node.matches "span"
-            &&
-            span
-            |>Html_node.inner_text = "Show this thread"
-        |None -> false
-     
-    let parse_reply_header reply_header =
-        reply_header
-        |>Html_node.first_descendants_with_css "span"
-        |>List.head
-        |>Html_node.inner_text
-        |>User_handle.trim_potential_atsign
-        |>User_handle
+module Parse_reply_in_main_post=
     
     
     let try_reply_target_from_reply_header tweet_text_node =
@@ -55,35 +24,8 @@ module Parse_reply =
                 Some reply_author
             else
                 None
-    
-    let try_reply_status_from_thread_mark user node =
-        if (
-            node
-            |>Html_node.parent
-            |>Html_node.direct_children
-            |>List.last
-            |>is_mark_of_thread)
-        then    
-            {Reply.to_user = user; to_post=None; is_direct=true}
-            |>Some
-        else
-            None
-    
-    let parse_reply_of_quotable_post author ``tweetText node`` =
-        let reply_target_from_header =
-            try_reply_target_from_reply_header
-                ``tweetText node``
-            
-        match reply_target_from_header with
-        |Some reply_target->
-            {Reply.to_user=reply_target; to_post=None; is_direct=true}
-            |>Some
-        |None->
-            try_reply_status_from_thread_mark author ``tweetText node``
-    
-    
+   
 
-    
     let post_has_linked_post_after article_html =
         article_html
         |>Html_node.descendants "div[data-testid='Tweet-User-Avatar']"
@@ -129,28 +71,55 @@ module Parse_reply =
     
     
     
+    let has_reply_header node =
+        node
+        |>Html_node.descendants_with_this "div"
+        |>List.exists (fun node ->
+            Html_node.direct_text node = "Replying to "
+        )
+    
+    let parse_reply_header_of_main_post
+        reply_header //second segment of top-level post segments
+        =
+        let target_user = 
+            reply_header
+            |>Html_node.descendant "a[role='link']"
+            |>Html_node.attribute_value "href"
+            |>User_handle.try_handle_from_url
+        match target_user with
+        |Some target_user ->
+            {Reply.to_user = target_user; to_post=None; is_direct=true}
+        |None->
+            raise (Bad_post_exception("can't read target user from the reply header"))
+            
+    let try_parse_reply_header_of_main_post
+        reply_header 
+        =
+        if has_reply_header reply_header then
+            parse_reply_header_of_main_post reply_header
+            |>Some
+        else
+            None
+    
+    
+    
+    
     let parse_reply_of_main_post
         author
         has_social_context_header
         article_node
+        second_segment
         (previous_cell: Previous_cell)
         =
-        let reply_from_quotable_core =
-            article_node
-            |>Html_node.descendants "div[data-testid='tweetText']"
-            |>List.tryHead
-            |>function
-            |Some message_node ->
-                message_node
-                |>parse_reply_of_quotable_post
-                    author
-            |None -> None
+        let reply_from_reply_header =
+            try_parse_reply_header_of_main_post
+                second_segment
             
-        match reply_from_quotable_core with
+        match reply_from_reply_header with
         |Some reply_status -> Some reply_status
         |None->
             if
-                has_social_context_header
+                has_social_context_header //reposts and pinned posts can't be part of a local thread in the timeline
             then 
                 None
             else

@@ -15,7 +15,7 @@ type Parsed_post_header = {
 module Parse_header =
     
     let parse_post_header
-        node
+        node //role=link for the quotation, or article for the main post
         =
         let header_node =
             node

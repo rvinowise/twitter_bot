@@ -63,6 +63,7 @@ module Html_node =
         else
             children
     
+    
     let direct_text (node:Html_node) =
         node.ChildNodes
         |>Seq.filter (fun child->child.NodeType = NodeType.Text)

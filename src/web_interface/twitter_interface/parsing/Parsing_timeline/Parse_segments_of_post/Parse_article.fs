@@ -157,8 +157,8 @@ module Parse_article =
             Parse_media.parse_media_from_large_layout main_post_node
         
         let external_source =
-            Parse_external_source.parse_external_source_of_main_post article_node
-            |>Some
+            external_source_node
+            |>Option.map Parse_external_source.parse_external_source_of_main_post 
             
         Main_post_body.Message (
             {
