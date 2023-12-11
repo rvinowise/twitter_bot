@@ -73,6 +73,7 @@ module Parse_external_source =
     
     let parse_twitter_event card_node event_id =
         card_node
+        |>Html_node.descendant "div[data-testid='card.layoutSmall.detail']"
         |>Html_node.direct_children
         |>function
         |user_node::[ title_node ] ->
@@ -107,35 +108,37 @@ module Parse_external_source =
             raise (Bad_post_exception($"the Card node of a twitter event should have User and Title, but there was {wrong_nodes}"))
     
     let try_twitter_event_node article_node =
-        article_node
-        |>Html_node.try_descendant "div[data-testid='card.wrapper']"
-        |>Option.map (Html_node.first_descendants_with_css "a[role='link']")
-        |>function
-        |Some (link_node::_) ->
-            link_node
-            |>Html_node.attribute_value "href"
-            |>fun url->url.Split("/")
-            |>List.ofArray
-            |>List.rev
+        let card_wrapper_node =
+            article_node
+            |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+        match card_wrapper_node with
+        |Some card_wrapper_node ->
+            card_wrapper_node
+            |>Html_node.first_descendants_with_css "a[role='link']"
             |>function
-            |id::keyword::rest ->
-                if keyword = "events" then
-                    link_node
-                    |>Html_node.try_descendant "div[data-testid='card.layoutSmall.detail']"
-                    |>function
-                    |Some card_node ->
+            | link_node::_ ->
+                link_node
+                |>Html_node.attribute_value "href"
+                |>fun url->url.Split("/")
+                |>List.ofArray
+                |>List.rev
+                |>function
+                |id::keyword::rest ->
+                    if keyword = "events" then
+                        
                         External_source_node.Twitter_event(
-                            card_node
+                            card_wrapper_node
                             ,
                             id
                             |>int64|>Event_id
                         )
                         |>Some
-                    |None ->None
-                else
-                    None
-            | _ -> None
-        |_ -> None
+                    else
+                        None
+                | _ -> None
+            |_ -> None
+        |None->None
+        
     
 
     let external_source_node_of_main_post
@@ -162,3 +165,22 @@ module Parse_external_source =
             parse_external_website node
         |External_source_node.Twitter_event (node, event_id) ->
             parse_twitter_event node event_id
+
+
+    let detach_and_parse_external_source
+        post_node
+        =
+        let external_source_node =
+            external_source_node_of_main_post
+                post_node
+        
+        match external_source_node with
+        |Some external_source_node ->
+            external_source_node
+            |>External_source_node.html_node
+            |>Html_node.detach_from_parent
+            |>ignore
+        |None->()
+        
+        external_source_node
+        |>Option.map parse_external_source_of_main_post 

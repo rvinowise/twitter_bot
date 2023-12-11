@@ -59,13 +59,18 @@ module Parse_quoted_post =
         
         let reply =
             Parse_reply_in_quoted_post.reply_of_quoted_post quotation_node
-            
         
         let header={
             author = parsed_header.author
             created_at = parsed_header.written_at
             reply=reply
         }
+        
+        let twitter_space =
+            Parse_twitter_audio_space.detach_and_parse_twitter_audio_space
+                quotation_node
+            
+        //at this point, twitter audio space is removed from the quotation node
         
         let message =
             quotation_node
@@ -78,9 +83,6 @@ module Parse_quoted_post =
         let media_items =
             Parse_media.parse_media_from_stripped_post quotation_node
             
-        let twitter_space =
-            Parse_twitter_audio_space.try_parse_twitter_audio_space quotation_node
-        
        
         if
             Parse_poll.quotation_is_a_poll
@@ -97,7 +99,7 @@ module Parse_quoted_post =
                 header=header
                 message = message
                 media_load = media_items
-                twitter_space = twitter_space 
+                audio_space = twitter_space 
             }
         
 

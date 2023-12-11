@@ -40,10 +40,12 @@ module Parse_twitter_audio_space =
                 audience_amount=audience_amount
             }
         | _ ->raise (Bad_post_exception("wrong segments of a twitter audio space"))
-        
-    let try_parse_twitter_audio_space html_node =
+    
+    let try_find_twitter_audio_space_node
+        post_node
+        =
         let placement_tracking_node =
-            html_node
+            post_node
             |>Html_node.try_descendant "div[data-testid='placementTracking']"
         
         match placement_tracking_node with
@@ -55,13 +57,33 @@ module Parse_twitter_audio_space =
                 if
                     (potential_follow_button|>Html_node.inner_text = "Follow host")
                 then
-                    parse_twitter_audio_space placement_tracking_node
-                    |>Some
+                    Some placement_tracking_node
                 else None
             |None -> None
-            
+        |None -> None
+        
+    let try_parse_twitter_audio_space
+        post_node
+        =
+        match
+            try_find_twitter_audio_space_node post_node
+        with
+        |Some audio_space_node ->
+            parse_twitter_audio_space audio_space_node
+            |>Some
         |None -> None
     
     
-    
- 
+    let detach_and_parse_twitter_audio_space
+        post_node
+        =
+        let audio_space_node =
+            try_find_twitter_audio_space_node
+                post_node
+        
+        audio_space_node
+        |>Option.map Html_node.detach_from_parent
+        |>ignore
+        
+        audio_space_node
+        |>Option.map parse_twitter_audio_space

@@ -361,10 +361,10 @@ module Twitter_post_database =
             main_post_id
             is_quotation
    
-        if quotable_core.twitter_space.IsSome then
+        if quotable_core.audio_space.IsSome then
             write_twitter_space
                 (db_connection:NpgsqlConnection)
-                quotable_core.twitter_space.Value
+                quotable_core.audio_space.Value
                 (main_post_id:Post_id)
                 (is_quotation:bool)
     

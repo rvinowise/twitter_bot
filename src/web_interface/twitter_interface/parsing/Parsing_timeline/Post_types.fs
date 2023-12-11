@@ -173,7 +173,7 @@ type Quotable_message = {
     header: Post_header
     message: Post_message
     media_load: Media_item list
-    twitter_space: Twitter_audio_space option
+    audio_space: Twitter_audio_space option
 }
 
 type Quotable_poll = {
@@ -280,6 +280,13 @@ module Main_post =
         match post.body with
         |Message (_, external_source) ->
             external_source
+        |Poll _ ->
+            None
+    
+    let audio_space post =
+        match post.body with
+        |Message (quotable_core, _) ->
+            quotable_core.audio_space
         |Poll _ ->
             None
             

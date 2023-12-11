@@ -134,19 +134,17 @@ module Parse_article =
         article_node
         =
         
-        let external_source_node =
-            Parse_external_source.external_source_node_of_main_post
+        let external_source =
+            Parse_external_source.detach_and_parse_external_source
                 article_node
         
-        match external_source_node with
-        |Some external_source_node ->
-            external_source_node
-            |>External_source_node.html_node
-            |>Html_node.detach_from_parent
-            |>ignore
-        |None->()
+        //at this point the article node doesn't have its external source
         
-        //at this point the article node doesn't have its external source        
+        let twitter_audio_space =
+            Parse_twitter_audio_space.detach_and_parse_twitter_audio_space
+                article_node
+        
+        //at this point the article node doesn't have its twitter audio space
         
         let main_message =
             article_node
@@ -158,17 +156,14 @@ module Parse_article =
         
         let media_items = 
             Parse_media.parse_media_from_stripped_post article_node
-        
-        let external_source =
-            external_source_node
-            |>Option.map Parse_external_source.parse_external_source_of_main_post 
+
             
         Main_post_body.Message (
             {
                 Quotable_message.header = header
                 message = main_message
                 media_load = media_items
-                twitter_space = None
+                audio_space = twitter_audio_space
             }
             ,
             external_source
