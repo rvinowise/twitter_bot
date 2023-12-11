@@ -112,13 +112,12 @@ module Parse_article =
             try_parse_poll_details
                 article_node
         
-        let message =
-            parse_message article_node
-            |>Post_message.text
-            
-        
         match poll_choices_and_summary with
         |Some (choices,votes_amount) ->
+            let message =
+                parse_message article_node
+                |>Post_message.text
+            
             Main_post_body.Poll {
                 Poll.quotable_part = {
                     header=header

@@ -180,26 +180,26 @@ module Harvest_posts_from_timeline =
         user
         =
         Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
-        let is_finished =
-            let newest_last_visited_post =
-                Twitter_post_database.read_newest_last_visited_post
-                    database
-                    tab
-                    user
-            let work_description =
-                $"""harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"""
-            
-            match newest_last_visited_post with
-            |Some last_post ->
-                Log.info
-                    $"""{work_description}
-                    will stop when post "{Post_id.value last_post}" is reached"""
-                (reached_last_visited_post last_post)
-            |None->
-                Log.info
-                    $"""{work_description}
-                    will stop when the timeline is ended"""
-                (fun _ -> false)
+        let is_finished = (fun _ -> false)
+//            let newest_last_visited_post =
+//                Twitter_post_database.read_newest_last_visited_post
+//                    database
+//                    tab
+//                    user
+//            let work_description =
+//                $"""harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"""
+//            
+//            match newest_last_visited_post with
+//            |Some last_post ->
+//                Log.info
+//                    $"""{work_description}
+//                    will stop when post "{Post_id.value last_post}" is reached"""
+//                (reached_last_visited_post last_post)
+//            |None->
+//                Log.info
+//                    $"""{work_description}
+//                    will stop when the timeline is ended"""
+//                (fun _ -> false)
         
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
         
@@ -275,12 +275,13 @@ module Harvest_posts_from_timeline =
             database
     
     
-    [<Fact(Skip="manual")>]
+    [<Fact>]//(Skip="manual")
     let ``try harvest_all_last_actions_of_users``()=
         let result =
-            harvest_updates_on_timeline_of_user
+            resilient_step_of_harvesting_timelines
                 (Browser.open_browser())
                 (Twitter_database.open_connection())
-                Timeline_tab.Posts_and_replies
-                (User_handle "petrenko_ai")
+                [
+                    User_handle "zarakayk", Timeline_tab.Posts_and_replies
+                ]
         ()

@@ -264,30 +264,49 @@ module Twitter_post_database =
     let write_twitter_event
         (db_connection:NpgsqlConnection)
         (twitter_event: Twitter_event)
-        (main_post_id:Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.twitter_space} (
-                main_post_id,
+            $"insert into {tables.post.twitter_event} (
                 id,
                 host,
                 title,
             )
             values (
-                @main_post_id,
                 @id,
                 @host,
                 @title,
             )
-            on conflict (main_post_id, is_quotation)
-            do update set (message, show_more_url, is_abbreviated)
-            = (@message, @show_more_url, @is_abbreviated)
+            on conflict (id)
+            do update set (host, title)
+            = (@host, @title)
             ",
             {|
-                main_post_id=main_post_id
                 id=twitter_event.id
                 host=twitter_event.user.handle
                 title=twitter_event.title
+            |}
+        ) |> ignore
+    
+    let write_twitter_event_in_post
+        (db_connection:NpgsqlConnection)
+        main_post_id
+        event_id
+        =
+        db_connection.Query(
+            $"insert into {tables.post.twitter_event_in_post} (
+                main_post_id,
+                event_id
+            )
+            values (
+                @main_post_id,
+                @event_id
+            )
+            on conflict (main_post_id, event_id)
+            do nothing
+            ",
+            {|
+                main_post_id=main_post_id
+                event_id=event_id
             |}
         ) |> ignore
     
@@ -514,7 +533,10 @@ module Twitter_post_database =
             write_twitter_event
                 db_connection
                 event
+            write_twitter_event_in_post
+                db_connection
                 post_id
+                event.id
             
     let write_post_body_with_poll
         (db_connection: NpgsqlConnection)
