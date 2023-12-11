@@ -9,22 +9,6 @@ open rvinowise.twitter
 module Parse_reply_in_main_post=
     
     
-    let try_reply_target_from_reply_header tweet_text_node =
-        tweet_text_node
-        |>Html_node.parent
-        |>Html_node.direct_children
-        |>List.head
-        |>fun potential_header ->
-            if
-                is_reply_header potential_header
-            then
-                let reply_author =
-                    potential_header
-                    |>parse_reply_header
-                Some reply_author
-            else
-                None
-   
 
     let post_has_linked_post_after article_html =
         article_html
@@ -105,18 +89,25 @@ module Parse_reply_in_main_post=
     
     
     let parse_reply_of_main_post
-        author
         has_social_context_header
         article_node
-        second_segment
         (previous_cell: Previous_cell)
         =
-        let reply_from_reply_header =
-            try_parse_reply_header_of_main_post
-                second_segment
+        let reply_header = 
+            Parse_reply.try_find_reply_header
+                article_node
             
-        match reply_from_reply_header with
-        |Some reply_status -> Some reply_status
+        match reply_header with
+        |Some reply_header ->
+            let reply_target_from_header =
+                reply_header
+                |>Parse_reply.user_from_reply_header
+                    
+            Some {
+                Reply.to_user = reply_target_from_header
+                to_post=None
+                is_direct=true
+            }
         |None->
             if
                 has_social_context_header //reposts and pinned posts can't be part of a local thread in the timeline

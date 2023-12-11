@@ -138,23 +138,26 @@ module Parse_article =
             Parse_external_source.external_source_node_of_main_post
                 article_node
         
-        let main_post_node =
+        match external_source_node with
+        |Some external_source_node ->
             external_source_node
-            |>function
-            |None->article_node
-            |Some external_source_node ->
-                external_source_node
-                |>External_source_node.html_node
-                |>Html_node.detach_from_parent
-                |>ignore
-                article_node
-                
+            |>External_source_node.html_node
+            |>Html_node.detach_from_parent
+            |>ignore
+        |None->()
+        
+        //at this point the article node doesn't have its external source        
         
         let main_message =
-            parse_message main_post_node
+            article_node
+            |>Parse_quoted_post.detach_nodes_with_images_outside_of_media_load
+            |>Option.map Post_message.from_html_node
+            |>Option.defaultValue Post_message.empty
+        
+        //at this point the article node doesn't have its message and user's avatar
         
         let media_items = 
-            Parse_media.parse_media_from_large_layout main_post_node
+            Parse_media.parse_media_from_stripped_post article_node
         
         let external_source =
             external_source_node
@@ -202,8 +205,7 @@ module Parse_article =
                 |>raise    
         
         let reply =
-            Parse_reply.parse_reply_of_main_post
-                parsed_header.author.handle
+            Parse_reply_in_main_post.parse_reply_of_main_post
                 (reposting_user.IsSome || is_pinned)
                 article_node
                 thread

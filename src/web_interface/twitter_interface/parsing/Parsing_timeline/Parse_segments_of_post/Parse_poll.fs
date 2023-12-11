@@ -12,27 +12,15 @@ module Parse_poll =
     
     
     let quotation_is_a_poll
-        ``node with role=link of the quotation``
+        quotation_node // without message node
         =
-        let quoted_message_node =
-            ``node with role=link of the quotation``
-            |>Html_node.descendant "div[data-testid='tweetText']"
-        
-        let node_with_poll_mark =
-            quoted_message_node
-            |>Html_node.parent
-            |>Html_node.direct_children
-            |>List.last
-        
-        if
-            node_with_poll_mark
-            |>Html_node.ancestors "div[data-testid='tweetText']"
-            |>List.isEmpty
-        then    
-            node_with_poll_mark
-            |>Html_node.inner_text = "Show this poll"
-        else
-            false
+        quotation_node
+        |>Html_node.descendants "span"
+        |>List.exists(fun node ->
+            node
+            |>Html_node.inner_text
+            |>(=) "Show this poll"
+        )
             
     
     let parse_ongoing_poll_choice

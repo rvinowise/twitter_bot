@@ -108,10 +108,10 @@ module Parse_external_source =
     
     let try_twitter_event_node article_node =
         article_node
-        |>Html_node.descendants "a[role='link']"
-        |>List.tryItem 1
+        |>Html_node.try_descendant "div[data-testid='card.wrapper']"
+        |>Option.map (Html_node.first_descendants_with_css "a[role='link']")
         |>function
-        |Some link_node ->
+        |Some (link_node::_) ->
             link_node
             |>Html_node.attribute_value "href"
             |>fun url->url.Split("/")
@@ -135,7 +135,7 @@ module Parse_external_source =
                 else
                     None
             | _ -> None
-        |None -> None
+        |_ -> None
     
 
     let external_source_node_of_main_post
@@ -143,8 +143,8 @@ module Parse_external_source =
         =
         [
             Parse_quoted_post.try_quotation_node;
-            try_external_website_node;
             try_twitter_event_node;
+            try_external_website_node;
         ]
         |>List.tryPick (fun parser ->
             parser article_node

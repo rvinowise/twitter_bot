@@ -34,9 +34,24 @@ module Parse_quoted_post =
         quotation_node
         |>Html_node.descend 1
         |>Html_node.direct_children
+    
+    let detach_nodes_with_images_outside_of_media_load
+        quotation_node
+        =
+        let message_node =
+            quotation_node
+            |>Html_node.try_descendant "div[data-testid='tweetText']"
+        
+        quotation_node
+        |>Html_node.descendant "div[data-testid='Tweet-User-Avatar']"
+        |>Html_node.detach_from_parent
+        |>ignore
+        
+        message_node //can have images which are emojis
+        |>Option.map Html_node.detach_from_parent
             
     let parse_quoted_post
-        quotation_node //div[role='link']
+        quotation_node //div[role='link'] //will be modified
         = 
         let parsed_header =
             quotation_node
@@ -44,12 +59,6 @@ module Parse_quoted_post =
         
         let reply =
             Parse_reply_in_quoted_post.reply_of_quoted_post quotation_node
-        
-        let media_items =
-            Parse_media.parse_media_items_from_quotation quotation_node
-            
-        let twitter_space =
-            Parse_twitter_audio_space.try_parse_twitter_audio_space quotation_node
             
         
         let header={
@@ -58,15 +67,21 @@ module Parse_quoted_post =
             reply=reply
         }
         
-        
-        let quoted_message_node =
+        let message =
             quotation_node
-            |>Html_node.try_descendant "div[data-testid='tweetText']"
+            |>detach_nodes_with_images_outside_of_media_load
+            |>Option.map Post_message.from_html_node
+            |>Option.defaultValue Post_message.empty
         
-        let message = Post_message.empty
-            // Post_message.from_html_node
-            //     quoted_message_node
+        //at this point, user's avatar and the message are removed from the quotation node
         
+        let media_items =
+            Parse_media.parse_media_from_stripped_post quotation_node
+            
+        let twitter_space =
+            Parse_twitter_audio_space.try_parse_twitter_audio_space quotation_node
+        
+       
         if
             Parse_poll.quotation_is_a_poll
                 quotation_node
