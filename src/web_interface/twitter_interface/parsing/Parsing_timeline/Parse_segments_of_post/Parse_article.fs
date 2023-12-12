@@ -2,6 +2,7 @@
 
 open System
 open System.Globalization
+open AngleSharp.Dom
 open rvinowise.html_parsing
 open rvinowise.twitter
 
@@ -212,8 +213,10 @@ module Parse_article =
         
     let parse_twitter_article
         (thread: Previous_cell )
-        (article_node:Html_node)
+        (original_article_node:Html_node)
         =
+        
+        let article_node = original_article_node.Clone() :?> Html_node
         
         let reposting_user, is_pinned =
             parse_very_top_header_of_social_context article_node

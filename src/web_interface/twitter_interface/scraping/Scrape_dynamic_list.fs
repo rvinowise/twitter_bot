@@ -151,7 +151,9 @@ module Scrape_dynamic_list =
         previous_items
         |>new_nodes_from_visible_nodes
               visible_skimmed_items
-        |>List.ofArray
+        |>List.ofArray 
+    
+        //visible_skimmed_items|>List.ofArray //TEST
     
     let process_item_batch_providing_previous_items
         (context: Previous_cell)

@@ -180,7 +180,18 @@ module Harvest_posts_from_timeline =
         user
         =
         Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
+        
         let is_finished = (fun _ -> false)
+        
+        // let start_time = DateTime.Now
+        // let is_finished = (fun _ ->
+        //      let current_time = DateTime.Now
+        //      if (current_time - start_time > TimeSpan.FromMinutes(5)) then
+        //          Log.debug $"scraping time elapsed at {current_time}"
+        //          true
+        //      else false
+        // )
+        //TEST
 //            let newest_last_visited_post =
 //                Twitter_post_database.read_newest_last_visited_post
 //                    database
@@ -282,6 +293,6 @@ module Harvest_posts_from_timeline =
                 (Browser.open_browser())
                 (Twitter_database.open_connection())
                 [
-                    User_handle "zarakayk", Timeline_tab.Posts_and_replies
+                    User_handle "TheHarrisSultan", Timeline_tab.Posts_and_replies
                 ]
         ()

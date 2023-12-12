@@ -700,3 +700,108 @@ module Twitter_post_database =
                 Timeline_tab.Posts
                 (User_handle "MikhailBatin")
         ()
+        
+        
+    [<Fact>]
+    let ``delete all posts from a user's timeline``()=
+        let user = User_handle "TheHarrisSultan"
+        let result =
+            Twitter_database.open_connection().Query<Post_id>(
+                $"""
+delete from post_quotable_message_body
+using post_header
+where post_quotable_message_body.main_post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from poll_choice
+using post_header
+where poll_choice.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from poll_summary
+using post_header
+where poll_summary.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_audio_space
+using post_header
+where post_audio_space.main_post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_external_url
+using post_header
+where post_external_url.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_image
+using post_header
+where post_image.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_like
+using post_header
+where post_like.post = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_poll_choice
+using post_header
+where post_poll_choice.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_quotable_poll
+using post_header
+where post_quotable_poll.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_reply
+using post_header
+where post_reply.next_post = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_repost
+where post_repost.reposter = @user;
+
+delete from post_stats
+using post_header
+where post_stats.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_twitter_event
+using post_header, post_twitter_event_in_post
+where post_twitter_event.id = post_twitter_event_in_post.event_id
+and post_twitter_event_in_post.main_post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_twitter_event_in_post
+using post_header
+where post_twitter_event_in_post.main_post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_video
+using post_header
+where post_video.post_id = post_header.main_post_id
+and post_header.is_quotation = false
+and post_header.author = @user;
+
+delete from post_header
+where post_header.author = @user;
+""",
+                {|
+                    user =user
+                |}
+            )
+            
+        ()
