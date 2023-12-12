@@ -35,12 +35,14 @@ module Program =
         
     let announce_competition_successes ()=
         try
-            announce_score.scrape_and_announce_user_state
-                (Browser.open_browser())
+            let browser = Browser.open_browser()
+            announce_score.scrape_and_announce_user_state browser
+            Browser.close_browser browser
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't scrape state of twitter-competitors: {exc.Message}"""|>ignore
-            ()
+        | exc ->
+            Log.error $"exception during scraping and announcing twitter scores: {exc.Message}"|>ignore
         
         try
             Import_referrals_from_googlesheet.import_referrals
@@ -51,7 +53,8 @@ module Program =
         | :? TaskCanceledException as exc ->
             Log.error $"""can't read referrals from googlesheet: {exc.Message}"""|>ignore
             ()
-    
+        | exc ->
+            Log.error $"exception during importing referrals from googlesheet: {exc.Message}"|>ignore
     
     let announce_user_interactions() =
         try

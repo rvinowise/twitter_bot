@@ -132,6 +132,9 @@ module Browser =
     let open_browser () =
         Log.info $"preparing a browser without tweaking it"
         Browser.from_cookies []
+    
+    let close_browser (browser:Browser) =
+        browser.webdriver.Close()
         
     let open_url url_string (browser: Browser) =
         canopy.parallell.functions.url url_string browser.webdriver
