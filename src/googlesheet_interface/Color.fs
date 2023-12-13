@@ -11,7 +11,6 @@ type Color = {
     red:float
     green:float
     blue:float
-    alpha:float
 }
 
 module Color =
@@ -20,16 +19,14 @@ module Color =
         Data.Color(
             Red= float32 color.red,
             Green= float32 color.green,
-            Blue= float32 color.blue,
-            Alpha= float32 color.alpha
+            Blue= float32 color.blue
         )
     
     let to_google_color (color:Color) =
         Color(
             Blue = float32 color.blue,
             Red = float32 color.red,
-            Green = float32 color.green,
-            Alpha = float32 color.alpha
+            Green = float32 color.green
         )
         
     let coefficient_between_values
@@ -60,7 +57,6 @@ module Color =
             red=color_from.red * multiplier_from + color_to.red*multiplier_to
             green=color_from.green * multiplier_from + color_to.green*multiplier_to
             blue=color_from.blue * multiplier_from + color_to.blue*multiplier_to
-            alpha=color_from.alpha * multiplier_from + color_to.alpha*multiplier_to
         }
         
        

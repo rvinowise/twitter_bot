@@ -133,7 +133,8 @@ module Browser =
         Log.info $"preparing a browser without tweaking it"
         Browser.from_cookies []
     
-    let close_browser (browser:Browser) =
+    let close_browser (browser: Browser) =
+        Log.info $"browser {browser} is closed"
         browser.webdriver.Close()
         
     let open_url url_string (browser: Browser) =

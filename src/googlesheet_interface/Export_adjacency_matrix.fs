@@ -90,6 +90,102 @@ module Export_adjacency_matrix =
             |>Option.defaultValue 0
         )
     
+    let maps_of_user_interactions 
+        (read_interactions: User_handle->seq<User_handle*int>)
+        (all_users: User_handle seq)
+        =
+        all_users
+        |>Seq.map(fun user ->
+            user,
+            user
+            |>read_interactions
+            |>Map.ofSeq
+        )|>Map.ofSeq
+    
+    let min_value_color = {
+        red=1
+        green=1
+        blue=1
+    }
+    let max_value_color = {
+        red=1
+        green=0
+        blue=0
+    }
+    
+    let interactions_to_intencity_colors
+        (user_interactions: Map<User_handle, Map<User_handle, int>>)
+        =
+        let interactions_with_others =
+            user_interactions
+            |>Map.toSeq
+            |>Seq.collect(fun (user,interactions) ->
+                interactions
+                |>Map.remove user
+                |>Map.values
+            )
+        let interactions_with_oneself =
+            user_interactions
+            |>Map.toSeq
+            |>Seq.map(fun (user,interactions) ->
+                interactions
+                |>Map.tryFind user
+                |>Option.defaultValue 0
+            )
+        
+        let interaction_to_intensity_color =
+            Color.cell_color_for_value
+                min_value_color
+                max_value_color
+                (Seq.min interactions_with_others)
+                (Seq.max interactions_with_others)
+        
+        let self_interaction_to_intensity_color =
+            Color.cell_color_for_value
+                {red=1;green=1;blue=1}
+                {red=0;green=0;blue=0}
+                (Seq.min interactions_with_oneself)
+                (Seq.max interactions_with_oneself)
+        
+        interaction_to_intensity_color,
+        self_interaction_to_intensity_color
+        
+        
+    let user_interactions_to_colored_values
+        interaction_to_intensity_color
+        self_interaction_to_intensity_color
+        (all_sorted_users: User_handle list)
+        (user_interactions: Map<User_handle, Map<User_handle, int>>)
+        =
+        user_interactions
+        |>Map.map(fun user interactions ->
+            interactions
+            |>Map.map (fun other_user interaction_amount ->
+                if
+                    other_user = user
+                then
+                    interaction_amount,
+                    self_interaction_to_intensity_color interaction_amount
+                else
+                    interaction_amount,
+                    interaction_to_intensity_color interaction_amount
+            )
+        )
+    
+    let row_of_interactions_for_user
+        all_sorted_users
+        user
+        (colored_interactions:Map<User_handle, int*Color>)
+        =
+        all_sorted_users
+        |>List.map(fun other_user ->
+            colored_interactions
+            |>Map.tryFind other_user
+            |>Option.defaultValue (0, )
+            |>Googlesheet_writing.colored_number_to_google_cell
+        )
+        
+        
     let update_googlesheet
         database
         googlesheet
@@ -101,30 +197,34 @@ module Export_adjacency_matrix =
                 database
         
         let user_interactions =
-            all_sorted_users
-            |>List.map (fun user->
-                interactions_with_other_users
-                    read_interactions
-                    all_sorted_users
-                    user
-            )
+            maps_of_user_interactions
+                read_interactions
+                all_sorted_users
         
-        let min_value,max_value =
-            min_and_max_values_from_lists user_interactions
+//        let user_interactions =
+//            all_sorted_users
+//            |>List.map (fun user->
+//                interactions_with_other_users
+//                    read_interactions
+//                    all_sorted_users
+//                    user
+//            )
+        
+        let
+            interaction_to_intencity_color,
+            self_interaction_to_intencity_color
+                =
+                interactions_to_intencity_colors user_interactions
+        
+        
+        let colored_interactions =    
+            user_interactions
+            |>user_interactions_to_colored_values
+                interaction_to_intencity_color
+                self_interaction_to_intencity_color
+                all_sorted_users
             
-        let min_value_color = {
-            red=1
-            green=1
-            blue=1
-            alpha=1
-        }
-        let max_value_color = {
-            red=1
-            green=0
-            blue=0
-            alpha=1
-        }
-        
+            
         let header_of_users =
             all_sorted_users
             |>List.map (Googlesheet.username_from_handle user_names)
@@ -136,22 +236,15 @@ module Export_adjacency_matrix =
             |>List.append [""]
             |>Googlesheet_writing.text_row_to_google_cells
         
-        let value_to_intensity_color =
-            Color.cell_color_for_value
-                min_value_color
-                max_value_color
-                min_value
-                max_value
+ 
         
         let rows_of_interactions =
-            user_interactions
-            |>List.map (fun sorted_interactions->
-                sorted_interactions
-                |>List.map(fun interaction_value ->
-                    interaction_value,
-                    value_to_intensity_color interaction_value
-                )
-            )|>Googlesheet_writing.colored_numbers_to_google_cells
+            all_sorted_users
+            |>List.map (fun user ->
+                colored_interactions
+                |>Map.find user
+                |>row_of_interactions_for_user all_sorted_users user
+            )
         
         (header_of_users::rows_of_interactions)
         |>Table.transpose Googlesheet.empty_cell
@@ -162,7 +255,7 @@ module Export_adjacency_matrix =
             googlesheet
         
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {

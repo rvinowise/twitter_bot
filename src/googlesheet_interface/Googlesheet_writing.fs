@@ -48,22 +48,25 @@ module Googlesheet_writing =
             )
         )
     
+    let colored_number_to_google_cell
+        (number,color)
+        =
+        CellData(
+            UserEnteredFormat = CellFormat(
+                BackgroundColor=Color.to_google_color color
+            ),
+            UserEnteredValue = ExtendedValue(
+                NumberValue= (number|>float|>Nullable)
+            )
+        )
+    
     let colored_numbers_to_google_cells
         (rows: (int*Color) list list)
         =
         rows
         |>List.map (fun cells ->
             cells
-            |>List.map (fun (cell_value,color) ->
-                CellData(
-                    UserEnteredFormat = CellFormat(
-                        BackgroundColor=Color.to_google_color color
-                    ),
-                    UserEnteredValue = ExtendedValue(
-                        NumberValue= (cell_value|>float|>Nullable)
-                    )
-                )
-            )
+            |>List.map colored_number_to_google_cell
         )
     
     let lists_of_google_cells_to_google_table
@@ -84,11 +87,11 @@ module Googlesheet_writing =
         (service: SheetsService)
         (sheet: Google_spreadsheet)
         =
-        let red = {red=1;green=0;blue=0;alpha=1}
-        let green = {red=0;green=1;blue=0;alpha=1}
-        let yellow = {red=1;green=1;blue=0;alpha=1}
-        let blue = {red=0;green=0;blue=1;alpha=1}
-        let white = {red=1;green=1;blue=1;alpha=1}
+        let red = {red=1;green=0;blue=0;}
+        let green = {red=0;green=1;blue=0;}
+        let yellow = {red=1;green=1;blue=0;}
+        let blue = {red=0;green=0;blue=1;}
+        let white = {red=1;green=1;blue=1;}
         
         
         
