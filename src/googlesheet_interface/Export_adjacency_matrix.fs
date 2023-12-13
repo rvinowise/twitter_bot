@@ -27,12 +27,12 @@ module Export_adjacency_matrix =
         =
         all_sorted_users
         |>List.map(fun other_user->
-            let interaction_intencity =
+            let interaction_intensity =
                 known_interactions
                 |>Map.tryFind other_user
                 |>Option.defaultValue 0
-            interaction_intencity,
-            value_to_color interaction_intencity
+            interaction_intensity,
+            value_to_color interaction_intensity
         )
         
     
@@ -92,13 +92,14 @@ module Export_adjacency_matrix =
     
     let maps_of_user_interactions 
         (read_interactions: User_handle->seq<User_handle*int>)
-        (all_users: User_handle seq)
+        (all_users: User_handle Set)
         =
         all_users
         |>Seq.map(fun user ->
             user,
             user
             |>read_interactions
+            |>Seq.filter (fun (user,_) -> Set.contains user all_users)
             |>Map.ofSeq
         )|>Map.ofSeq
     
@@ -113,7 +114,7 @@ module Export_adjacency_matrix =
         blue=0
     }
     
-    let interactions_to_intencity_colors
+    let interactions_to_intensity_colors
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
         =
         let interactions_with_others =
@@ -133,17 +134,20 @@ module Export_adjacency_matrix =
                 |>Option.defaultValue 0
             )
         
+        let min_interaction = Seq.min interactions_with_others
+        let max_interaction = Seq.max interactions_with_others
+        
         let interaction_to_intensity_color =
             Color.cell_color_for_value
                 min_value_color
                 max_value_color
-                (Seq.min interactions_with_others)
-                (Seq.max interactions_with_others)
+                min_interaction
+                max_interaction
         
         let self_interaction_to_intensity_color =
             Color.cell_color_for_value
                 {red=1;green=1;blue=1}
-                {red=0;green=0;blue=0}
+                {red=0.5;green=0.5;blue=0.5}
                 (Seq.min interactions_with_oneself)
                 (Seq.max interactions_with_oneself)
         
@@ -173,6 +177,8 @@ module Export_adjacency_matrix =
         )
     
     let row_of_interactions_for_user
+        interaction_to_intensity_color
+        self_interaction_to_intensity_color
         all_sorted_users
         user
         (colored_interactions:Map<User_handle, int*Color>)
@@ -181,7 +187,12 @@ module Export_adjacency_matrix =
         |>List.map(fun other_user ->
             colored_interactions
             |>Map.tryFind other_user
-            |>Option.defaultValue (0, )
+            |>Option.defaultValue (0,
+                if other_user = user then
+                    self_interaction_to_intensity_color 0
+                else
+                    interaction_to_intensity_color 0
+            )
             |>Googlesheet_writing.colored_number_to_google_cell
         )
         
@@ -197,31 +208,23 @@ module Export_adjacency_matrix =
                 database
         
         let user_interactions =
-            maps_of_user_interactions
+            all_sorted_users
+            |>Set.ofSeq
+            |>maps_of_user_interactions
                 read_interactions
-                all_sorted_users
-        
-//        let user_interactions =
-//            all_sorted_users
-//            |>List.map (fun user->
-//                interactions_with_other_users
-//                    read_interactions
-//                    all_sorted_users
-//                    user
-//            )
         
         let
-            interaction_to_intencity_color,
-            self_interaction_to_intencity_color
+            interaction_to_intensity_color,
+            self_interaction_to_intensity_color
                 =
-                interactions_to_intencity_colors user_interactions
+                interactions_to_intensity_colors user_interactions
         
         
         let colored_interactions =    
             user_interactions
             |>user_interactions_to_colored_values
-                interaction_to_intencity_color
-                self_interaction_to_intencity_color
+                interaction_to_intensity_color
+                self_interaction_to_intensity_color
                 all_sorted_users
             
             
@@ -243,7 +246,10 @@ module Export_adjacency_matrix =
             |>List.map (fun user ->
                 colored_interactions
                 |>Map.find user
-                |>row_of_interactions_for_user all_sorted_users user
+                |>row_of_interactions_for_user
+                      interaction_to_intensity_color
+                      self_interaction_to_intensity_color
+                      all_sorted_users user
             )
         
         (header_of_users::rows_of_interactions)
