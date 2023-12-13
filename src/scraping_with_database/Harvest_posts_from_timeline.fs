@@ -156,6 +156,7 @@ module Harvest_posts_from_timeline =
         tab
         user
         =
+        Log.info $"""Harvesting newest posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"."""
         parse_timeline
             (harvest_timeline_cell_for_first_post database tab user)
             browser
@@ -217,12 +218,12 @@ module Harvest_posts_from_timeline =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser
         
-        write_newest_post_on_timeline
-            browser
-            html_parsing_context
-            database
-            tab
-            user
+        // write_newest_post_on_timeline
+        //     browser
+        //     html_parsing_context
+        //     database
+        //     tab
+        //     user
         
         harvest_timeline_tab_of_user
             browser
@@ -300,11 +301,13 @@ module Harvest_posts_from_timeline =
                 (Browser.open_browser())
                 (Twitter_database.open_connection())
                 [
-                    User_handle "petrenko_ai", Timeline_tab.Likes
-                    User_handle "SciFi_by_Allen", Timeline_tab.Likes
-                    User_handle "EnriqueSegarra_", Timeline_tab.Likes
-                    User_handle "GStolyarovII", Timeline_tab.Posts_and_replies
-                    User_handle "Timrael", Timeline_tab.Posts_and_replies
-                    User_handle "ValleeRl", Timeline_tab.Likes
+                    // User_handle "petrenko_ai", Timeline_tab.Likes
+                    // User_handle "SciFi_by_Allen", Timeline_tab.Likes
+                    // User_handle "EnriqueSegarra_", Timeline_tab.Likes
+                    // User_handle "GStolyarovII", Timeline_tab.Posts_and_replies
+                    // User_handle "Timrael", Timeline_tab.Posts_and_replies
+                    // User_handle "ValleeRl", Timeline_tab.Likes
+                    User_handle "tehprom269887", Timeline_tab.Likes
+                    
                 ]
         ()

@@ -239,14 +239,14 @@ module Twitter_post_database =
                 is_quotation,
                 host,
                 title,
-                audience_amount,
+                audience_amount
             )
             values (
                 @main_post_id,
                 @is_quotation,
                 @host,
                 @title,
-                @audience_amount,
+                @audience_amount
             )
             on conflict (main_post_id, is_quotation)
             do update set (message, show_more_url, is_abbreviated)
@@ -269,12 +269,12 @@ module Twitter_post_database =
             $"insert into {tables.post.twitter_event} (
                 id,
                 host,
-                title,
+                title
             )
             values (
                 @id,
                 @host,
-                @title,
+                @title
             )
             on conflict (id)
             do update set (host, title)

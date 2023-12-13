@@ -21,11 +21,9 @@ module Announce_user_interactions =
             |>List.splitAt(
                 let last_harvested_user=
                     all_users
-                    |>List.findIndex (fun user -> user = User_handle "SciFi_by_Allen")
+                    |>List.findIndex (fun user -> user = User_handle "ValleeRl")
                 last_harvested_user+1
             )|>snd
-        
-        
             
         Log.info $"reading list of users took {DateTime.Now-before_scraping_users}"
         

@@ -86,7 +86,6 @@ module Html_node =
             Seq.head seq
         else if Seq.length seq = 0 then
             "expected one element, but there's none"
-            |>Log.error
             |>ArgumentException
             |>raise
         else

@@ -1,5 +1,6 @@
 ﻿namespace rvinowise.twitter
 
+open System
 open rvinowise.html_parsing
 open rvinowise.twitter
 open rvinowise.twitter.Parse_article
@@ -35,6 +36,15 @@ module Parse_timeline_cell =
     |Hidden_post of Previous_cell
     |Error of string
     
+    let report_error_when_parsing_post
+        (exc: Exception)
+        (post_node: Html_node)
+        =
+        Log.error $"""Exception: {exc.Message}
+            when parsing twitter post with html:
+            {post_node.OuterHtml}"""
+        |>ignore
+        
     let try_parse_post
         previous_cell
         article_node
@@ -44,10 +54,10 @@ module Parse_timeline_cell =
             |>Parse_article.parse_twitter_article previous_cell
             |>Parsed_timeline_cell.Post
         with
-        | :? Bad_post_exception as exc ->
+        | :? Bad_post_exception
+        | :? ArgumentException as exc ->   
+            report_error_when_parsing_post exc article_node
             Parsed_timeline_cell.Error exc.Message
-           
-        
  
     let try_parse_cell
         (previous_cell: Previous_cell)

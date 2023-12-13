@@ -40,6 +40,7 @@ type Browser(cookies:Cookie seq) =
         options.AddArgument("--disable-notifications")
         options.AddArgument("--ignore-certificate-errors")
         options.AddArgument("--ignore-ssl-errors")
+        options.AddArgument("--user-agent=Chrome/119.0.0.0")
         options
     
     let start_headless_browser 
@@ -57,7 +58,6 @@ type Browser(cookies:Cookie seq) =
         browser_profile_path
         =
         let options = browser_options local_browser_path browser_profile_path
-        //options.AddArgument($"--profile-directory={profile_path}")
         new ChromeDriver(local_webdriver_path, options,TimeSpan.FromSeconds(180))
     
     let prepare_browser (cookies:Cookie seq) =

@@ -41,6 +41,8 @@ type User_handle_mapper() =
     override this.Parse(value: obj) =
         User_handle (value :?> string) 
 
+
+
 type Post_id_mapper() =
     inherit SqlMapper.TypeHandler<Post_id>()
     override this.SetValue(
@@ -54,6 +56,18 @@ type Post_id_mapper() =
     override this.Parse(value: obj) =
         Post_id (value :?> int64)
 
+type Event_id_mapper() =
+    inherit SqlMapper.TypeHandler<Event_id>()
+    override this.SetValue(
+            parameter:IDbDataParameter ,
+            value: Event_id
+        )
+        =
+        let (Event_id value) = value 
+        parameter.Value <- value
+    
+    override this.Parse(value: obj) =
+        Event_id (value :?> int64)
 
 type Option_mapper<'T>(
         type_mapper: SqlMapper.TypeHandler<'T> 
@@ -106,6 +120,7 @@ module Twitter_database =
         SqlMapper.AddTypeHandler(Timestamp_mapper()) //sometimes it's needed, sometimes not
         SqlMapper.AddTypeHandler(User_handle_mapper())
         SqlMapper.AddTypeHandler(Post_id_mapper())
+        SqlMapper.AddTypeHandler(Event_id_mapper())
         SqlMapper.AddTypeHandler(Option_mapper<User_handle>(User_handle_mapper()))
         SqlMapper.AddTypeHandler(Option_mapper<Post_id>(Post_id_mapper()))
         SqlMapper.AddTypeHandler(Option_string_mapper())
