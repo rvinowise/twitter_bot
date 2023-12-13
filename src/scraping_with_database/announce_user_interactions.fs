@@ -24,8 +24,8 @@ module Announce_user_interactions =
                     |>List.findIndex (fun user -> user = User_handle "SciFi_by_Allen")
                 last_harvested_user+1
             )|>snd
-        //Likes of petrenko_ai are skipped
-        //Likes of SciFi_by_Allen are skipped
+        
+        
             
         Log.info $"reading list of users took {DateTime.Now-before_scraping_users}"
         
