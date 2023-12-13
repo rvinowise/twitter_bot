@@ -67,9 +67,9 @@ module Scrape_dynamic_list =
                 |>snd
                 |>Array.tail
             |None->
-                Log.error $"""lists are not overlapping, some elements might be missed.
-                full_list={old_items};
-                new_list={visible_items}"""|>ignore
+                // Log.error $"""lists are not overlapping, some elements might be missed.
+                // full_list={old_items};
+                // new_list={visible_items}"""|>ignore
                 visible_items
             
         |None->
