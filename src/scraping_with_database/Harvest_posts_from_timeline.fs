@@ -287,7 +287,7 @@ module Harvest_posts_from_timeline =
             database
     
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try harvest_all_last_actions_of_users``()=
         //Likes of petrenko_ai are skipped
         //Likes of SciFi_by_Allen are skipped
@@ -312,9 +312,9 @@ module Harvest_posts_from_timeline =
                     User_handle "Timrael", Timeline_tab.Posts_and_replies
                     User_handle "ValleeRl", Timeline_tab.Likes
                     User_handle "fedichev", Timeline_tab.Posts_and_replies
+                    User_handle "irat1onal", Timeline_tab.Likes
                     User_handle "turchin", Timeline_tab.Posts_and_replies
                     User_handle "vadbars", Timeline_tab.Posts_and_replies
-                    User_handle "irat1onal", Timeline_tab.Likes
                     
                     //User_handle "tehprom269887", Timeline_tab.Likes
                     
