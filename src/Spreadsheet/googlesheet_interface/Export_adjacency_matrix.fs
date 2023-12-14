@@ -1,5 +1,6 @@
 ﻿namespace rvinowise.twitter
 
+open rvinowise.twitter
 open rvinowise.web_scraping
 open Xunit
 
@@ -90,28 +91,43 @@ module Export_adjacency_matrix =
             |>Option.defaultValue 0
         )
     
+    let map_from_seq_preferring_last
+        items
+        =
+        items
+        |>Seq.fold(fun map (key, value) ->
+            map
+            |>Map.add key value
+        )
+            Map.empty
+    
     let maps_of_user_interactions 
         (read_interactions: User_handle->seq<User_handle*int>)
         (all_users: User_handle Set)
         =
+        let zero_interactions =
+            all_users
+            |>Seq.map (fun user -> user,0)
+        
         all_users
         |>Seq.map(fun user ->
             user,
             user
             |>read_interactions
             |>Seq.filter (fun (user,_) -> Set.contains user all_users)
-            |>Map.ofSeq
+            |>Seq.append zero_interactions
+            |>map_from_seq_preferring_last
         )|>Map.ofSeq
     
     let min_value_color = {
-        red=1
-        green=1
-        blue=1
+        r=1
+        g=1
+        b=1
     }
     let max_value_color = {
-        red=1
-        green=0
-        blue=0
+        r=1
+        g=0
+        b=0
     }
     
     let interactions_to_intensity_colors
@@ -146,8 +162,8 @@ module Export_adjacency_matrix =
         
         let self_interaction_to_intensity_color =
             Color.cell_color_for_value
-                {red=1;green=1;blue=1}
-                {red=0.5;green=0.5;blue=0.5}
+                {r=1;g=1;b=1}
+                {r=0.5;g=0.5;b=0.5}
                 (Seq.min interactions_with_oneself)
                 (Seq.max interactions_with_oneself)
         
@@ -158,7 +174,6 @@ module Export_adjacency_matrix =
     let user_interactions_to_colored_values
         interaction_to_intensity_color
         self_interaction_to_intensity_color
-        (all_sorted_users: User_handle list)
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
         =
         user_interactions
@@ -177,25 +192,31 @@ module Export_adjacency_matrix =
         )
     
     let row_of_interactions_for_user
-        interaction_to_intensity_color
-        self_interaction_to_intensity_color
         all_sorted_users
-        user
         (colored_interactions:Map<User_handle, int*Color>)
         =
         all_sorted_users
         |>List.map(fun other_user ->
             colored_interactions
-            |>Map.tryFind other_user
-            |>Option.defaultValue (0,
-                if other_user = user then
-                    self_interaction_to_intensity_color 0
-                else
-                    interaction_to_intensity_color 0
-            )
-            |>Googlesheet_writing.colored_number_to_google_cell
+            |>Map.find other_user
+            |>Cell.from_colored_number
         )
-        
+    
+    
+    let hyperlink_of_user
+        usernames
+        handle
+        =
+        {
+            handle=handle
+            name=
+                usernames
+                |>Map.tryFind handle
+                |>Option.defaultValue (User_handle.value handle)
+        }
+        |>Googlesheet_for_twitter.hyperlink_to_twitter_user
+   
+    
         
     let update_googlesheet
         database
@@ -212,7 +233,7 @@ module Export_adjacency_matrix =
             |>Set.ofSeq
             |>maps_of_user_interactions
                 read_interactions
-        
+            
         let
             interaction_to_intensity_color,
             self_interaction_to_intensity_color
@@ -225,21 +246,31 @@ module Export_adjacency_matrix =
             |>user_interactions_to_colored_values
                 interaction_to_intensity_color
                 self_interaction_to_intensity_color
-                all_sorted_users
             
             
         let header_of_users =
             all_sorted_users
-            |>List.map (Googlesheet.username_from_handle user_names)
-            |>Googlesheet_writing.text_row_to_google_vertical_cells
-        
+            |>List.map (hyperlink_of_user user_names)
+            |>List.map (fun url -> {
+                Cell.value = Cell_value.Formula url
+                color = Color.white
+                style = Text_style.vertical
+            })
+            
         let left_column_of_users =
             all_sorted_users
-            |>List.map (Googlesheet.username_from_handle user_names)
-            |>List.append [""]
-            |>Googlesheet_writing.text_row_to_google_cells
+            |>List.map (hyperlink_of_user user_names)
+            |>List.map (fun url -> {
+                Cell.value = Cell_value.Formula url
+                color = Color.white
+                style = Text_style.regular
+            })
+            |>List.append [{
+                Cell.value = Cell_value.Formula """=HYPERLINK("https://github.com/rvinowise/twitter_bot","src")"""
+                color = Color.white
+                style = Text_style.regular
+            }]
         
- 
         
         let rows_of_interactions =
             all_sorted_users
@@ -247,15 +278,13 @@ module Export_adjacency_matrix =
                 colored_interactions
                 |>Map.find user
                 |>row_of_interactions_for_user
-                      interaction_to_intensity_color
-                      self_interaction_to_intensity_color
-                      all_sorted_users user
+                      all_sorted_users
             )
         
         (header_of_users::rows_of_interactions)
-        |>Table.transpose Googlesheet.empty_cell
+        |>Table.transpose Cell.empty
         |>List.append [left_column_of_users]
-        |>Table.transpose Googlesheet.empty_cell
+        |>Table.transpose Cell.empty
         |>Googlesheet_writing.write_table
             (Googlesheet.create_googlesheet_service())
             googlesheet
@@ -279,9 +308,13 @@ module Export_adjacency_matrix =
             page_id=2007335692
             page_name="Replies"
         }
+        let everything_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=1019851571
+            page_name="Everything"
+        }
             
         let database = Twitter_database.open_connection()
-        
         
         let all_users =
             Settings.Competitors.list

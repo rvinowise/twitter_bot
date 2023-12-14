@@ -53,7 +53,7 @@ module Export_scores_to_googlesheet =
         let current_growth_formula = $"=E{user_row_index}-F{user_row_index}"
         [
             place :>obj
-            (Googlesheet_for_twitter.hyperlink_to_twitter_user competitor.handle) :>obj
+            (Googlesheet_for_twitter.hyperlink_to_twitter_user_handle competitor.handle) :>obj
             competitor.name :>obj
             current_growth_formula :>obj
         ]@(

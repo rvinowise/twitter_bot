@@ -2,10 +2,6 @@
 
 open System
 open System.Collections.Generic
-open System.IO
-open System.Threading.Tasks
-open Google.Apis.Auth.OAuth2
-open Google.Apis.Services
 
 open Google.Apis.Sheets.v4
 open Google.Apis.Sheets.v4.Data
@@ -16,10 +12,43 @@ open rvinowise.twitter
 
 module Googlesheet_writing =
     
+    let value_to_google_value
+        (value: Cell_value)
+        =
+        match value with
+        |Integer number ->
+            ExtendedValue( NumberValue= (number|>float|>Nullable) )
+        |Float number ->
+            ExtendedValue( NumberValue= (number|>float|>Nullable) )
+        |Text text ->
+            ExtendedValue(StringValue = text)
+        |Formula text ->
+            ExtendedValue(FormulaValue = text)
+    
+    let cell_to_google_cell
+        (cell:Cell)
+        =
+        CellData(
+            UserEnteredFormat = CellFormat(
+                BackgroundColor=Color.to_google_color cell.color,
+                
+                TextRotation=TextRotation(
+                    Angle =
+                        match cell.style.rotation with
+                        |Vertical ->
+                            Nullable -90
+                        |Horizontal ->
+                            Nullable 0
+                )
+            ),
+            UserEnteredValue = value_to_google_value cell.value
+        )
+    
+   
     
     
     
-    let text_row_to_google_vertical_cells
+    let formulas_row_to_google_vertical_cells
         (cells: string list)
         =
         cells
@@ -31,7 +60,7 @@ module Googlesheet_writing =
                     )
                 ),
                 UserEnteredValue = ExtendedValue(
-                    StringValue=cell_value
+                    FormulaValue=cell_value
                 )
             )
         )
@@ -48,26 +77,9 @@ module Googlesheet_writing =
             )
         )
     
-    let colored_number_to_google_cell
-        (number,color)
-        =
-        CellData(
-            UserEnteredFormat = CellFormat(
-                BackgroundColor=Color.to_google_color color
-            ),
-            UserEnteredValue = ExtendedValue(
-                NumberValue= (number|>float|>Nullable)
-            )
-        )
     
-    let colored_numbers_to_google_cells
-        (rows: (int*Color) list list)
-        =
-        rows
-        |>List.map (fun cells ->
-            cells
-            |>List.map colored_number_to_google_cell
-        )
+    
+    
     
     let lists_of_google_cells_to_google_table
         (rows: CellData list list)
@@ -82,53 +94,7 @@ module Googlesheet_writing =
             )
         )|>List :> IList<_>
     
-    
-    let input_colors_into_sheet
-        (service: SheetsService)
-        (sheet: Google_spreadsheet)
-        =
-        let red = {red=1;green=0;blue=0;}
-        let green = {red=0;green=1;blue=0;}
-        let yellow = {red=1;green=1;blue=0;}
-        let blue = {red=0;green=0;blue=1;}
-        let white = {red=1;green=1;blue=1;}
-        
-        
-        
-        let updateCellsRequest =
-            Request(
-                UpdateCells = UpdateCellsRequest(
-                    Range = GridRange(
-                        SheetId = sheet.page_id,
-                        StartColumnIndex = 0,
-                        StartRowIndex = 0,
-                        EndColumnIndex = 1000,
-                        EndRowIndex = 1000
-                    ),
-                    Rows =
-                        (
-                         text_row_to_google_vertical_cells
-                            ["long name1"; "long name2"]
-                        ::
-                        colored_numbers_to_google_cells [
-                            [1,white;2,white;3,yellow;3,yellow]
-                            [3,white;4,white]
-                        ]
-                        |>Table.transpose Googlesheet.empty_cell
-                        |>List.append [(text_row_to_google_cells ["test1";"test2";"test3";"test4";"test";"test"])]
-                        |>Table.transpose Googlesheet.empty_cell
-                        |>lists_of_google_cells_to_google_table
-                        )
-                    ,
-                    Fields = "*"
-                )
-            )
-        
-        let bussr = BatchUpdateSpreadsheetRequest()
-        bussr.Requests <- List<Request>()
-        bussr.Requests.Add(updateCellsRequest)
-        let result = service.Spreadsheets.BatchUpdate(bussr, sheet.doc_id).Execute()
-        ()
+
     
     let write_sheet_dimension
         (service: SheetsService)
@@ -203,7 +169,11 @@ module Googlesheet_writing =
                         EndColumnIndex = max_x,
                         EndRowIndex = max_y
                     ),
-                    Rows = lists_of_google_cells_to_google_table table,
+                    Rows = (
+                        table
+                        |>List.map (List.map cell_to_google_cell)
+                        |>lists_of_google_cells_to_google_table
+                    ),
                     Fields = "*"
                 )
             )
@@ -215,14 +185,22 @@ module Googlesheet_writing =
         ()
     
     
-    [<Fact(Skip="manual")>]
-    let ``try input_colors_into_sheet``() =
-        input_colors_into_sheet
+    [<Fact>]
+    let ``try write table``() =
+        
+        let likes_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=0
+            page_name="Likes"
+        }
+        
+        fun y x -> {
+            Cell.value = Cell_value.Integer (y*10+x)
+            color = Color.white
+            style = Text_style.regular
+        }
+        |>List.init 10
+        |>List.map (List.init 10)
+        |>write_table
             (Googlesheet.create_googlesheet_service())
-            {
-                Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-                page_id=2108706810
-                page_name="Reposts"
-            }
-    
-    
+            likes_googlesheet

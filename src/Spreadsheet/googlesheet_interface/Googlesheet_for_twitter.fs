@@ -14,8 +14,14 @@ open Xunit
 
 module Googlesheet_for_twitter =
     
-    let hyperlink_to_twitter_user handle =
+    let hyperlink_to_twitter_user_handle handle =
         sprintf
             """=HYPERLINK("%s", "@%s")"""
             (User_handle.url_from_handle handle)
             (handle|>User_handle.value)
+            
+    let hyperlink_to_twitter_user (user:Twitter_user) =
+        sprintf
+            """=HYPERLINK("%s", "%s")"""
+            (User_handle.url_from_handle user.handle)
+            user.name

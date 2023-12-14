@@ -8,25 +8,27 @@ open Xunit
 
 
 type Color = {
-    red:float
-    green:float
-    blue:float
+    r:float
+    g:float
+    b:float
 }
 
 module Color =
+    
+    let white = {r=1;g=1;b=1}
     let to_googlesheet_color (color:Color) =
         
         Data.Color(
-            Red= float32 color.red,
-            Green= float32 color.green,
-            Blue= float32 color.blue
+            Red= float32 color.r,
+            Green= float32 color.g,
+            Blue= float32 color.b
         )
     
     let to_google_color (color:Color) =
         Color(
-            Blue = float32 color.blue,
-            Red = float32 color.red,
-            Green = float32 color.green
+            Blue = float32 color.b,
+            Red = float32 color.r,
+            Green = float32 color.g
         )
         
     let coefficient_between_values
@@ -54,9 +56,9 @@ module Color =
         let multiplier_from = 1.0-multiplier_to
         
         {
-            red=color_from.red * multiplier_from + color_to.red*multiplier_to
-            green=color_from.green * multiplier_from + color_to.green*multiplier_to
-            blue=color_from.blue * multiplier_from + color_to.blue*multiplier_to
+            r=color_from.r * multiplier_from + color_to.r*multiplier_to
+            g=color_from.g * multiplier_from + color_to.g*multiplier_to
+            b=color_from.b * multiplier_from + color_to.b*multiplier_to
         }
         
        
