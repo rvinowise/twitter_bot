@@ -34,11 +34,17 @@ module Text_style =
         writing = Text_writing.Regular
     }
 
+
 type Cell = {
     color: Color
     value: Cell_value
     style: Text_style
 }
+type Frame =
+|Cell of Cell
+|Table of Frame list list
+
+
 
 
 module Cell =
@@ -51,8 +57,7 @@ module Cell =
     
     let from_colored_number
         (number,color)
-        =
-        {
+        = {
             Cell.color = color
             value = Cell_value.Integer number
             style = Text_style.regular
@@ -66,6 +71,16 @@ module Cell =
             cells
             |>List.map from_colored_number
         )
+
+module Frame =
+    let empty =
+        Frame.Cell Cell.empty
+        
+    let from_colored_number
+        (number,color)
+        =
+         Cell.from_colored_number (number,color)
+         |>Frame.Cell
 
 module Table =
     

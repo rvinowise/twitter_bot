@@ -25,3 +25,17 @@ module Googlesheet_for_twitter =
             """=HYPERLINK("%s", "%s")"""
             (User_handle.url_from_handle user.handle)
             user.name
+            
+            
+    let hyperlink_of_user
+        usernames
+        handle
+        =
+        {
+            handle=handle
+            name=
+                usernames
+                |>Map.tryFind handle
+                |>Option.defaultValue (User_handle.value handle)
+        }
+        |>hyperlink_to_twitter_user

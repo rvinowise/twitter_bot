@@ -5,15 +5,47 @@ open rvinowise.web_scraping
 open Xunit
 
 
+type Interaction_colorscheme = {
+    min_color: Color
+    max_color: Color
+}
 
-module Adjacency_matrix_compound =()
-        
+module Adjacency_matrix =
     
-    (*
+    
+    let map_from_seq_preferring_last
+        items
+        =
+        items
+        |>Seq.fold(fun map (key, value) ->
+            map
+            |>Map.add key value
+        )
+            Map.empty
+    
+    let maps_of_user_interactions 
+        (read_interactions: User_handle->seq<User_handle*int>)
+        (all_users: User_handle Set)
+        =
+        let zero_interactions =
+            all_users
+            |>Seq.map (fun user -> user,0)
+        
+        all_users
+        |>Seq.map(fun user ->
+            user,
+            user
+            |>read_interactions
+            |>Seq.filter (fun (user,_) -> Set.contains user all_users)
+            |>Seq.append zero_interactions
+            |>map_from_seq_preferring_last
+        )|>Map.ofSeq
+    
     
     
     let interactions_to_intensity_colors
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
+        (colorscheme:Interaction_colorscheme)
         =
         let interactions_with_others =
             user_interactions
@@ -37,8 +69,8 @@ module Adjacency_matrix_compound =()
         
         let interaction_to_intensity_color =
             Color.cell_color_for_value
-                min_value_color
-                max_value_color
+                colorscheme.min_color
+                colorscheme.max_color
                 min_interaction
                 max_interaction
         
@@ -85,92 +117,14 @@ module Adjacency_matrix_compound =()
         )
     
     
-    let hyperlink_of_user
-        usernames
-        handle
-        =
-        {
-            handle=handle
-            name=
-                usernames
-                |>Map.tryFind handle
-                |>Option.defaultValue (User_handle.value handle)
-        }
-        |>Googlesheet_for_twitter.hyperlink_to_twitter_user
+    
    
     
         
-    let update_googlesheet
-        database
-        googlesheet
-        (read_interactions: User_handle->seq<User_handle*int>)
-        all_sorted_users
-        =
-        let user_names =
-            Social_activity_database.read_user_names_from_handles
-                database
-        
-        let user_interactions =
-            all_sorted_users
-            |>Set.ofSeq
-            |>maps_of_user_interactions
-                read_interactions
-            
-        let
-            interaction_to_intensity_color,
-            self_interaction_to_intensity_color
-                =
-                interactions_to_intensity_colors user_interactions
-        
-        
-        let colored_interactions =    
-            user_interactions
-            |>user_interactions_to_colored_values
-                interaction_to_intensity_color
-                self_interaction_to_intensity_color
-            
-            
-        let header_of_users =
-            all_sorted_users
-            |>List.map (hyperlink_of_user user_names)
-            |>List.map (fun url -> {
-                Cell.value = Cell_value.Formula url
-                color = Color.white
-                style = Text_style.vertical
-            })
-            
-        let left_column_of_users =
-            all_sorted_users
-            |>List.map (hyperlink_of_user user_names)
-            |>List.map (fun url -> {
-                Cell.value = Cell_value.Formula url
-                color = Color.white
-                style = Text_style.regular
-            })
-            |>List.append [{
-                Cell.value = Cell_value.Formula """=HYPERLINK("https://github.com/rvinowise/twitter_bot","src")"""
-                color = Color.white
-                style = Text_style.regular
-            }]
-        
-        
-        let rows_of_interactions =
-            all_sorted_users
-            |>List.map (fun user ->
-                colored_interactions
-                |>Map.find user
-                |>row_of_interactions_for_user
-                      all_sorted_users
-            )
-        
-        (header_of_users::rows_of_interactions)
-        |>Table.transpose Cell.empty
-        |>List.append [left_column_of_users]
-        |>Table.transpose Cell.empty
-        |>Googlesheet_writing.write_table
-            (Googlesheet.create_googlesheet_service())
-            googlesheet
-        
+    
+    
+    
+    
     
     [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
@@ -180,16 +134,31 @@ module Adjacency_matrix_compound =()
             page_id=0
             page_name="Likes"
         }
+        let likes_colorscheme = {
+            min_color={r=1; g=1;b=1}
+            max_color={r=1; g=0;b=0}
+        }
+        
         let reposts_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2108706810
             page_name="Reposts"
         }
+        let reposts_colorscheme = {
+            min_color={r=1; g=1;b=1}
+            max_color={r=0; g=1;b=0}
+        }
+        
         let replies_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2007335692
             page_name="Replies"
         }
+        let replies_colorscheme = {
+            min_color={r=1; g=1;b=1}
+            max_color={r=0; g=0;b=1}
+        }
+        
         let everything_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=1019851571
@@ -198,24 +167,53 @@ module Adjacency_matrix_compound =()
             
         let database = Twitter_database.open_connection()
         
-        let all_users =
+        let all_sorted_users =
             Settings.Competitors.list
             |>Scrape_list_members.scrape_twitter_list_members
                 (Browser.open_browser())
             |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)
         
-        update_googlesheet
-            database
+        let all_users = Set.ofList all_sorted_users
+        let user_names =
+            Social_activity_database.read_user_names_from_handles
+                database
+        
+        
+        let likes_interactions =
+            all_users
+            |>maps_of_user_interactions
+                (User_interaction.read_likes_by_user database)    
+        
+        let reposts_interactions =
+            all_users
+            |>maps_of_user_interactions
+                (User_interaction.read_reposts_by_user database)
+                
+        let replies_interactions =
+            all_users
+            |>maps_of_user_interactions
+                (User_interaction.read_replies_by_user database)  
+        
+        let update_googlesheet_with_interaction_type =
+            update_googlesheet
+                all_sorted_users
+                user_names
+        
+        update_googlesheet_with_interaction_type
             likes_googlesheet
-            (User_interaction.read_likes_by_user database)
-            all_users
-        update_googlesheet
-            database
+            likes_colorscheme
+            likes_interactions
+        update_googlesheet_with_interaction_type
             reposts_googlesheet
-            (User_interaction.read_reposts_by_user database)
-            all_users
-        update_googlesheet
-            database
+            reposts_colorscheme
+            reposts_interactions
+        update_googlesheet_with_interaction_type
             replies_googlesheet
-            (User_interaction.read_replies_by_user database)
-            all_users *)
+            replies_colorscheme
+            replies_interactions
+            
+        update_googlesheet_with_total_interactions
+            everything_googlesheet
+            likes_interactions
+            reposts_interactions
+            replies_interactions
