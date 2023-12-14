@@ -295,19 +295,28 @@ module Harvest_posts_from_timeline =
         //"Posts_and_replies" of user "GStolyarovII" ?
         //"Posts_and_replies" of user "Timrael" ?
         //Likes of user ValleeRl (half way -- fail with a twitter-event)
+        //"Posts_and_replies" of user "fedichev" ?
+        //"Posts_and_replies" of user "turchin". (scraped enough, but not all) 70%
+        //"Posts_and_replies" of user "vadbars". (scraped enough, but not all) 70%
+        //"Likes" of user "irat1onal".
         
         let result =
             resilient_step_of_harvesting_timelines
                 (Browser.open_browser())
                 (Twitter_database.open_connection())
                 [
-                    // User_handle "petrenko_ai", Timeline_tab.Likes
-                    // User_handle "SciFi_by_Allen", Timeline_tab.Likes
-                    // User_handle "EnriqueSegarra_", Timeline_tab.Likes
-                    // User_handle "GStolyarovII", Timeline_tab.Posts_and_replies
-                    // User_handle "Timrael", Timeline_tab.Posts_and_replies
-                    // User_handle "ValleeRl", Timeline_tab.Likes
-                    User_handle "tehprom269887", Timeline_tab.Likes
+                    User_handle "petrenko_ai", Timeline_tab.Likes
+                    User_handle "SciFi_by_Allen", Timeline_tab.Likes
+                    User_handle "EnriqueSegarra_", Timeline_tab.Likes
+                    User_handle "GStolyarovII", Timeline_tab.Posts_and_replies
+                    User_handle "Timrael", Timeline_tab.Posts_and_replies
+                    User_handle "ValleeRl", Timeline_tab.Likes
+                    User_handle "fedichev", Timeline_tab.Posts_and_replies
+                    User_handle "turchin", Timeline_tab.Posts_and_replies
+                    User_handle "vadbars", Timeline_tab.Posts_and_replies
+                    User_handle "irat1onal", Timeline_tab.Likes
+                    
+                    //User_handle "tehprom269887", Timeline_tab.Likes
                     
                 ]
         ()

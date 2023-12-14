@@ -6,129 +6,11 @@ open Xunit
 
 
 
-module Export_adjacency_matrix =
+module Adjacency_matrix_compound =()
         
     
+    (*
     
-    let row_of_header
-        (user_names: Map<User_handle, string>)
-        all_sorted_users
-        =
-        all_sorted_users
-        |>List.map (Googlesheet.username_from_handle user_names)
-        |>List.map (fun user->user :> obj)
-        |>List.append ["" :> obj]
-    
-        
-    
-    let row_of_interactions_with_all_users
-        (value_to_color: int -> rvinowise.twitter.Color)
-        all_sorted_users
-        (known_interactions: Map<User_handle, int>)
-        =
-        all_sorted_users
-        |>List.map(fun other_user->
-            let interaction_intensity =
-                known_interactions
-                |>Map.tryFind other_user
-                |>Option.defaultValue 0
-            interaction_intensity,
-            value_to_color interaction_intensity
-        )
-        
-    
-    let min_and_max_values_from_maps
-        (user_interactions: Map<User_handle, Map<User_handle, int>>)
-        =
-        user_interactions
-        |>Map.values
-        |>Seq.map (fun (interactions:Map<User_handle, int>) ->
-            let interaction_values = 
-                interactions
-                |>Map.values
-            if Seq.isEmpty interaction_values then
-                0,0
-            else
-                Seq.min interaction_values,
-                Seq.max interaction_values
-        )|>List.ofSeq
-        |>List.unzip
-        |> fun (mins,maxs) ->
-            mins|>Seq.min,
-            maxs|>Seq.max
-    
-
-    let min_and_max_values_from_lists
-        (lists: int list list)
-        =
-        lists
-        |>List.map (fun inner_list ->
-            List.min inner_list,    
-            List.max inner_list
-        )
-        |>List.unzip
-        |> fun (mins,maxs) ->
-            mins|>Seq.min,
-            maxs|>Seq.max
-    
-    let interactions_with_other_users
-        (read_interactions: User_handle->seq<User_handle*int>)
-        (other_sorted_users: User_handle list)
-        user
-        =
-        let interactions_with_all_users =
-            read_interactions user
-        
-        other_sorted_users
-        |>List.map(fun other_sorted_user ->
-            interactions_with_all_users
-            |>Seq.tryPick(fun (user,interaction_amount) ->
-                if user = other_sorted_user then
-                    Some interaction_amount
-                else
-                    None
-            )
-            |>Option.defaultValue 0
-        )
-    
-    let map_from_seq_preferring_last
-        items
-        =
-        items
-        |>Seq.fold(fun map (key, value) ->
-            map
-            |>Map.add key value
-        )
-            Map.empty
-    
-    let maps_of_user_interactions 
-        (read_interactions: User_handle->seq<User_handle*int>)
-        (all_users: User_handle Set)
-        =
-        let zero_interactions =
-            all_users
-            |>Seq.map (fun user -> user,0)
-        
-        all_users
-        |>Seq.map(fun user ->
-            user,
-            user
-            |>read_interactions
-            |>Seq.filter (fun (user,_) -> Set.contains user all_users)
-            |>Seq.append zero_interactions
-            |>map_from_seq_preferring_last
-        )|>Map.ofSeq
-    
-    let min_value_color = {
-        r=1
-        g=1
-        b=1
-    }
-    let max_value_color = {
-        r=1
-        g=0
-        b=0
-    }
     
     let interactions_to_intensity_colors
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
@@ -336,4 +218,4 @@ module Export_adjacency_matrix =
             database
             replies_googlesheet
             (User_interaction.read_replies_by_user database)
-            all_users
+            all_users *)
