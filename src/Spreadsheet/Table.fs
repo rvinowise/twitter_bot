@@ -57,11 +57,27 @@ module Cell =
     
     let from_colored_number
         (number,color)
-        = {
+        =
+        {
             Cell.color = color
             value = Cell_value.Integer number
             style = Text_style.regular
         }
+    
+    let from_colored_text
+        text color
+        =
+        {
+            Cell.color = color
+            value = Cell_value.Text text
+            style = Text_style.regular
+        }
+    
+    let from_plain_text text = {
+        Cell.color = Color.white
+        value = Cell_value.Text text
+        style = Text_style.regular
+    }
         
     let from_table_with_colored_numbers
         (rows: (int*Color) list list)

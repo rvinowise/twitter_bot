@@ -31,35 +31,21 @@ module Color =
             Green = float32 color.g
         )
         
-    let coefficient_between_values
-        (value_from: int)
-        (value_to: int)
-        (value_between: int)
-        =
-        float(value_between-value_from)
-        /
-        float(value_to-value_from)
+    
 
     
-    let cell_color_for_value
-        (color_from:Color)
-        (color_to:Color)
-        (value_from: int)
-        (value_to: int)
-        (value_between: int)
+    let mix_two_colors
+        (added_color:Color)
+        (amount: float)
+        (base_color:Color)
         =
-        let multiplier_to =
-            coefficient_between_values
-                value_from
-                value_to
-                value_between
-        let multiplier_from = 1.0-multiplier_to
-        
+        let multiplier_from = 1.0-amount
         {
-            r=color_from.r * multiplier_from + color_to.r*multiplier_to
-            g=color_from.g * multiplier_from + color_to.g*multiplier_to
-            b=color_from.b * multiplier_from + color_to.b*multiplier_to
+            r=base_color.r * multiplier_from + added_color.r*amount
+            g=base_color.g * multiplier_from + added_color.g*amount
+            b=base_color.b * multiplier_from + added_color.b*amount
         }
+    
         
        
         

@@ -190,14 +190,7 @@ module Social_activity_database =
     
     
         
-    let read_user_names_from_handles
-        (db_connection: NpgsqlConnection)
-        =
-        db_connection.Query<Db_twitter_user>(
-            @"select * from user_name"
-        )
-        |>Seq.map(fun user->User_handle user.handle, user.name)
-        |>Map.ofSeq
+    
     
     
         

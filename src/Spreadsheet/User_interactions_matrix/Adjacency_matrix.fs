@@ -12,6 +12,61 @@ type Interaction_colorscheme = {
 
 module Adjacency_matrix =
     
+    let likes_color = {r=1;g=0;b=0}
+    let reposts_color = {r=0;g=1;b=0}
+    let replies_color = {r=0.2;g=0.2;b=1}
+    
+    let enhancing_average_values = 0.2
+    
+    let coefficient_between_values
+        (min_value: int)
+        (max_value: int)
+        (average_value: int)
+        (value_between: int)
+        =
+        let our_value_from_zero = value_between-min_value
+        let max_from_zero = max_value-min_value
+        
+        let average_value_coefficient =
+            float(average_value-min_value)
+            /
+            float(max_from_zero)
+            
+        let pure_value_coefficient =
+            float(our_value_from_zero)
+            /
+            float(max_from_zero)
+        
+        let enhancing_because_average =
+            if value_between = min_value then
+                0.0
+            else
+                abs(average_value_coefficient-pure_value_coefficient) * enhancing_average_values
+        
+        pure_value_coefficient + enhancing_because_average
+        
+    let cell_color_for_value
+        (min_color:Color)
+        (max_color:Color)
+        (min_value: int)
+        (max_value: int)
+        (average_value: int)
+        (value_between: int)
+        =
+        if value_between > 0 then
+            () //test
+            
+        let multiplier_to =
+            coefficient_between_values
+                min_value
+                max_value
+                average_value
+                value_between
+        
+        Color.mix_two_colors
+            max_color
+            multiplier_to
+            min_color
     
     let map_from_seq_preferring_last
         items
@@ -42,10 +97,30 @@ module Adjacency_matrix =
         )|>Map.ofSeq
     
     
+    let min_max_average_values
+        (items: int seq)
+        =
+        Seq.min items,
+        Seq.max items,
+        items
+        |>Seq.map float
+        |>Seq.average
+        |>int
     
-    let interactions_to_intensity_colors
+    let border_and_average_interactions
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
-        (colorscheme:Interaction_colorscheme)
+        =
+        let interactions =
+            user_interactions
+            |>Map.toSeq
+            |>Seq.collect(fun (user,interactions) ->
+                interactions
+                |>Map.values
+            )
+        min_max_average_values interactions
+    
+    let border_and_average_interactions_with_others
+        (user_interactions: Map<User_handle, Map<User_handle, int>>)
         =
         let interactions_with_others =
             user_interactions
@@ -55,6 +130,12 @@ module Adjacency_matrix =
                 |>Map.remove user
                 |>Map.values
             )
+            
+        min_max_average_values interactions_with_others
+    
+    let border_and_average_interactions_with_oneself
+        (user_interactions: Map<User_handle, Map<User_handle, int>>)
+        =
         let interactions_with_oneself =
             user_interactions
             |>Map.toSeq
@@ -63,23 +144,27 @@ module Adjacency_matrix =
                 |>Map.tryFind user
                 |>Option.defaultValue 0
             )
-        
-        let min_interaction = Seq.min interactions_with_others
-        let max_interaction = Seq.max interactions_with_others
+            
+        min_max_average_values interactions_with_oneself
+    
+    let interactions_to_intensity_colors_functions
+        (user_interactions: Map<User_handle, Map<User_handle, int>>)
+        (colorscheme:Interaction_colorscheme)
+        =
         
         let interaction_to_intensity_color =
-            Color.cell_color_for_value
+            user_interactions
+            |>border_and_average_interactions_with_others
+            |||>cell_color_for_value
                 colorscheme.min_color
                 colorscheme.max_color
-                min_interaction
-                max_interaction
         
         let self_interaction_to_intensity_color =
-            Color.cell_color_for_value
+            user_interactions
+            |>border_and_average_interactions_with_oneself
+            |||>cell_color_for_value
                 {r=1;g=1;b=1}
                 {r=0.5;g=0.5;b=0.5}
-                (Seq.min interactions_with_oneself)
-                (Seq.max interactions_with_oneself)
         
         interaction_to_intensity_color,
         self_interaction_to_intensity_color
@@ -117,103 +202,51 @@ module Adjacency_matrix =
         )
     
     
-    
-   
-    
+    let header_of_users all_sorted_users =
+        all_sorted_users
+        |>List.map (Googlesheet_for_twitter.hyperlink_to_twitter_user)
+        |>List.map (fun url -> {
+            Cell.value = Cell_value.Formula url
+            color = Color.white
+            style = Text_style.vertical
+        })
         
-    
-    
-    
-    
-    
-    [<Fact>]//(Skip="manual")
-    let ``try update_googlesheet``() =
-        //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
-        let likes_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=0
-            page_name="Likes"
-        }
-        let likes_colorscheme = {
-            min_color={r=1; g=1;b=1}
-            max_color={r=1; g=0;b=0}
-        }
-        
-        let reposts_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=2108706810
-            page_name="Reposts"
-        }
-        let reposts_colorscheme = {
-            min_color={r=1; g=1;b=1}
-            max_color={r=0; g=1;b=0}
-        }
-        
-        let replies_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=2007335692
-            page_name="Replies"
-        }
-        let replies_colorscheme = {
-            min_color={r=1; g=1;b=1}
-            max_color={r=0; g=0;b=1}
-        }
-        
-        let everything_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=1019851571
-            page_name="Everything"
-        }
+    let left_column_of_users all_sorted_users =
+        all_sorted_users
+        |>List.map (Googlesheet_for_twitter.hyperlink_to_twitter_user )
+        |>List.map (fun url -> {
+            Cell.value = Cell_value.Formula url
+            color = Color.white
+            style = Text_style.regular
+        })
+        |>List.append [{
+            Cell.value = Cell_value.Formula """=HYPERLINK("https://github.com/rvinowise/twitter_bot","src")"""
+            color = Color.white
+            style = Text_style.regular
+        }]
+
+
+    let compose_adjacency_matrix
+        all_sorted_users
+        rows_of_interactions
+        =
             
-        let database = Twitter_database.open_connection()
-        
-        let all_sorted_users =
-            Settings.Competitors.list
-            |>Scrape_list_members.scrape_twitter_list_members
-                (Browser.open_browser())
-            |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)
-        
-        let all_users = Set.ofList all_sorted_users
-        let user_names =
-            Social_activity_database.read_user_names_from_handles
-                database
-        
-        
-        let likes_interactions =
-            all_users
-            |>maps_of_user_interactions
-                (User_interaction.read_likes_by_user database)    
-        
-        let reposts_interactions =
-            all_users
-            |>maps_of_user_interactions
-                (User_interaction.read_reposts_by_user database)
-                
-        let replies_interactions =
-            all_users
-            |>maps_of_user_interactions
-                (User_interaction.read_replies_by_user database)  
-        
-        let update_googlesheet_with_interaction_type =
-            update_googlesheet
+        let header_of_users =
+            header_of_users
                 all_sorted_users
-                user_names
         
-        update_googlesheet_with_interaction_type
-            likes_googlesheet
-            likes_colorscheme
-            likes_interactions
-        update_googlesheet_with_interaction_type
-            reposts_googlesheet
-            reposts_colorscheme
-            reposts_interactions
-        update_googlesheet_with_interaction_type
-            replies_googlesheet
-            replies_colorscheme
-            replies_interactions
+        let left_column_of_users =
+            left_column_of_users
+                all_sorted_users
             
-        update_googlesheet_with_total_interactions
-            everything_googlesheet
-            likes_interactions
-            reposts_interactions
-            replies_interactions
+        (header_of_users::rows_of_interactions)
+        |>Table.transpose Cell.empty
+        |>List.append [left_column_of_users]
+        |>Table.transpose Cell.empty
+        
+
+    
+    
+    
+    
+    

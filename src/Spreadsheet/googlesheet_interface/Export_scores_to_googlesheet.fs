@@ -162,7 +162,7 @@ module Export_scores_to_googlesheet =
                 (sheet_row_of_header last_datetime days_in_past)
             ]
         let user_handles_to_names =
-            Social_activity_database.read_user_names_from_handles
+            Social_user_database.read_user_names_from_handles
                 db_connection
         let user_scores=
             current_scores

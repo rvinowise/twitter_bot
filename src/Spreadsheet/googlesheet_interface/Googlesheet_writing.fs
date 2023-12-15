@@ -152,12 +152,12 @@ module Googlesheet_writing =
         let max_y =    
             List.length table
         
-        let adding_dimensions_result =
-            write_sheet_dimension
-                service
-                sheet
-                max_x
-                max_y
+//        let adding_dimensions_result =
+//            write_sheet_dimension
+//                service
+//                sheet
+//                max_x
+//                max_y
         
         let updateCellsRequest =
             Request(

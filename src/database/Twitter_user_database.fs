@@ -9,6 +9,14 @@ open rvinowise.twitter.database
 
 module Social_user_database =
     
+    let read_user_names_from_handles
+        (db_connection: NpgsqlConnection)
+        =
+        db_connection.Query<Db_twitter_user>(
+            @"select * from user_name"
+        )
+        |>Seq.map(fun user->User_handle user.handle, user.name)
+        |>Map.ofSeq
         
     let update_user_names_in_db
         (db_connection:NpgsqlConnection)

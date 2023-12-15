@@ -35,20 +35,30 @@ module Adjacency_matrix_single =
         
         let min_interaction = Seq.min interactions_with_others
         let max_interaction = Seq.max interactions_with_others
+        let average_interaction =
+            interactions_with_others
+            |>Seq.map float
+            |>Seq.average|>int
         
         let interaction_to_intensity_color =
-            Color.cell_color_for_value
+            Adjacency_matrix.cell_color_for_value
                 colorscheme.min_color
                 colorscheme.max_color
                 min_interaction
                 max_interaction
+                average_interaction
         
         let self_interaction_to_intensity_color =
-            Color.cell_color_for_value
+            Adjacency_matrix.cell_color_for_value
                 {r=1;g=1;b=1}
                 {r=0.5;g=0.5;b=0.5}
                 (Seq.min interactions_with_oneself)
                 (Seq.max interactions_with_oneself)
+                (
+                    interactions_with_oneself
+                    |>Seq.map float
+                    |>Seq.average|>int    
+                )
         
         interaction_to_intensity_color,
         self_interaction_to_intensity_color
@@ -78,7 +88,6 @@ module Adjacency_matrix_single =
         
     let update_googlesheet
         all_sorted_users
-        user_names
         googlesheet
         colorscheme
         user_interactions
@@ -94,48 +103,25 @@ module Adjacency_matrix_single =
             |>user_interactions_to_colored_values
                 interaction_to_intensity_color
                 self_interaction_to_intensity_color
-            
-            
-        let header_of_users =
-            all_sorted_users
-            |>List.map (Googlesheet_for_twitter.hyperlink_of_user user_names)
-            |>List.map (fun url -> {
-                Cell.value = Cell_value.Formula url
-                color = Color.white
-                style = Text_style.vertical
-            })
-            
-        let left_column_of_users =
-            all_sorted_users
-            |>List.map (Googlesheet_for_twitter.hyperlink_of_user user_names)
-            |>List.map (fun url -> {
-                Cell.value = Cell_value.Formula url
-                color = Color.white
-                style = Text_style.regular
-            })
-            |>List.append [{
-                Cell.value = Cell_value.Formula """=HYPERLINK("https://github.com/rvinowise/twitter_bot","src")"""
-                color = Color.white
-                style = Text_style.regular
-            }]
         
+        let all_sorted_handles =
+            all_sorted_users
+            |>List.map Twitter_user.handle
         
         let rows_of_interactions =
-            all_sorted_users
+            all_sorted_handles
             |>List.map (fun user ->
                 colored_interactions
                 |>Map.find user
                 |>Adjacency_matrix.row_of_interactions_for_user
-                      all_sorted_users
+                      all_sorted_handles
             )
         
-        (header_of_users::rows_of_interactions)
-        |>Table.transpose Cell.empty
-        |>List.append [left_column_of_users]
-        |>Table.transpose Cell.empty
+        Adjacency_matrix.compose_adjacency_matrix
+            all_sorted_users
+            rows_of_interactions
         |>Googlesheet_writing.write_table
             (Googlesheet.create_googlesheet_service())
             googlesheet
-        
     
     
