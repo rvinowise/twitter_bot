@@ -7,10 +7,10 @@ open rvinowise.twitter
 
 (*
 posted urls sometimes create a beautiful rectangle with details of that url:
-    Events, Spaces, External_websites  
+    Events, Spaces, External_websites, Broadcasts
 
 Media-items (images, videos and Gifs): 
-    scramble Events, Spaces, and External_websites (the link will be represented as plain text)
+    scramble Events, Spaces, External_websites, Broadcasts (the link will be represented as plain text)
     (in both, Main posts and Quoted posts) 
     but:
         both, Main post and its Quoted post, can have 4 media-items each;
@@ -26,7 +26,10 @@ Events:
 Spaces: 
     exist in quotations, if the main post doesn't have Media-items
 
-External_websites, Events and Spaces can't coexist with each other within one Article
+Broadcasts:
+    kind of exist in quotations, but look like a video (a media-item) without a poster
+
+External_websites, Events, Spaces and Broadcasts can't coexist with each other within one Article
     
 Quoted_post
     scramble External_websites and Events in the Main post, and can't have either themselves
@@ -200,9 +203,13 @@ type External_website = {
     obfuscated_url: string option
 }
 
+type Twitter_event_presenter =
+    |User of Twitter_user
+    |Company of string
+
 type Twitter_event = {
     id: Event_id
-    user: Twitter_user
+    presenter: Twitter_event_presenter
     title: string
 }
 
@@ -210,15 +217,15 @@ type Twitter_event = {
 type External_source_node =
     |Quoted_message of Html_node
     |Quoted_poll of Html_node
-    |External_website of Html_node
+    |External_website of Html_node*Html_node//card.wrapper and scard.layoutSmall nodes
     |Twitter_event of Html_node * Event_id
     
 module External_source_node =
-    let html_node (node:External_source_node) =
+    let root_html_node (node:External_source_node) =
         match node with
         |Quoted_message html
         |Quoted_poll html
-        |External_website html
+        |External_website (html,_)
         |Twitter_event (html,_) ->
             html
 

@@ -14,13 +14,27 @@ type Parsed_post_header = {
 
 module Parse_header =
     
-    let parse_post_header
+    let detach_post_header
         node //role=link for the quotation, or article for the main post
         =
-        let header_node =
+        let user_avatar_node =
+            node
+            |>Html_node.descendant "div[data-testid='Tweet-User-Avatar']"
+        
+        user_avatar_node
+        |>Html_node.detach_from_parent
+        |>ignore
+            
+        let rest_header_node =
             node
             |>Html_node.descendant "div[data-testid='User-Name']"
-        
+            
+        rest_header_node
+        |>Html_node.detach_from_parent
+    
+    let parse_post_header
+        header_node //div[data-testid='User-Name']
+        =
         let author_name =
             header_node
             |>Html_node.direct_children
@@ -61,5 +75,10 @@ module Parse_header =
             post_url=url
         }
         
-        
+    let detach_and_parse_header
+        node //role=link for the quotation, or article for the main post
+        =
+        node
+        |>detach_post_header
+        |>parse_post_header
     

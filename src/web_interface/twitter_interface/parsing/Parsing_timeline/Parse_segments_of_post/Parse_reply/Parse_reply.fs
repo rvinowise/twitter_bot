@@ -19,10 +19,10 @@ module Parse_reply =
         )
     
     let try_find_reply_header
-        quotation_node //role=link
+        node
         =
-        quotation_node
-        |>Html_node.descendants"div"
+        node
+        |>Html_node.descendants "div"
         |>List.filter (fun node ->
             node
             |>Html_node.direct_text = "Replying to "
@@ -31,7 +31,7 @@ module Parse_reply =
     
     let user_from_reply_header reply_header =
         reply_header
-        |>Html_node.first_descendants_with_css "span"
+        |>Html_node.descendants_from_highest_level "span"
         |>List.head
         |>Html_node.inner_text
         |>User_handle.trim_potential_atsign

@@ -1,0 +1,42 @@
+2023-12-14 04:33:39.523 +03:00 [INF] preparing a browser without tweaking it
+2023-12-14 04:33:39.680 +03:00 [INF] webdriver installation result: C:\prj\twitter_bot\bin\Debug\net7.0\webdriver\119.0.6045.105\X64\chromedriver.exe
+2023-12-14 04:33:53.878 +03:00 [INF] reading members of list 1692215865779892304 ... 
+2023-12-14 04:34:29.872 +03:00 [INF] list has 82 members... 
+2023-12-14 04:45:26.651 +03:00 [INF] preparing a browser without tweaking it
+2023-12-14 04:45:26.842 +03:00 [INF] webdriver installation result: C:\prj\twitter_bot\bin\Debug\net7.0\webdriver\119.0.6045.105\X64\chromedriver.exe
+2023-12-14 04:45:44.878 +03:00 [INF] reading members of list 1692215865779892304 ... 
+2023-12-14 04:46:26.010 +03:00 [INF] list has 82 members... 
+2023-12-14 06:11:10.430 +03:00 [INF] preparing a browser without tweaking it
+2023-12-14 06:11:10.599 +03:00 [INF] webdriver installation result: C:\prj\twitter_bot\bin\Debug\net7.0\webdriver\119.0.6045.105\X64\chromedriver.exe
+2023-12-14 06:11:25.106 +03:00 [INF] reading members of list 1692215865779892304 ... 
+2023-12-14 06:12:00.432 +03:00 [INF] list has 82 members... 
+2023-12-14 07:02:36.210 +03:00 [INF] preparing a browser without tweaking it
+2023-12-14 07:02:36.384 +03:00 [INF] webdriver installation result: C:\prj\twitter_bot\bin\Debug\net7.0\webdriver\119.0.6045.105\X64\chromedriver.exe
+2023-12-14 07:02:59.046 +03:00 [INF] reading members of list 1692215865779892304 ... 
+2023-12-14 07:04:19.547 +03:00 [INF] list has 82 members... 
+2023-12-15 05:28:45.625 +03:00 [INF] preparing a browser without tweaking it
+2023-12-15 05:28:46.262 +03:00 [INF] webdriver installation result: C:\prj\twitter_bot\bin\Debug\net7.0\webdriver\119.0.6045.105\X64\chromedriver.exe
+2023-12-15 05:29:13.768 +03:00 [INF] reading members of list 1692215865779892304 ... 
+2023-12-15 05:29:56.617 +03:00 [INF] list has 82 members... 
+2023-12-15 05:34:06.916 +03:00 [INF] preparing a browser without tweaking it
+2023-12-15 05:34:07.025 +03:00 [INF] webdriver installation result: C:\prj\twitter_bot\bin\Debug\net7.0\webdriver\119.0.6045.105\X64\chromedriver.exe
+2023-12-15 05:34:16.904 +03:00 [INF] reading members of list 1692215865779892304 ... 
+2023-12-15 05:34:50.451 +03:00 [INF] list has 82 members... 
+2023-12-16 10:30:10.382 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.456 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.576 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.576 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.642 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.642 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.926 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.932 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.969 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.970 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.995 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:10.995 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:11.106 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:11.107 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:11.238 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:11.238 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:11.302 +03:00 [ERR] expected one element, but there's 2
+2023-12-16 10:30:11.303 +03:00 [ERR] expected one element, but there's 2

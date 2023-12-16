@@ -95,9 +95,22 @@ module Adjacency_matrix_interface =
         ]
         |>List.map User_handle
     
+    let likes_color = {r=1;g=0;b=0}
+    let reposts_color = {r=0;g=1;b=0}
+    let replies_color = {r=0.2;g=0.2;b=1}
     
+    let interaction_type_from_db
+        all_user_handles
+        read_interactions
+        color
+        =
+        all_user_handles
+        |>Adjacency_matrix.maps_of_user_interactions
+            read_interactions    
+        |>Adjacency_matrix.interaction_type_for_colored_interactions
+            color
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {
@@ -105,29 +118,17 @@ module Adjacency_matrix_interface =
             page_id=0
             page_name="Likes"
         }
-        let likes_colorscheme = {
-            min_color={r=1; g=1;b=1}
-            max_color=Adjacency_matrix.likes_color
-        }
         
         let reposts_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2108706810
             page_name="Reposts"
         }
-        let reposts_colorscheme = {
-            min_color={r=1; g=1;b=1}
-            max_color=Adjacency_matrix.reposts_color
-        }
-        
+   
         let replies_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2007335692
             page_name="Replies"
-        }
-        let replies_colorscheme = {
-            min_color={r=1; g=1;b=1}
-            max_color=Adjacency_matrix.replies_color
         }
         
         let everything_googlesheet = {
@@ -170,40 +171,43 @@ module Adjacency_matrix_interface =
             Set.ofList all_sorted_handles
         
         let likes_interactions =
-            all_user_handles
-            |>Adjacency_matrix.maps_of_user_interactions
-                (User_interaction.read_likes_by_user database)    
+            interaction_type_from_db
+                all_user_handles
+                (User_interaction.read_likes_by_user database)
+                likes_color
         
         let reposts_interactions =
-            all_user_handles
-            |>Adjacency_matrix.maps_of_user_interactions
+            interaction_type_from_db
+                all_user_handles
                 (User_interaction.read_reposts_by_user database)
-                
+                reposts_color
+        
         let replies_interactions =
-            all_user_handles
-            |>Adjacency_matrix.maps_of_user_interactions
-                (User_interaction.read_replies_by_user database)  
+            interaction_type_from_db
+                all_user_handles
+                (User_interaction.read_replies_by_user database)
+                replies_color
+        
         
         let update_googlesheet_with_interaction_type =
             Adjacency_matrix_single.update_googlesheet
                 all_sorted_users
         
-//        update_googlesheet_with_interaction_type
-//            likes_googlesheet
-//            likes_colorscheme
-//            likes_interactions
+        update_googlesheet_with_interaction_type
+            likes_googlesheet
+            likes_interactions
         update_googlesheet_with_interaction_type
             reposts_googlesheet
-            reposts_colorscheme
             reposts_interactions
         update_googlesheet_with_interaction_type
             replies_googlesheet
-            replies_colorscheme
             replies_interactions
             
-//        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
-//            everything_googlesheet
-//            all_sorted_users
-//            likes_interactions
-//            reposts_interactions
-//            replies_interactions
+        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+            everything_googlesheet
+            all_sorted_users
+            [
+                likes_interactions;
+                reposts_interactions;
+                replies_interactions
+            ]

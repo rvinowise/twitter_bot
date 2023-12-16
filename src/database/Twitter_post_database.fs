@@ -265,24 +265,35 @@ module Twitter_post_database =
         (db_connection:NpgsqlConnection)
         (twitter_event: Twitter_event)
         =
+        let presenter_handle,presenter_name =
+            match twitter_event.presenter with
+            |User user ->
+                User_handle.value user.handle,
+                user.name
+            |Company name ->
+                "", name
+            
         db_connection.Query(
             $"insert into {tables.post.twitter_event} (
                 id,
-                host,
+                presenter_handle,
+                presenter_name,
                 title
             )
             values (
                 @id,
-                @host,
+                @presenter_handle,
+                @presenter_name,
                 @title
             )
             on conflict (id)
-            do update set (host, title)
-            = (@host, @title)
+            do update set (presenter_handle, presenter_name, title)
+            = (@presenter_handle, @presenter_name, @title)
             ",
             {|
                 id=twitter_event.id
-                host=twitter_event.user.handle
+                presenter_handle=presenter_handle
+                presenter_name=presenter_name
                 title=twitter_event.title
             |}
         ) |> ignore
@@ -692,7 +703,7 @@ module Twitter_post_database =
             |}
         )|>Seq.tryHead
         
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try read_last_visited_post``() =
         let result =
             read_newest_last_visited_post
@@ -702,7 +713,7 @@ module Twitter_post_database =
         ()
         
         
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``delete all posts from a user's timeline``()=
         let user = User_handle "TheHarrisSultan"
         let result =

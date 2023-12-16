@@ -36,6 +36,7 @@
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_reply\Parse_reply_in_quoted_post.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_reply\Parse_reply_in_main_post.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_external_source\Parse_twitter_audio_space.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_external_source\Parse_twitter_event.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_external_source\Parse_quoted_post.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_external_source\Parse_external_source.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_footer_with_stats.fs" />

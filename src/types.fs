@@ -41,6 +41,14 @@ module User_handle =
         $"{Twitter_settings.base_url}/{value handle}"        
     let handle_from_url user_url =
         User_handle (Uri(user_url).Segments|>Array.last)
+    
+    let try_handle_from_text (text:string) =
+        if Seq.tryHead text = Some '@' then
+            text[1..]
+            |>User_handle
+            |>Some
+        else
+            None
         
     let try_handle_from_url user_url =
         try

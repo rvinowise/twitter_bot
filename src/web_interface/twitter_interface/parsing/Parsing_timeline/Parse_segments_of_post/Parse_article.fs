@@ -26,7 +26,7 @@ module Parse_article =
     
     let is_pinned social_context_node =
         social_context_node
-        |>Html_node.first_descendants_with_css "span"
+        |>Html_node.descendants_from_highest_level "span"
         |>List.tryHead
         |>Option.map Html_node.inner_text
         |>Option.map ((=)"Pinned")
@@ -148,7 +148,7 @@ module Parse_article =
         
         let main_message =
             article_node
-            |>Parse_quoted_post.detach_nodes_with_images_outside_of_media_load
+            |>Parse_quoted_post.detach_message_node
             |>Option.map Post_message.from_html_node
             |>Option.defaultValue Post_message.empty
         
@@ -183,10 +183,12 @@ module Parse_article =
         thread
         (reposting_user: User_handle option)
         is_pinned
-        (header_node: Html_node)
         =
         let parsed_header =
-            Parse_header.parse_post_header header_node
+            Parse_header.detach_and_parse_header article_node
+        
+        //at this point the article doesn't have its header
+        
         let post_id =
             parsed_header.post_url
             |>function
@@ -195,7 +197,7 @@ module Parse_article =
                 |>Html_parsing.last_url_segment
                 |>int64|>Post_id
             |None ->
-                ("a post header doesn't have its url",header_node)
+                "a post header doesn't have its url"
                 |>Bad_post_exception
                 |>raise    
         
@@ -225,9 +227,7 @@ module Parse_article =
             Find_segments_of_post.top_level_segments_of_main_post article_node
         
         let header,post_id =
-            segment_nodes
-            |>List.head
-            |>parse_main_post_header
+            parse_main_post_header
                 article_node
                 thread
                 reposting_user

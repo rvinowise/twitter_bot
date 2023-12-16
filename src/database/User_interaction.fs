@@ -86,7 +86,7 @@ module User_interaction =
         )|>amounts_for_user_as_tuples
         
         
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try read_likes_from_user``()=
         let result = 
             read_replies_by_user
@@ -105,7 +105,7 @@ module User_interaction =
             """
         )
    
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try read_all_users``()=
         let result = 
             read_all_users

@@ -23,7 +23,7 @@ module Parse_twitter_user_briefing =
         let name briefing_node =
             briefing_node
             |>Html_node.descendant "div[data-testid='UserName']"
-            |>Html_node.first_descendants_with_css "span"
+            |>Html_node.descendants_from_highest_level "span"
             |>Html_node.should_be_single
             |>Html_parsing.readable_text_from_html_segments
             

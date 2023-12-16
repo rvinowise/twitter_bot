@@ -41,6 +41,7 @@ module Parse_timeline_cell =
         (post_node: Html_node)
         =
         Log.error $"""Exception: {exc.Message}
+            stacktrase: {exc.StackTrace}
             when parsing twitter post with html:
             {post_node.OuterHtml}"""
         |>ignore

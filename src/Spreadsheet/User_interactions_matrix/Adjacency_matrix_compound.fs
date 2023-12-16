@@ -5,16 +5,7 @@ open rvinowise.web_scraping
 open Xunit
 
 
-type Interaction_type = {
-    interactions: Map<User_handle, Map<User_handle, int>>
-    color: Color
-}
 
-type Interaction_cell = {
-    likes: int
-    reposts: int
-    replies: int
-}
 
 module Adjacency_matrix_compound =
         
@@ -50,27 +41,17 @@ module Adjacency_matrix_compound =
     let compound_interactions_to_intensity_colors_functions
         (interaction_types: Interaction_type list)
         =
-        let interactions_with_border_values =
-            interaction_types
-            |>List.map(fun interaction_type ->
-                interaction_type,
-                Adjacency_matrix.border_and_average_interactions
-                    interaction_type.interactions
-            )
         
         let interactions_to_color_coefficient =
-            interactions_with_border_values
-            |>List.map(fun (interaction_type, (min,max,average)) ->
-                Adjacency_matrix.coefficient_between_values min max average
+            interaction_types
+            |>List.map(fun {key_values_with_others = key_values} ->
+                Adjacency_matrix.coefficient_between_values key_values
             )
         
         
         let interaction_to_intensity_color
             (values: int list)
-            =
-            if values=[77;39;70] then
-                ()
-                
+            =             
             let color_multipliers =
                 values
                 |>List.mapi(fun index value ->
@@ -125,7 +106,7 @@ module Adjacency_matrix_compound =
                 |>List.map (fun other_user ->
                     let interactions =
                         interactions_types
-                        |>List.map (fun interaction_type -> interaction_type.interactions)
+                        |>List.map (fun interaction_type -> interaction_type.values)
                         |>interactions_between_users
                             user
                             other_user
@@ -146,28 +127,15 @@ module Adjacency_matrix_compound =
     let update_googlesheet_with_total_interactions
         googlesheet
         all_sorted_users
-        likes_interactions
-        reposts_interactions
-        replies_interactions
+        all_interaction_types
         =
         let values_to_text
             (interactions: int list)
             =
             $"{interactions[0]}\n{interactions[1]},{interactions[2]}"
         
-        [
-            {
-                interactions = likes_interactions;
-                color = Adjacency_matrix.likes_color
-            };{
-                interactions = reposts_interactions;
-                color = Adjacency_matrix.reposts_color
-            };{
-                interactions = replies_interactions;
-                color = Adjacency_matrix.replies_color
-            }
-        ]
-        |>update_googlesheet_with_compound_interactions
+        update_googlesheet_with_compound_interactions
             googlesheet
             all_sorted_users
             values_to_text
+            all_interaction_types

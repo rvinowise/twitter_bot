@@ -35,17 +35,12 @@ module Parse_quoted_post =
         |>Html_node.descend 1
         |>Html_node.direct_children
     
-    let detach_nodes_with_images_outside_of_media_load
-        quotation_node
+    let detach_message_node
+        article_node
         =
         let message_node =
-            quotation_node
+            article_node
             |>Html_node.try_descendant "div[data-testid='tweetText']"
-        
-        quotation_node
-        |>Html_node.descendant "div[data-testid='Tweet-User-Avatar']"
-        |>Html_node.detach_from_parent
-        |>ignore
         
         message_node //can have images which are emojis
         |>Option.map Html_node.detach_from_parent
@@ -55,7 +50,9 @@ module Parse_quoted_post =
         = 
         let parsed_header =
             quotation_node
-            |>Parse_header.parse_post_header
+            |>Parse_header.detach_and_parse_header
+        
+        //at this point, the header is removed from the quotation node
         
         let reply =
             Parse_reply_in_quoted_post.reply_of_quoted_post quotation_node
@@ -74,11 +71,11 @@ module Parse_quoted_post =
         
         let message =
             quotation_node
-            |>detach_nodes_with_images_outside_of_media_load
+            |>detach_message_node
             |>Option.map Post_message.from_html_node
             |>Option.defaultValue Post_message.empty
         
-        //at this point, user's avatar and the message are removed from the quotation node
+        //at this point, the message is removed from the quotation node
         
         let media_items =
             Parse_media.parse_media_from_stripped_post quotation_node
