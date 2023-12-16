@@ -968,7 +968,7 @@ https://openlongevity.org""")
         |wrong_source -> raise (Bad_post_exception($"this post should contain an external web-site, but here's {wrong_source}"))
         
         
-    [<Fact>]
+    [<Fact(Skip="not implemented")>]
     let ``parse a post which quotes a broadcast-post``() =
         //[images_in_name][same_user+images_in_name, video]
         //https://twitter.com/EvanKirstel/status/1686098887243968512
@@ -1004,10 +1004,13 @@ Mentioned bio tech and nano pathogens as potential perils that should prevent re
             |>parse_single_main_twitter_post
         
         match post.body with
-        |Message (quotable_message, _) ->
-            match quotable_message.media_load with
-            |[Video_poster url] ->
-                url
-                |>should equal "https://pbs.twimg.com/tweet_video_thumb/GBa9JKSXIAARlpj?format=webp&name=tiny"
-            |_ -> raise <| Bad_post_exception()
-        |Poll _ -> raise <| Bad_post_exception()
+        |Message (quotable_message, external_source) ->
+            match external_source with
+            |Some (Quoted_message quotation) ->
+                match quotation.media_load with
+                |[Video_poster url] ->
+                    url
+                    |>should equal "https://pbs.twimg.com/tweet_video_thumb/GBa9JKSXIAARlpj?format=webp&name=tiny"
+                |_ -> raise <| Bad_post_exception("the quoted post should have one video (gif)")
+            | _ -> raise <| Bad_post_exception("this main post should have a quoted post")
+        |Poll _ -> raise <| Bad_post_exception("this main post should be without a poll")

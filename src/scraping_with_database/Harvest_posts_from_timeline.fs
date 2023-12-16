@@ -287,7 +287,7 @@ module Harvest_posts_from_timeline =
             database
     
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try harvest_all_last_actions_of_users``()=
         //Likes of petrenko_ai are skipped
         //Likes of SciFi_by_Allen are skipped

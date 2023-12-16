@@ -19,7 +19,8 @@ module Parse_header =
         =
         let user_avatar_node =
             node
-            |>Html_node.descendant "div[data-testid='Tweet-User-Avatar']"
+            |>Html_node.descendants "div[data-testid='Tweet-User-Avatar']"
+            |>List.head
         
         user_avatar_node
         |>Html_node.detach_from_parent
@@ -27,7 +28,8 @@ module Parse_header =
             
         let rest_header_node =
             node
-            |>Html_node.descendant "div[data-testid='User-Name']"
+            |>Html_node.descendants "div[data-testid='User-Name']"
+            |>List.head
             
         rest_header_node
         |>Html_node.detach_from_parent
