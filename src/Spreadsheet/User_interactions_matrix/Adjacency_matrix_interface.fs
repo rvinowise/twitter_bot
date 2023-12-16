@@ -110,13 +110,18 @@ module Adjacency_matrix_interface =
         |>Adjacency_matrix.interaction_type_for_colored_interactions
             color
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=0
             page_name="Likes"
+        }
+        let likes2_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=301514205
+            page_name="Likes2"
         }
         
         let reposts_googlesheet = {
@@ -130,11 +135,21 @@ module Adjacency_matrix_interface =
             page_id=2007335692
             page_name="Replies"
         }
+        let replies2_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=1973553744
+            page_name="Replies2"
+        }
         
         let everything_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=1019851571
             page_name="Everything"
+        }
+        let everything2_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=2048215660
+            page_name="Everything2"
         }
             
         let database = Twitter_database.open_connection()
@@ -195,19 +210,40 @@ module Adjacency_matrix_interface =
         
         update_googlesheet_with_interaction_type
             likes_googlesheet
+            0.4
             likes_interactions
         update_googlesheet_with_interaction_type
-            reposts_googlesheet
-            reposts_interactions
-        update_googlesheet_with_interaction_type
-            replies_googlesheet
-            replies_interactions
+            likes2_googlesheet
+            0.0
+            likes_interactions
+        // update_googlesheet_with_interaction_type
+        //     reposts_googlesheet
+        //     reposts_interactions
+        // update_googlesheet_with_interaction_type
+        //     replies_googlesheet
+        //     0.4
+        //     replies_interactions
+        // update_googlesheet_with_interaction_type
+        //     replies2_googlesheet
+        //     0.0
+        //     replies_interactions
             
-        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
-            everything_googlesheet
-            all_sorted_users
-            [
-                likes_interactions;
-                reposts_interactions;
-                replies_interactions
-            ]
+        // Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+        //     everything_googlesheet
+        //     0.4
+        //     all_sorted_users
+        //     [
+        //         likes_interactions;
+        //         reposts_interactions;
+        //         replies_interactions
+        //     ]
+        //     
+        // Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+        //     everything2_googlesheet
+        //     0.0
+        //     all_sorted_users
+        //     [
+        //         likes_interactions;
+        //         reposts_interactions;
+        //         replies_interactions
+        //     ]

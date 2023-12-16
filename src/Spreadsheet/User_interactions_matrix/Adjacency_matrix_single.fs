@@ -36,18 +36,21 @@ module Adjacency_matrix_single =
     let update_googlesheet
         all_sorted_users
         googlesheet
+        amplification_of_average
         (interactions: Interaction_type)
         =
         let interaction_to_intensity_color =
             Adjacency_matrix.cell_color_for_value
                 Color.white
                 interactions.color
+                amplification_of_average
                 interactions.key_values_with_others 
         
         let self_interaction_to_intensity_color =
             Adjacency_matrix.cell_color_for_value
                 Color.white
                 {r=0.5;g=0.5;b=0.5}
+                amplification_of_average
                 interactions.key_values_with_oneself
         
         let all_sorted_handles =

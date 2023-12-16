@@ -39,13 +39,14 @@ module Adjacency_matrix_compound =
             base_color
     
     let compound_interactions_to_intensity_colors_functions
+        amplifier_of_average
         (interaction_types: Interaction_type list)
         =
         
         let interactions_to_color_coefficient =
             interaction_types
             |>List.map(fun {key_values_with_others = key_values} ->
-                Adjacency_matrix.coefficient_between_values key_values
+                Adjacency_matrix.coefficient_between_values amplifier_of_average key_values
             )
         
         
@@ -89,15 +90,14 @@ module Adjacency_matrix_compound =
         googlesheet
         all_sorted_users
         values_to_text
+        values_to_color
         (interactions_types: Interaction_type list)
         =
         let all_sorted_handles =
             all_sorted_users
             |>List.map Twitter_user.handle    
         
-        let values_to_color =
-            compound_interactions_to_intensity_colors_functions
-                interactions_types
+        
                 
         let rows_of_interactions =
             all_sorted_handles
@@ -126,6 +126,7 @@ module Adjacency_matrix_compound =
             
     let update_googlesheet_with_total_interactions
         googlesheet
+        amplifier_of_average
         all_sorted_users
         all_interaction_types
         =
@@ -134,8 +135,14 @@ module Adjacency_matrix_compound =
             =
             $"{interactions[0]}\n{interactions[1]},{interactions[2]}"
         
+        let values_to_color =
+            compound_interactions_to_intensity_colors_functions
+                amplifier_of_average
+                all_interaction_types
+        
         update_googlesheet_with_compound_interactions
             googlesheet
             all_sorted_users
             values_to_text
+            values_to_color
             all_interaction_types

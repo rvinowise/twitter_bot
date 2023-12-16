@@ -82,9 +82,9 @@ module Adjacency_matrix =
                 |>key_values_of_interactions
         }
      
-    let enhancing_average_values = 0.2
     
     let coefficient_between_values
+        amplifier_of_average
         (key_values: Key_values)
         (value_between: int)
         =
@@ -110,18 +110,20 @@ module Adjacency_matrix =
                 if value_between <= key_values.min then
                     0.0
                 else
-                    abs(average_value_coefficient-pure_value_coefficient) * enhancing_average_values
+                    amplifier_of_average / (abs(average_value_coefficient-pure_value_coefficient)+amplifier_of_average)
             
             pure_value_coefficient + enhancing_because_average
         
     let cell_color_for_value
         (min_color:Color)
         (max_color:Color)
+        amplification_of_average
         (key_values: Key_values)
         (value_between: int)
         =
         let multiplier_to =
             coefficient_between_values
+                amplification_of_average
                 key_values
                 value_between
         
