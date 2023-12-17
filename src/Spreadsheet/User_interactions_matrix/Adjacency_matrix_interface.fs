@@ -99,6 +99,26 @@ module Adjacency_matrix_interface =
     let reposts_color = {r=0;g=1;b=0}
     let replies_color = {r=0.2;g=0.2;b=1}
     
+    
+    let sorted_users_from_handles
+        database
+        all_sorted_handles
+        =
+        let user_names =
+            Social_user_database.read_user_names_from_handles
+                database
+        
+        all_sorted_handles
+        |>List.map (fun handle ->
+            {
+                handle= handle
+                name =
+                    (user_names
+                    |>Map.tryFind handle
+                    |>Option.defaultValue (User_handle.value handle))
+            }    
+        )
+    
     let interaction_type_from_db
         all_user_handles
         read_interactions
@@ -110,13 +130,92 @@ module Adjacency_matrix_interface =
         |>Adjacency_matrix.interaction_type_for_colored_interactions
             color
     
-    [<Fact(Skip="manual")>]//
+    
+    [<Fact>]//(Skip="manual")
+    let ``fill table with the test of color blending ``() =
+        let googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=2048215660
+            page_name="Everything2"
+        }
+        
+        let all_sorted_users =
+            List.init 30 (fun index ->
+                {
+                    handle= index|>string|>User_handle
+                    name= index|>string
+                }    
+            )
+            
+        let all_sorted_handles =
+            all_sorted_users
+            |>List.map (fun user -> user.handle)
+        
+        let likes_interactions =
+            all_sorted_handles
+            |>List.mapi (fun row user ->
+                user,
+                all_sorted_handles
+                |>List.mapi(fun column other_user ->
+                    other_user,
+                    row%10
+                )|>Map.ofList
+            )|>Map.ofList
+            |>Adjacency_matrix.interaction_type_for_colored_interactions
+                likes_color
+                
+        let reposts_interactions =
+            all_sorted_handles
+            |>List.mapi (fun row user ->
+                user,
+                all_sorted_handles
+                |>List.mapi(fun column other_user ->
+                    other_user,
+                    column%10
+                )|>Map.ofList
+            )|>Map.ofList
+            |>Adjacency_matrix.interaction_type_for_colored_interactions
+                reposts_color
+        
+        let square_side = 10
+        let replies_interactions =
+            all_sorted_handles
+            |>List.mapi (fun row user ->
+                user,
+                all_sorted_handles
+                |>List.mapi(fun column other_user ->
+                    other_user,
+                    (column/square_side) +
+                    (row/square_side)*
+                    (all_sorted_handles.Length/square_side)
+                )|>Map.ofList
+            )|>Map.ofList
+            |>Adjacency_matrix.interaction_type_for_colored_interactions
+                replies_color
+                
+        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+            googlesheet
+            0.0
+            all_sorted_users
+            [
+                likes_interactions;
+                reposts_interactions;
+                replies_interactions
+            ]
+        
+    
+    [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=0
             page_name="Likes"
+        }
+        let likes2_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=301514205
+            page_name="Likes2"
         }
         
         let reposts_googlesheet = {
@@ -130,11 +229,21 @@ module Adjacency_matrix_interface =
             page_id=2007335692
             page_name="Replies"
         }
+        let replies2_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=1973553744
+            page_name="Replies2"
+        }
         
         let everything_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=1019851571
             page_name="Everything"
+        }
+        let everything2_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=2048215660
+            page_name="Everything2"
         }
             
         let database = Twitter_database.open_connection()
@@ -151,21 +260,12 @@ module Adjacency_matrix_interface =
 //            |>List.map Twitter_user.handle
 //            |>Set.ofList
         
-        let user_names =
-            Social_user_database.read_user_names_from_handles
-                database
+        
         
         let all_sorted_users =
-            all_sorted_handles
-            |>List.map (fun handle ->
-                {
-                    handle= handle
-                    name =
-                        (user_names
-                        |>Map.tryFind handle
-                        |>Option.defaultValue (User_handle.value handle))
-                }    
-            )
+            sorted_users_from_handles
+                database
+                all_sorted_handles
         
         let all_user_handles =
             Set.ofList all_sorted_handles
@@ -195,16 +295,38 @@ module Adjacency_matrix_interface =
         
         update_googlesheet_with_interaction_type
             likes_googlesheet
+            0.4
+            likes_interactions
+        update_googlesheet_with_interaction_type
+            likes2_googlesheet
+            0
             likes_interactions
         update_googlesheet_with_interaction_type
             reposts_googlesheet
+            0
             reposts_interactions
         update_googlesheet_with_interaction_type
             replies_googlesheet
+            0
+            replies_interactions
+        update_googlesheet_with_interaction_type
+            replies2_googlesheet
+            0
             replies_interactions
             
         Adjacency_matrix_compound.update_googlesheet_with_total_interactions
             everything_googlesheet
+            0.4
+            all_sorted_users
+            [
+                likes_interactions;
+                reposts_interactions;
+                replies_interactions
+            ]
+            
+        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+            everything2_googlesheet
+            0
             all_sorted_users
             [
                 likes_interactions;
