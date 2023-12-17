@@ -304,15 +304,10 @@ module Harvest_posts_from_timeline =
                 (Browser.open_browser())
                 (Twitter_database.open_connection())
                 [
-                    User_handle "petrenko_ai", Timeline_tab.Likes
-                    User_handle "SciFi_by_Allen", Timeline_tab.Likes
-                    User_handle "EnriqueSegarra_", Timeline_tab.Likes
-                    User_handle "Timrael", Timeline_tab.Posts_and_replies
-                    User_handle "ValleeRl", Timeline_tab.Likes
                     User_handle "fedichev", Timeline_tab.Posts_and_replies
-                    User_handle "irat1onal", Timeline_tab.Likes
-                    User_handle "turchin", Timeline_tab.Posts_and_replies
                     User_handle "vadbars", Timeline_tab.Posts_and_replies
+                    User_handle "Timrael", Timeline_tab.Posts_and_replies
+                    User_handle "turchin", Timeline_tab.Posts_and_replies
                     
                     //User_handle "tehprom269887", Timeline_tab.Likes
                     
