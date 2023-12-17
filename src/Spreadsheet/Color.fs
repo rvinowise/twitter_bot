@@ -16,6 +16,7 @@ type Color = {
 module Color =
     
     let white = {r=1;g=1;b=1}
+    let black = {r=0;g=0;b=0}
     let to_googlesheet_color (color:Color) =
         
         Data.Color(

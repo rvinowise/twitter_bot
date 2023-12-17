@@ -14,14 +14,22 @@ module Adjacency_matrix_compound =
         (base_color: Color)
         (colors: (Color*float) list)
         =
-        let colors_amount =
-            colors
-            |>List.length
-            |>float
+        let colors_amount=
+            colors|>List.length|>float
+            
         let total_amount =
             colors
             |>List.map snd
             |>List.reduce (+)
+        
+//        let base_color =
+//            if total_amount > 1 then
+//                Color.black
+//            else
+//                Color.white
+        let darkness =
+            (max 0.0 (total_amount-1.0))*
+            (total_amount / colors_amount)
         
         colors
         |>List.fold(fun base_color (added_color, added_amount) ->
@@ -36,7 +44,9 @@ module Adjacency_matrix_compound =
                     added_color
                     added_amount
         )
-            base_color
+            Color.white
+        |>Color.mix_two_colors
+            Color.black darkness
     
     let compound_interactions_to_intensity_colors_functions
         amplifier_of_average

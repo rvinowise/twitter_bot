@@ -82,6 +82,7 @@ module Adjacency_matrix =
                 |>key_values_of_interactions
         }
      
+    let inline clamp minimum maximum value = value |> max minimum |> min maximum
     
     let coefficient_between_values
         amplifier_of_average
@@ -112,7 +113,8 @@ module Adjacency_matrix =
                 else
                     amplifier_of_average / (abs(average_value_coefficient-pure_value_coefficient)+amplifier_of_average)
             
-            pure_value_coefficient + enhancing_because_average
+            pure_value_coefficient// + enhancing_because_average
+            |>clamp 0 1
         
     let cell_color_for_value
         (min_color:Color)
