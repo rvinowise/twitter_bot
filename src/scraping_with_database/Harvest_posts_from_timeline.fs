@@ -182,7 +182,7 @@ module Harvest_posts_from_timeline =
         =
         Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
         
-        let is_finished = (fun _ -> false)
+        //let is_finished = (fun _ -> false)
         
         // let start_time = DateTime.Now
         // let is_finished = (fun _ ->
@@ -193,37 +193,46 @@ module Harvest_posts_from_timeline =
         //      else false
         // )
         //TEST
-//            let newest_last_visited_post =
-//                Twitter_post_database.read_newest_last_visited_post
-//                    database
-//                    tab
-//                    user
-//            let work_description =
-//                $"""harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"""
-//            
-//            match newest_last_visited_post with
-//            |Some last_post ->
-//                Log.info
-//                    $"""{work_description}
-//                    will stop when post "{Post_id.value last_post}" is reached"""
-//                (reached_last_visited_post last_post)
-//            |None->
-//                Log.info
-//                    $"""{work_description}
-//                    will stop when the timeline is ended"""
-//                (fun _ -> false)
+        let newest_last_visited_post =
+            Twitter_post_database.read_newest_last_visited_post
+                database
+                tab
+                user
+        let work_description =
+            $"""harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"""
+        
+        let is_finished = //standard function
+            match newest_last_visited_post with
+            |Some last_post ->
+                Log.info
+                    $"""{work_description}
+                    will stop when post "{Post_id.value last_post}" is reached"""
+                (reached_last_visited_post last_post)
+            |None->
+                Log.info
+                    $"""{work_description}
+                    will stop when the timeline is ended"""
+                (fun _ -> false)
+        
+        let mutable item_count = 0 //function to make up for lack of data (temp)
+        let is_finished = fun _ ->
+            item_count <- item_count + 1
+            if item_count >= 500 then
+                true
+            else
+                false
         
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
         
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser
         
-        // write_newest_post_on_timeline
-        //     browser
-        //     html_parsing_context
-        //     database
-        //     tab
-        //     user
+        write_newest_post_on_timeline
+            browser
+            html_parsing_context
+            database
+            tab
+            user
         
         harvest_timeline_tab_of_user
             browser

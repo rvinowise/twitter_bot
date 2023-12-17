@@ -153,7 +153,6 @@ module Scrape_dynamic_list =
               visible_skimmed_items
         |>List.ofArray 
     
-        //visible_skimmed_items|>List.ofArray //TEST
     
     let process_item_batch_providing_previous_items
         (context: Previous_cell)
