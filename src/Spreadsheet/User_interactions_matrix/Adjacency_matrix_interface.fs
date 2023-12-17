@@ -135,6 +135,11 @@ module Adjacency_matrix_interface =
     let ``fill table with the test of color blending ``() =
         let googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=1019851571
+            page_name="Everything"
+        }
+        let googlesheet2 = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2048215660
             page_name="Everything2"
         }
@@ -195,14 +200,24 @@ module Adjacency_matrix_interface =
                 
         Adjacency_matrix_compound.update_googlesheet_with_total_interactions
             googlesheet
-            0.0
+            2
+            0.3
             all_sorted_users
             [
-                likes_interactions;
                 reposts_interactions;
-                replies_interactions
+                replies_interactions;
+                likes_interactions;
             ]
-        
+        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+            googlesheet2
+            1.6
+            0.3
+            all_sorted_users
+            [
+                reposts_interactions;
+                replies_interactions;
+                likes_interactions;
+            ]
     
     [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
@@ -212,10 +227,10 @@ module Adjacency_matrix_interface =
             page_id=0
             page_name="Likes"
         }
-        let likes2_googlesheet = {
+        let likes_enhanced_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=301514205
-            page_name="Likes2"
+            page_name="Likes enhanced average"
         }
         
         let reposts_googlesheet = {
@@ -223,16 +238,21 @@ module Adjacency_matrix_interface =
             page_id=2108706810
             page_name="Reposts"
         }
+        let reposts_enhanced_googlesheet = {
+            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+            page_id=1761036256
+            page_name="Reposts enhanced average"
+        }
    
         let replies_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2007335692
             page_name="Replies"
         }
-        let replies2_googlesheet = {
+        let replies_enhanced_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=1973553744
-            page_name="Replies2"
+            page_name="Replies enhanced average"
         }
         
         let everything_googlesheet = {
@@ -240,10 +260,10 @@ module Adjacency_matrix_interface =
             page_id=1019851571
             page_name="Everything"
         }
-        let everything2_googlesheet = {
+        let everything_enhanced_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2048215660
-            page_name="Everything2"
+            page_name="Everything enhanced average"
         }
             
         let database = Twitter_database.open_connection()
@@ -293,40 +313,30 @@ module Adjacency_matrix_interface =
             Adjacency_matrix_single.update_googlesheet
                 all_sorted_users
         
+    
         update_googlesheet_with_interaction_type
             likes_googlesheet
+            3
             0.4
             likes_interactions
-        update_googlesheet_with_interaction_type
-            likes2_googlesheet
-            0
-            likes_interactions
+
         update_googlesheet_with_interaction_type
             reposts_googlesheet
-            0
+            3
+            0.4
             reposts_interactions
+
         update_googlesheet_with_interaction_type
             replies_googlesheet
-            0
+            3
+            0.4
             replies_interactions
-        update_googlesheet_with_interaction_type
-            replies2_googlesheet
-            0
-            replies_interactions
+            
             
         Adjacency_matrix_compound.update_googlesheet_with_total_interactions
             everything_googlesheet
+            3
             0.4
-            all_sorted_users
-            [
-                likes_interactions;
-                reposts_interactions;
-                replies_interactions
-            ]
-            
-        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
-            everything2_googlesheet
-            0
             all_sorted_users
             [
                 likes_interactions;
