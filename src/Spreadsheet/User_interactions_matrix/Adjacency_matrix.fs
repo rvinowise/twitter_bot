@@ -3,7 +3,7 @@
 open rvinowise.twitter
 open rvinowise.web_scraping
 open Xunit
-
+open System
 
 type Interaction_colorscheme = {
     min_color: Color
@@ -85,10 +85,14 @@ module Adjacency_matrix =
     let inline clamp minimum maximum value = value |> max minimum |> min maximum
     
     let coefficient_between_values
+        enhancing_accuracy
         amplifier_of_average
         (key_values: Key_values)
         (value_between: int)
         =
+        if value_between = 254 then
+            ()
+        
         if value_between <= key_values.min then
             0.0
         elif value_between >= key_values.max then
@@ -107,24 +111,39 @@ module Adjacency_matrix =
                 /
                 float(max_from_zero)
             
+            let maximal_difference =
+                if average_value_coefficient <= 0.5 then
+                    Math.Pow(-average_value_coefficient+2.0, enhancing_accuracy)
+                else
+                    Math.Pow(average_value_coefficient+1.0, enhancing_accuracy)
+                
+            let difference_with_average =
+                Math.Pow(
+                    abs(average_value_coefficient-pure_value_coefficient)+1.0,
+                    enhancing_accuracy
+                ) /
+                maximal_difference
+            
             let enhancing_because_average =
                 if value_between <= key_values.min then
                     0.0
                 else
-                    amplifier_of_average / (abs(average_value_coefficient-pure_value_coefficient)+amplifier_of_average)
+                    amplifier_of_average*difference_with_average
             
-            pure_value_coefficient// + enhancing_because_average
+            pure_value_coefficient + enhancing_because_average
             |>clamp 0 1
         
     let cell_color_for_value
         (min_color:Color)
         (max_color:Color)
+        amplifying_accuracy
         amplification_of_average
         (key_values: Key_values)
         (value_between: int)
         =
         let multiplier_to =
             coefficient_between_values
+                amplifying_accuracy
                 amplification_of_average
                 key_values
                 value_between

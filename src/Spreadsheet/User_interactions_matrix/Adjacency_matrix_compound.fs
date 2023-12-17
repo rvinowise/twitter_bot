@@ -31,6 +31,15 @@ module Adjacency_matrix_compound =
             (max 0.0 (total_amount-1.0))*
             (total_amount / colors_amount)
         
+            
+        let max_possible_darkness = colors_amount-1.0
+            
+        let darkness_coefficient =
+            max 0.0 (total_amount-1.0)
+        
+        let darkness_amount =
+            darkness_coefficient / max_possible_darkness
+        
         colors
         |>List.fold(fun base_color (added_color, added_amount) ->
             if total_amount > 1 then
@@ -46,9 +55,10 @@ module Adjacency_matrix_compound =
         )
             Color.white
         |>Color.mix_two_colors
-            Color.black darkness
+            Color.black darkness_amount
     
     let compound_interactions_to_intensity_colors_functions
+        amplifying_accuracy
         amplifier_of_average
         (interaction_types: Interaction_type list)
         =
@@ -56,7 +66,10 @@ module Adjacency_matrix_compound =
         let interactions_to_color_coefficient =
             interaction_types
             |>List.map(fun {key_values_with_others = key_values} ->
-                Adjacency_matrix.coefficient_between_values amplifier_of_average key_values
+                Adjacency_matrix.coefficient_between_values
+                    amplifying_accuracy
+                    amplifier_of_average
+                    key_values
             )
         
         
@@ -136,6 +149,7 @@ module Adjacency_matrix_compound =
             
     let update_googlesheet_with_total_interactions
         googlesheet
+        amplifying_accuracy
         amplifier_of_average
         all_sorted_users
         all_interaction_types
@@ -147,6 +161,7 @@ module Adjacency_matrix_compound =
         
         let values_to_color =
             compound_interactions_to_intensity_colors_functions
+                amplifying_accuracy
                 amplifier_of_average
                 all_interaction_types
         

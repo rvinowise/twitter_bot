@@ -25,6 +25,23 @@ module Googlesheet_writing =
         |Formula text ->
             ExtendedValue(FormulaValue = text)
     
+    let rather_dark (color:Color) =
+        let red_liteness = 1.5
+        let green_liteness = 1.6
+        let blue_liteness = 0.5
+        color.r*red_liteness+
+        color.g*green_liteness+
+        color.b*blue_liteness < 1.5
+    
+    let text_color_for_background
+        (background_color:Color)
+        =
+        if rather_dark background_color then
+            Color.white
+        else
+            Color.black
+        
+    
     let cell_to_google_cell
         (cell:Cell)
         =
@@ -39,6 +56,16 @@ module Googlesheet_writing =
                             Nullable -90
                         |Horizontal ->
                             Nullable 0
+                ),
+                
+                TextFormat = TextFormat(
+                    ForegroundColorStyle = ColorStyle (
+                        RgbColor = (
+                            cell.color
+                            |>text_color_for_background
+                            |>Color.to_google_color
+                        )
+                    )    
                 )
             ),
             UserEnteredValue = value_to_google_value cell.value
