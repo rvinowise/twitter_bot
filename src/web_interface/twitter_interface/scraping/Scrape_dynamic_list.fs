@@ -153,7 +153,6 @@ module Scrape_dynamic_list =
               visible_skimmed_items
         |>List.ofArray 
     
-        //visible_skimmed_items|>List.ofArray //TEST
     
     let process_item_batch_providing_previous_items
         (context: Previous_cell)
@@ -205,7 +204,7 @@ module Scrape_dynamic_list =
             if repetitions_left = 0 then
                 None
             else
-                Log.debug $"skim_and_scroll_iteration didn't find new items, attempts left={repetitions_left}; trying again "
+                //Log.debug $"skim_and_scroll_iteration didn't find new items, attempts left={repetitions_left}; trying again "
                 skim_and_scroll_iteration
                     wait_for_loading
                     skim_new_visible_items
