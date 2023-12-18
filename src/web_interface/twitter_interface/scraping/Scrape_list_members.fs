@@ -3,6 +3,7 @@
 open System
 open OpenQA.Selenium
 open SeleniumExtras.WaitHelpers
+open canopy.types
 open rvinowise.html_parsing
 open rvinowise.web_scraping
 
@@ -11,6 +12,18 @@ module Scrape_list_members =
     let wait_for_list_loading browser =
         "div[role='progressbar'] svg circle"
         |>Browser.wait_till_disappearance browser 10 |>ignore
+    
+    let focus_on_list_for_scrolling
+        browser
+        =
+        try
+            "div[data-testid='app-bar-close']"
+            |>Browser.focus_element browser
+        with
+        | :? CanopyException as exc ->
+            Log.error $"""failed at focusing element:
+            {exc.Message}"""
+            |>ignore
         
     let scrape_twitter_list_members browser list_id = 
         Log.info $"reading members of list {list_id} ... " 
@@ -23,8 +36,7 @@ module Scrape_list_members =
             Browser.try_element_reliably browser table_css
             |>Option.isSome
         then
-            "div[data-testid='app-bar-close']"
-            |>Browser.focus_element browser
+            focus_on_list_for_scrolling browser
 
             let users =
                 $"{table_css} div[data-testid='UserCell']"

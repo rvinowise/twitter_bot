@@ -204,7 +204,7 @@ module Scrape_dynamic_list =
             if repetitions_left = 0 then
                 None
             else
-                Log.debug $"skim_and_scroll_iteration didn't find new items, attempts left={repetitions_left}; trying again "
+                //Log.debug $"skim_and_scroll_iteration didn't find new items, attempts left={repetitions_left}; trying again "
                 skim_and_scroll_iteration
                     wait_for_loading
                     skim_new_visible_items

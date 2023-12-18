@@ -16,14 +16,14 @@ module Announce_user_interactions =
             |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)
             
             
-        // let users =
-        //     all_users
-        //     |>List.splitAt(
-        //         let last_harvested_user=
-        //             all_users
-        //             |>List.findIndex (fun user -> user = User_handle "ValleeRl")
-        //         last_harvested_user+1
-        //     )|>snd
+        let users =
+            all_users
+            |>List.splitAt(
+                let last_harvested_user=
+                    all_users
+                    |>List.findIndex (fun user -> user = User_handle "EricSiebert9")
+                last_harvested_user+1
+            )|>snd
             
         Log.info $"reading list of users took {DateTime.Now-before_scraping_users}"
         
@@ -32,7 +32,7 @@ module Announce_user_interactions =
         Harvest_posts_from_timeline.harvest_all_last_actions_of_users
             browser 
             database
-            all_users
+            users
             
         Log.info $"harvesting actions of users took {DateTime.Now-before_harvesting_actions}"
 //            
