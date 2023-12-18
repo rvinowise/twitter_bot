@@ -10,52 +10,7 @@ open Xunit
 module Adjacency_matrix_compound =
         
     
-    let mix_colors
-        (base_color: Color)
-        (colors: (Color*float) list)
-        =
-        let colors_amount=
-            colors|>List.length|>float
-            
-        let total_amount =
-            colors
-            |>List.map snd
-            |>List.reduce (+)
-        
-//        let base_color =
-//            if total_amount > 1 then
-//                Color.black
-//            else
-//                Color.white
-        let darkness =
-            (max 0.0 (total_amount-1.0))*
-            (total_amount / colors_amount)
-        
-            
-        let max_possible_darkness = colors_amount-1.0
-            
-        let darkness_coefficient =
-            max 0.0 (total_amount-1.0)
-        
-        let darkness_amount =
-            darkness_coefficient / max_possible_darkness
-        
-        colors
-        |>List.fold(fun base_color (added_color, added_amount) ->
-            if total_amount > 1 then
-                base_color
-                |>Color.mix_two_colors
-                    added_color
-                    (added_amount/(total_amount))
-            else
-                base_color
-                |>Color.mix_two_colors
-                    added_color
-                    added_amount
-        )
-            Color.white
-        |>Color.mix_two_colors
-            Color.black darkness_amount
+    
     
     let compound_interactions_to_intensity_colors_functions
         amplifying_accuracy
@@ -91,7 +46,7 @@ module Adjacency_matrix_compound =
             
             color_multipliers
             |>List.zip colors
-            |>mix_colors
+            |>Color.mix_colors
                 Color.white
                 
         interaction_to_intensity_color
@@ -133,7 +88,10 @@ module Adjacency_matrix_compound =
                         |>interactions_between_users
                             user
                             other_user
-                        
+                    if interactions = [0;0;8] then
+                        ()//test
+                    if interactions = [0;1;5] then
+                        ()//test
                     Cell.from_colored_text
                         (values_to_text interactions)
                         (values_to_color interactions)

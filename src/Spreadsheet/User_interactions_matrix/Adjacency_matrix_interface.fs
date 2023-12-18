@@ -135,14 +135,15 @@ module Adjacency_matrix_interface =
     let ``fill table with the test of color blending ``() =
         let googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=1019851571
-            page_name="Everything"
+            page_id=398318420
+            page_name="Color blending example"
         }
         let googlesheet2 = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=2048215660
-            page_name="Everything2"
+            page_id=1806921415
+            page_name="Color blending example2"
         }
+        
         
         let all_sorted_users =
             List.init 30 (fun index ->
@@ -200,24 +201,24 @@ module Adjacency_matrix_interface =
                 
         Adjacency_matrix_compound.update_googlesheet_with_total_interactions
             googlesheet
-            2
-            0.3
+            3
+            0.4
             all_sorted_users
             [
+                likes_interactions;
                 reposts_interactions;
                 replies_interactions;
-                likes_interactions;
             ]
-        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
-            googlesheet2
-            1.6
-            0.3
-            all_sorted_users
-            [
-                reposts_interactions;
-                replies_interactions;
-                likes_interactions;
-            ]
+        // Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+        //     googlesheet
+        //     3
+        //     0.4
+        //     all_sorted_users
+        //     [
+        //         reposts_interactions;
+        //         replies_interactions;
+        //         likes_interactions;
+        //     ]
     
     [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
