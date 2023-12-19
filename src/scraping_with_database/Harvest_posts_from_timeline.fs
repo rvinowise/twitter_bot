@@ -172,27 +172,30 @@ module Harvest_posts_from_timeline =
         =
         post.id = last_visited_post
     
-            
+    let finish_after_amount_of_invocations amount =
+        let mutable item_count = 0 
+        let is_finished = fun _ ->
+            item_count <- item_count + 1
+            item_count >= amount
+        is_finished
+        
+    let finish_after_time time =
+        let start_time = DateTime.Now
+        let is_finished = (fun _ ->
+             let current_time = DateTime.Now
+             if (current_time - start_time > TimeSpan.FromMinutes(5)) then
+                 Log.debug $"scraping time elapsed at {current_time}"
+                 true
+             else false
+        )
+        is_finished
     
-    let harvest_updates_on_timeline_of_user
-        browser
-        database
-        (tab: Timeline_tab)
-        user
+    let only_finish_when_no_posts_left =
+        (fun _ -> false)
+    
+    let finish_when_last_newest_post_reached
+        database tab user
         =
-        Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
-        
-        //let is_finished = (fun _ -> false)
-        
-        // let start_time = DateTime.Now
-        // let is_finished = (fun _ ->
-        //      let current_time = DateTime.Now
-        //      if (current_time - start_time > TimeSpan.FromMinutes(5)) then
-        //          Log.debug $"scraping time elapsed at {current_time}"
-        //          true
-        //      else false
-        // )
-        //TEST
         let newest_last_visited_post =
             Twitter_post_database.read_newest_last_visited_post
                 database
@@ -201,7 +204,7 @@ module Harvest_posts_from_timeline =
         let work_description =
             $"""harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"""
         
-        let is_finished = //standard function
+        let is_finished =
             match newest_last_visited_post with
             |Some last_post ->
                 Log.info
@@ -212,20 +215,31 @@ module Harvest_posts_from_timeline =
                 Log.info
                     $"""{work_description}
                     will stop when the timeline is ended"""
-                (fun _ -> false)
+                only_finish_when_no_posts_left
         
-        let mutable item_count = 0 //function to make up for lack of data (temp)
-        let is_finished = fun _ ->
-            item_count <- item_count + 1
-            if item_count >= 500 then
-                true
-            else
-                false
+        is_finished
+    
+    let reveal_timeline browser tab user=
+        Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
+        Reveal_user_page.surpass_content_warning browser
+    
+    let harvest_updates_on_timeline_of_user
+        browser
+        database
+        (tab: Timeline_tab)
+        user
+        =
+        Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
+        
         
         let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
         
-        Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
-        Reveal_user_page.surpass_content_warning browser
+        reveal_timeline browser tab user 
+        
+        let is_finished =
+            only_finish_when_no_posts_left
+            //finish_when_last_newest_post_reached database tab user
+        
         
         write_newest_post_on_timeline
             browser
