@@ -298,25 +298,19 @@ module Harvest_posts_from_timeline =
     
     [<Fact>]//(Skip="manual")
     let ``try harvest_all_last_actions_of_users``()=
-        //Likes of petrenko_ai are skipped
-        //Likes of SciFi_by_Allen are skipped
-        //"Likes" of user "EnriqueSegarra_"
-        //"Posts_and_replies" of user "Timrael" ?
-        //Likes of user ValleeRl (half way -- fail with a twitter-event)
-        //"Posts_and_replies" of user "fedichev" ?
-        //"Posts_and_replies" of user "turchin". (scraped enough, but not all) 70%
-        //"Posts_and_replies" of user "vadbars". (scraped enough, but not all) 70%
-        //"Likes" of user "irat1onal".
         
         let result =
             resilient_step_of_harvesting_timelines
                 (Browser.open_browser())
                 (Twitter_database.open_connection())
                 [
-                    User_handle "fedichev", Timeline_tab.Posts_and_replies
-                    User_handle "vadbars", Timeline_tab.Posts_and_replies
-                    User_handle "Timrael", Timeline_tab.Posts_and_replies
-                    User_handle "turchin", Timeline_tab.Posts_and_replies
+                    User_handle "richardDawkins", Timeline_tab.Posts_and_replies
+                    User_handle "sapinker", Timeline_tab.Posts_and_replies
+                    User_handle "PeterSinger", Timeline_tab.Posts_and_replies
+                    User_handle "danieldennett", Timeline_tab.Posts_and_replies
+
+                    User_handle "CosmicSkeptic", Timeline_tab.Posts_and_replies
+                    User_handle "seanmcarroll", Timeline_tab.Posts_and_replies
                     
                     //User_handle "tehprom269887", Timeline_tab.Likes
                     
