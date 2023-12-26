@@ -1,7 +1,5 @@
 ﻿namespace rvinowise.twitter
 
-open canopy.parallell.functions
-open rvinowise.html_parsing
 open rvinowise.web_scraping
 
 module Scrape_followers_network =

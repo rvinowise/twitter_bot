@@ -3,10 +3,6 @@
 open System
 open rvinowise.html_parsing
 open rvinowise.twitter
-open rvinowise.twitter.Parse_article
-
-
-
 
 
 
@@ -31,10 +27,6 @@ module Parse_timeline_cell =
         |>Html_node.inner_text = "Show more replies"
         
         
-    type Parsed_timeline_cell =
-    |Post of Main_post*Previous_cell
-    |Hidden_post of Previous_cell
-    |Error of string
     
     let report_error_when_parsing_post
         (exc: Exception)
@@ -50,24 +42,27 @@ module Parse_timeline_cell =
         previous_cell
         article_node
         =
-        try 
+        try
             article_node
             |>Parse_article.parse_twitter_article previous_cell
-            |>Parsed_timeline_cell.Post
+            |>Parsed_timeline_cell.Adjacent_post
         with
         | :? Bad_post_exception
         | :? ArgumentException as exc ->   
             report_error_when_parsing_post exc article_node
             Parsed_timeline_cell.Error exc.Message
  
-    let try_parse_cell
-        (previous_cell: Previous_cell)
+    let try_article_node_from_cell_node cell_node =
+        cell_node
+        |>Html_node.try_descendant "article[data-testid='tweet']"
+    
+    let parse_timeline_cell
+        (previous_cell: Parsed_timeline_cell)
         (html_cell: Html_node)
         =
         
         let article_node =
-            html_cell
-            |>Html_node.try_descendant "article[data-testid='tweet']"
+            try_article_node_from_cell_node html_cell
         
         match article_node with
         |Some article_node ->
@@ -78,10 +73,18 @@ module Parse_timeline_cell =
             if
                 cell_looks_like_hidden_replies html_cell
             then
-                Parsed_timeline_cell.Hidden_post previous_cell
+                previous_cell
+                |>Parsed_timeline_cell.try_post
+                |>function
+                |Some post ->
+                    Parsed_timeline_cell.Distant_connected_post post
+                |None ->
+                    "this cell contains hidden replies, but there's no post to which they reply"
+                    |>Parsed_timeline_cell.Error
             else
-                Parsed_timeline_cell.Error "a timeline cell has neither the article in it, nor hidden replies"
-                
+                "a timeline cell has neither the article in it, nor hidden replies"
+                |>Parsed_timeline_cell.Error
+        //returns: Adjacent_post, Distant_connected_post, Error
             
     
     

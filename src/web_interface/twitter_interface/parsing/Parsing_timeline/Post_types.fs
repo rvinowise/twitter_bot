@@ -268,6 +268,9 @@ module Main_post =
             quotable_message.header
         |Poll poll ->
             poll.quotable_part.header
+    
+    let author_handle post =
+        post|>header|>Post_header.author|>Twitter_user.handle
             
     let quotable_message post =
         match post.body with
@@ -321,17 +324,42 @@ module Main_post =
 
 
 
-type Previous_cell =
-    |Adjacent_post of Post_id * User_handle
-    |Distant_connected_message of Post_id * User_handle
+type Parsed_timeline_cell =
+    |Adjacent_post of Main_post
+    |Final_post of Main_post
+    |Distant_connected_post of Main_post
+    |Fail_loading_timeline
+    |Error of string
     |No_cell
 
-module Previous_cell =
-    let human_name (cell:Previous_cell) =
+module Parsed_timeline_cell =
+    
+    let try_post cell =
         match cell with
-        |Adjacent_post (post,author) ->
-            $"""Adjacent_post {Post_id.value post} from "{User_handle.value author}" """
-        |Distant_connected_message (post,author) ->
-            $"""Distant_connected_message {Post_id.value post} from "{User_handle.value author}" """
+        |Adjacent_post post
+        |Final_post post
+        |Distant_connected_post post ->
+            Some post
+        |Fail_loading_timeline|Error _ |No_cell ->
+            None
+    let post cell =
+        cell
+        |>try_post
+        |>function
+        |Some post -> post
+        |None -> raise (Bad_post_exception("timeline cell doesn't have a post"))
+    
+    let human_name (cell:Parsed_timeline_cell) =
+        match cell with
+        |Adjacent_post post ->
+            $"""Adjacent_post {post.id} from "{Main_post.author_handle post}" """
+        |Final_post post ->
+            $"""Final_post {post.id} from "{Main_post.author_handle post}" """
+        |Distant_connected_post post ->
+            $"""Distant_connected_message {post.id} from "{Main_post.author_handle post}" """
+        |Fail_loading_timeline ->
+            $"""Fail_loading_timeline"""
+        |Error message->
+            $"Error: {message}"
         |No_cell ->
             "No_cell"

@@ -5,11 +5,10 @@ open rvinowise.web_scraping
 
 
 
-module Surpass_distractions =
+module Twitter_notifications =
 
             
-    let surpass_cookies_agreement browser
-        =
+    let surpass_cookies_agreement browser =
         "div[data-testid='BottomBar'] div[role='button']"
         |>Browser.try_element browser
         |>function
@@ -18,7 +17,8 @@ module Surpass_distractions =
         
 
     
-    
+    let is_timeline_refusing_to_load browser =()
+        
 
   
 

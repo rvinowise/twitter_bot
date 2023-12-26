@@ -27,29 +27,7 @@ module Timeline_tab =
         |Likes -> "Likes"
         |Media -> "Media"
 
-module Scrape_posts_from_timeline =
-    
-    
-    
-    
-    let is_advertisement cell_node =
-        cell_node
-        |>Html_node.descendants "div[data-testid='placementTracking']"
-        <> []
-    
-    let cell_contains_post cell_node =
-        cell_node
-        |>is_advertisement|>not
-        &&
-        cell_node
-        |>Html_node.try_descendant "article[data-testid='tweet']"
-        |>Option.isSome
-    
-    let wait_for_timeline_loading browser =
-        //Browser.sleep 1
-        "div[role='progressbar']"
-        |>Browser.wait_till_disappearance browser 60 |>ignore 
-            
+
     
 
 

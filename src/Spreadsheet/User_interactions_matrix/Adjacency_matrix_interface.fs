@@ -131,7 +131,7 @@ module Adjacency_matrix_interface =
             color
     
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``fill table with the test of color blending ``() =
         let googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
@@ -220,7 +220,7 @@ module Adjacency_matrix_interface =
         //         likes_interactions;
         //     ]
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {

@@ -38,6 +38,7 @@ module Scrape_user_social_activity =
             "87.2M",87200000
             "4,383 posts",4383
             "10.7K posts",10700
+            "19.7K Likes", 19700
         ]|>List.map (fun (input,expected_number)->
             input
             |>Parsing_twitter_datatypes.try_parse_abbreviated_number
@@ -45,8 +46,9 @@ module Scrape_user_social_activity =
             | None -> raise (Exception())
             | Some result_number -> should equal expected_number result_number
         )
-        
-    let scrape_posts_amount browser =
+    
+    (* it can be Likes amount or Writings amount, depending on the opened Tab *)        
+    let try_scrape_posts_amount browser =
         let posts_qty_field =
             "div[aria-label='Home timeline'] div:has(>h2[role='heading']) > div[dir='ltr']"
             |>Browser.try_element browser
@@ -63,8 +65,7 @@ module Scrape_user_social_activity =
             |>Parsing_twitter_datatypes.try_parse_abbreviated_number 
     
     
-    
-    let scrape_acquaintances_amount_of_user browser user_handle link =
+    let try_scrape_acquaintances_amount_of_user browser user_handle link =
         let followers_qty_field = $"a[href='/{User_handle.value user_handle}/{link}'] span span"
         followers_qty_field
         |>Browser.try_element browser
@@ -78,17 +79,17 @@ module Scrape_user_social_activity =
             |>Browser.read followers_qty_field
             |>Parsing_twitter_datatypes.try_parse_abbreviated_number
     
-    let scrape_followers_amount_of_user browser user_handle =
-        scrape_acquaintances_amount_of_user browser user_handle "verified_followers"
+    let try_scrape_followers_amount_of_user browser user_handle =
+        try_scrape_acquaintances_amount_of_user browser user_handle "verified_followers"
     
-    let scrape_followees_amount_of_user browser user_handle =
-        scrape_acquaintances_amount_of_user browser user_handle "following"
+    let try_scrape_followees_amount_of_user browser user_handle =
+        try_scrape_acquaintances_amount_of_user browser user_handle "following"
     
     let scrape_user_social_activity browser user_handle =
         {
-            User_social_activity.posts_amount = scrape_posts_amount browser
-            followers_amount = scrape_followers_amount_of_user browser user_handle
-            followees_amount = scrape_followees_amount_of_user browser user_handle
+            User_social_activity.posts_amount = try_scrape_posts_amount browser
+            followers_amount = try_scrape_followers_amount_of_user browser user_handle
+            followees_amount = try_scrape_followees_amount_of_user browser user_handle
         }
             
    

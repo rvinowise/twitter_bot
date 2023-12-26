@@ -38,18 +38,32 @@ module Parse_reply_in_main_post=
         |>List.isEmpty|>not
     
     let reply_from_local_thread
-        (previous_post: Previous_cell)
+        (previous_cell: Parsed_timeline_cell)
         (article_html)
         =
         if
             post_has_linked_post_before article_html
         then
-            match previous_post with
-            |Adjacent_post (post,user) ->
-                Some {Reply.to_user = user; to_post=Some post; is_direct=true}
-            |Distant_connected_message (post,user) ->
-                Some {Reply.to_user = user; to_post=Some post; is_direct=false}
-            |No_cell -> None
+            match previous_cell with
+            |Adjacent_post post ->
+                Some {
+                    Reply.to_user = Main_post.author_handle post
+                    to_post=Some post.id
+                    is_direct=true
+                }
+            |Distant_connected_post post ->
+                Some {
+                    Reply.to_user = Main_post.author_handle post
+                    to_post=Some post.id
+                    is_direct=false
+                }
+            |No_cell
+            |Error _ ->
+                None
+            |Fail_loading_timeline|Final_post _ ->
+                $"type of timeline cell {Parsed_timeline_cell.human_name previous_cell} can't precede any other timeline cell"
+                |>Harvesting_exception
+                |>raise
         else
             None
     
@@ -91,7 +105,7 @@ module Parse_reply_in_main_post=
     let parse_reply_of_main_post
         has_social_context_header
         article_node
-        (previous_cell: Previous_cell)
+        previous_cell
         =
         let reply_header = 
             Parse_reply.try_find_reply_header

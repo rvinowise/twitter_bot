@@ -1,14 +1,9 @@
 ﻿namespace rvinowise.twitter
 
 open System
-open AngleSharp
-open BenchmarkDotNet.Engines
 open OpenQA.Selenium
 open Xunit
-open canopy.types
 open rvinowise.html_parsing
-open rvinowise.twitter.Parse_timeline_cell
-open rvinowise.twitter.Parse_article
 open rvinowise.web_scraping
 
 module Harvest_posts_from_timeline =
@@ -28,30 +23,40 @@ module Harvest_posts_from_timeline =
     
     let harvest_timeline_cell
         (write_post: Main_post -> unit)
-        (is_first_ignored_post: Main_post -> bool)
+        (is_finished: Main_post -> bool) // is it the first ignored post?
         previous_cell
         html_cell
         =
         let parsed_cell =
-            Parse_timeline_cell.try_parse_cell
+            Parse_timeline_cell.parse_timeline_cell
                 previous_cell
                 html_cell
         
         match parsed_cell with
-        |Parsed_timeline_cell.Post (post, cell_summary) ->
+        |Parsed_timeline_cell.Adjacent_post post ->
             if
-                is_first_ignored_post post
+                is_finished post
             then
                 None
             else
                 write_post post
-                Some cell_summary
-        |Hidden_post previous_cell ->
+                Some parsed_cell
+        |Distant_connected_post _ ->
             Some previous_cell
         |Error error ->
-            Log.error $"failed to harvest a cell from the timeline: {error}"|>ignore
-            Some Previous_cell.No_cell
-    
+            Log.error $"failed to parse a cell from the timeline: {error}"|>ignore
+            Some Parsed_timeline_cell.No_cell
+        
+        |Final_post _ ->
+            None
+        |Fail_loading_timeline ->
+            Log.error "failed to load the timeline"|>ignore
+            None
+        |No_cell ->
+            "a function which parses a timeline cell can't return No_cell as a result"
+            |>Harvesting_exception
+            |>raise
+            
     let harvest_timeline_cell_for_first_post
         database
         tab
@@ -60,16 +65,16 @@ module Harvest_posts_from_timeline =
         html_cell
         =
         let parsed_cell =
-            Parse_timeline_cell.try_parse_cell
+            Parse_timeline_cell.parse_timeline_cell
                 previous_cell
                 html_cell
         
         match parsed_cell with
-        |Parsed_timeline_cell.Post (post, cell_summary) ->
+        |Parsed_timeline_cell.Adjacent_post post ->
             if
                 post.is_pinned
             then
-                Some cell_summary
+                Some parsed_cell
             else
                 Twitter_post_database.write_newest_last_visited_post
                     database
@@ -77,35 +82,42 @@ module Harvest_posts_from_timeline =
                     user
                     post.id
                 
-                let author =
-                    post
-                    |>Main_post.header
-                    |>Post_header.author
-                
                 Log.info $"""
                 the newest post on timeline {Timeline_tab.human_name tab} of user {User_handle.value user}
-                is {Post_id.value post.id} by {User_handle.value author.handle}"""
+                is {Post_id.value post.id} by {Main_post.author_handle post}"""
                 
                 None
-                
-        |Hidden_post previous_cell ->
-            Some previous_cell
-        |Error error ->
-            Log.error $"failed to harvest a cell from the timeline: {error}"|>ignore
-            Some Previous_cell.No_cell
+        | _ ->
+            Some parsed_cell
             
-            
+    let is_advertisement cell_node =
+        cell_node
+        |>Html_node.descendants "div[data-testid='placementTracking']"
+        <> []
+    
+    let cell_contains_post cell_node =
+        cell_node
+        |>is_advertisement|>not
+        &&
+        cell_node
+        |>Html_node.try_descendant "article[data-testid='tweet']"
+        |>Option.isSome
+    
+    let wait_for_timeline_loading browser =
+        //Browser.sleep 1
+        "div[role='progressbar']"
+        |>Browser.wait_till_disappearance browser 60 |>ignore
+        
     let parse_timeline
-        (process_item: Previous_cell -> Html_node -> Previous_cell option)
+        (process_item: Parsed_timeline_cell -> Html_node -> Parsed_timeline_cell option)
         browser
         parsing_context
         scrolling_repetitions
         =
         
-        let wait_for_loading = (fun () -> Scrape_posts_from_timeline.wait_for_timeline_loading browser)
+        let wait_for_loading = (fun () -> wait_for_timeline_loading browser)
         let is_item_needed =
-            Html_node.from_html_string>>
-            Scrape_posts_from_timeline.cell_contains_post
+            is_advertisement>>not
         
         "div[data-testid='cellInnerDiv']"
         |>Scrape_dynamic_list.parse_dynamic_list_with_previous_item
@@ -133,7 +145,6 @@ module Harvest_posts_from_timeline =
                 Twitter_post_database.write_main_post    
                     database
         
-        
         let mutable item_count = 0
         let harvest_cell_with_counter item =
             item_count <- item_count+1
@@ -143,12 +154,13 @@ module Harvest_posts_from_timeline =
             harvest_cell_with_counter
             browser
             html_parsing_context
-            5
+            50
             
         Log.info $"""
         {item_count} posts have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".
         """
-   
+        item_count
+        
     let write_newest_post_on_timeline
         browser
         html_parsing_context
@@ -183,7 +195,7 @@ module Harvest_posts_from_timeline =
         let start_time = DateTime.Now
         let is_finished = (fun _ ->
              let current_time = DateTime.Now
-             if (current_time - start_time > TimeSpan.FromMinutes(5)) then
+             if (current_time - start_time > time) then
                  Log.debug $"scraping time elapsed at {current_time}"
                  true
              else false
@@ -223,6 +235,40 @@ module Harvest_posts_from_timeline =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         Reveal_user_page.surpass_content_warning browser
     
+        
+    
+    let check_insufficient_scraping browser tab user posts_found =
+        let minimum_posts_ratio =
+            [
+                (*70% of scraped likes, relative to the reported amount by twitter, is OK
+                possibly because liked Ads are skipped*)
+                Timeline_tab.Likes, 0.7
+                
+                (*posts_and_replies tab includes the posts to which the reply is made,
+                so, it normally has more posts than the targeted user wrote*)
+                Timeline_tab.Posts_and_replies, 1
+            ]|>Map.ofList
+        
+        let posts_supposed_amount =
+            Scrape_user_social_activity.try_scrape_posts_amount browser
+        match posts_supposed_amount with
+        |Some amount ->
+            if
+                (float posts_found)/(float amount) < (minimum_posts_ratio[tab])
+            then
+                $"""insufficient scraping of timeline {Timeline_tab.human_name tab} of user {User_handle.value user}:
+                twitter reports {posts_supposed_amount} posts, but only {posts_found} posts were found,
+                which is less than {minimum_posts_ratio[tab]*100.0} %%
+                """
+                |>Log.error|>ignore
+        |None ->
+            $"can't read posts amount from timeline {Timeline_tab.human_name tab} of user {User_handle.value user}"
+            |>Log.error|>ignore
+            
+        
+        //Log.error $"""insufficient scraping of timeline {tab}: found {posts_found}, but twitter reports {} """    
+            
+    
     let harvest_updates_on_timeline_of_user
         browser
         database
@@ -230,16 +276,13 @@ module Harvest_posts_from_timeline =
         user
         =
         Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
-        
-        
-        let html_parsing_context = BrowsingContext.New AngleSharp.Configuration.Default
+        let html_parsing_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
         
         reveal_timeline browser tab user 
         
         let is_finished =
             only_finish_when_no_posts_left
             //finish_when_last_newest_post_reached database tab user
-        
         
         write_newest_post_on_timeline
             browser
@@ -255,6 +298,8 @@ module Harvest_posts_from_timeline =
             is_finished
             tab
             user
+        |>check_insufficient_scraping browser tab user
+        
         
         ()
     
@@ -310,23 +355,51 @@ module Harvest_posts_from_timeline =
             database
     
     
-    [<Fact>]//(Skip="manual")
-    let ``try harvest_all_last_actions_of_users``()=
+    [<Fact(Skip="manual")>]//
+    let ``try harvest_all_last_actions_of_users (specific tabs)``()=
         
-        let result =
-            resilient_step_of_harvesting_timelines
-                (Browser.open_browser())
-                (Twitter_database.open_connection())
+        resilient_step_of_harvesting_timelines
+            (Browser.open_browser())
+            (Twitter_database.open_connection())
+            [
+                User_handle "davidasinclair", Timeline_tab.Posts_and_replies
+//                    User_handle "BasedBeffJezos", Timeline_tab.Posts_and_replies
+//                    User_handle "PeterDiamandis", Timeline_tab.Posts_and_replies
+//                    User_handle "sama", Timeline_tab.Posts_and_replies
+//                    User_handle "lexfridman", Timeline_tab.Posts_and_replies
+//                    
+//                    
+//                    User_handle "richardDawkins", Timeline_tab.Likes
+//                    User_handle "sapinker", Timeline_tab.Likes
+//                    User_handle "PeterSinger", Timeline_tab.Likes
+//                    User_handle "danieldennett", Timeline_tab.Likes
+//
+//                    User_handle "CosmicSkeptic", Timeline_tab.Likes
+//                    User_handle "seanmcarroll", Timeline_tab.Likes
+//                    User_handle "seanmcarroll", Timeline_tab.Posts_and_replies
+                
+                
+            ]
+        
+    [<Fact(Skip="manual")>]//
+    let ``try harvest_all_last_actions_of_users (both tabs)``()=
+        let user_timelines =
+            [
+                 "davidasinclair"
+                 "BasedBeffJezos"
+                 "PeterDiamandis"
+                 "sama"
+                 "fedichev"
+            ]
+            |>List.map User_handle
+            |>List.collect (fun user ->
                 [
-                    User_handle "richardDawkins", Timeline_tab.Posts_and_replies
-                    User_handle "sapinker", Timeline_tab.Posts_and_replies
-                    User_handle "PeterSinger", Timeline_tab.Posts_and_replies
-                    User_handle "danieldennett", Timeline_tab.Posts_and_replies
-
-                    User_handle "CosmicSkeptic", Timeline_tab.Posts_and_replies
-                    User_handle "seanmcarroll", Timeline_tab.Posts_and_replies
-                    
-                    //User_handle "tehprom269887", Timeline_tab.Likes
-                    
+                    user,Timeline_tab.Posts_and_replies;
+                    user,Timeline_tab.Likes
                 ]
-        ()
+            )
+        
+        resilient_step_of_harvesting_timelines
+            (Browser.open_browser())
+            (Twitter_database.open_connection())
+            user_timelines

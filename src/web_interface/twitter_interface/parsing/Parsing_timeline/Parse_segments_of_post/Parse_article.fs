@@ -178,6 +178,9 @@ module Parse_article =
             (try_parse_article_without_poll header)
         ]|>List.pick (fun parser -> parser article_node)
     
+    
+        
+    
     let parse_main_post_header
         article_node
         thread
@@ -193,9 +196,7 @@ module Parse_article =
             parsed_header.post_url
             |>function
             |Some url ->
-                url
-                |>Html_parsing.last_url_segment
-                |>int64|>Post_id
+                Parse_header.post_id_from_post_url url
             |None ->
                 "a post header doesn't have its url"
                 |>Bad_post_exception
@@ -214,7 +215,7 @@ module Parse_article =
         },post_id
         
     let parse_twitter_article
-        (thread: Previous_cell )
+        (previous_cell: Parsed_timeline_cell )
         (original_article_node:Html_node)
         =
         
@@ -229,7 +230,7 @@ module Parse_article =
         let header,post_id =
             parse_main_post_header
                 article_node
-                thread
+                previous_cell
                 reposting_user
                 is_pinned
         
@@ -243,14 +244,14 @@ module Parse_article =
                 header
                 article_node
         
-        let post_for_context =
-            Adjacent_post (post_id, header.author.handle)
+        let parsed_post =
+            {
+                Main_post.id=post_id
+                body=post_body
+                stats=post_stats
+                reposter=reposting_user
+                is_pinned = is_pinned
+            }
         
-        {
-            Main_post.id=post_id
-            body=post_body
-            stats=post_stats
-            reposter=reposting_user
-            is_pinned = is_pinned
-        },post_for_context
+        parsed_post
         

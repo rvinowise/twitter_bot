@@ -43,7 +43,7 @@ module Harvest_followers_network =
         user
         =
         Log.important $"harvesting user {user}"
-        Surpass_distractions.surpass_cookies_agreement browser
+        Twitter_notifications.surpass_cookies_agreement browser
         harvest_top_of_user_page
             parsing_context
             browser
