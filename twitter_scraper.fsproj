@@ -90,6 +90,8 @@
     
     <Folder Include="src\web_interface" />
     
+    <Compile Include="src\visualisation\Twitter_network.fs" />
+    
     
     <Compile Include="Program.fs" />
   </ItemGroup>
@@ -144,6 +146,8 @@
     <PackageReference Include="FSharp.Configuration" Version="2.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
 
+    <!--visualisation-->
+    <PackageReference Include="Plotly.NET" Version="4.2.0" />
 
   </ItemGroup>
 
