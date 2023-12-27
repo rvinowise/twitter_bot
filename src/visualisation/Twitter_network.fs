@@ -35,7 +35,7 @@ module Twitter_network =
                 0
         )
         
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try draw_chart (focus on days)``() =
         
         let db_connection = Twitter_database.open_connection()
@@ -75,7 +75,7 @@ module Twitter_network =
         |>Chart.show        
     
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try draw_chart (focus on datapoints)``() =
         
         let db_connection = Twitter_database.open_connection()

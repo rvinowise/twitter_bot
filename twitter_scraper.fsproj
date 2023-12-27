@@ -25,6 +25,9 @@
     
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_twitter_datatypes.fs" />
     
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_user\Parse_twitter_user.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_user\Parse_twitter_user_briefing.fs" />
+    
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Find_segments_of_post.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Post_types.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_header.fs" />
@@ -43,11 +46,15 @@
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_timeline.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\general_posts.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\sequence_of_timeline_cells.fs" />
+    
+    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Read_updates_on_dynamic_list\Scrape_visible_part_of_list.fs" />
+    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Read_updates_on_dynamic_list\Read_list_updates.fs" />
+    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Read_updates_on_dynamic_list\Read_list_updates_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Read_updates_on_dynamic_list\Benchmark.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Scrape_dynamic_list.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Scrape_dymanic_list_tests.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Scrape_list_members.fs" />
-    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Read_updates_on_dynamic_list\Read_list_updates_as_simple_html.fs" />
-    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Read_updates_on_dynamic_list\Read_list_updates_with_item_ids.fs" />
+    
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Reveal_user_page.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_user_social_activity.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_user_briefing.fs" />

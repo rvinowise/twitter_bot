@@ -18,7 +18,7 @@ module Scrape_followers_network =
         
         let user_catalog_element = "div[aria-label='Home timeline'] div[data-testid='UserCell']"
         let catalogue =
-            Browser.try_element browser "div:has(>div[data-testid='cellInnerDiv'])"
+            Browser.try_element browser $"div:has(>{Twitter_settings.timeline_cell_css})"
         
         match catalogue with
         |Some _ ->

@@ -119,7 +119,7 @@ module Harvest_posts_from_timeline =
         let is_item_needed =
             is_advertisement>>not
         
-        "div[data-testid='cellInnerDiv']"
+        Twitter_settings.timeline_cell_css
         |>Scrape_dynamic_list.parse_dynamic_list_with_previous_item
             wait_for_loading
             is_item_needed

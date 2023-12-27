@@ -10,31 +10,7 @@ open Xunit
 
 module Scrape_dynamic_list =
     
-    let process_item_batch_providing_previous_items
-        context
-        items
-        process_item
-        =
-        let rec iteration_of_batch_processing
-            context
-            items
-            =
-            match items with
-            |next_item::rest_items ->
-                let new_context =
-                    process_item context next_item
-                match new_context with
-                |None->None
-                |Some context ->
-                    iteration_of_batch_processing
-                        context
-                        rest_items
-            |[]->Some context
-            
-        
-        iteration_of_batch_processing
-            context
-            items
+    
             
         
     let rec skim_and_scroll_iteration
@@ -64,10 +40,10 @@ module Scrape_dynamic_list =
         
         |new_skimmed_items ->
             let next_context =
-                process_item_batch_providing_previous_items
+                Read_list_updates.process_item_batch_providing_previous_items
+                    process_item
                     previous_context
                     new_skimmed_items
-                    process_item
                     
             match next_context with
             |Some next_context ->
@@ -91,21 +67,24 @@ module Scrape_dynamic_list =
         scrolling_repetitions
         item_selector
         =
-        let skim_new_visible_items =
-            Skim_dynamic_list_updates.skim_new_visible_items
-                browser
-                html_parsing_context
-                is_item_needed
-                item_selector
-                   
         let load_next_items =
             fun () -> Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
         
         let load_new_item_batch previous_items =
             wait_for_loading()
         
+            let visible_items =
+                Scrape_visible_part_of_list.scrape_items
+                    browser
+                    html_parsing_context
+                    is_item_needed
+                    item_selector
+            
             let new_skimmed_items =
-                skim_new_visible_items previous_items
+                Read_list_updates.new_items_from_visible_items
+                    Read_list_updates.cell_identity_from_postid
+                    previous_items
+                    visible_items
                 
             load_next_items()
             
@@ -134,12 +113,14 @@ module Scrape_dynamic_list =
             wait_for_loading()
             
             let new_skimmed_items =
-                Skim_dynamic_list_updates.skim_new_visible_items
+                Scrape_visible_part_of_list.scrape_items
                     browser
                     html_parsing_context
                     is_item_needed
                     item_selector
-                    all_items
+                |>Read_list_updates.new_items_from_visible_items
+                      Read_list_updates.cell_identity_from_html
+                      all_items
             
             if
                 not new_skimmed_items.IsEmpty

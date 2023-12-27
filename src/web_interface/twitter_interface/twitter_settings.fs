@@ -15,3 +15,6 @@ module Twitter_settings =
             base_url+relative_url
         else
             base_url+"/"+relative_url
+            
+    
+    let timeline_cell_css = "div[data-testid='cellInnerDiv']"
