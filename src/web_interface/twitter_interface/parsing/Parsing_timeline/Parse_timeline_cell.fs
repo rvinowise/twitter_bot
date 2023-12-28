@@ -19,14 +19,6 @@ so that different parts of the html-hierarchy could be sent as parameters
  *)
 module Parse_timeline_cell =
     
-    let cell_looks_like_hidden_replies
-        html_cell
-        =
-        html_cell
-        |>Html_node.descendant "span"
-        |>Html_node.inner_text = "Show more replies"
-        
-        
     
     let report_error_when_parsing_post
         (exc: Exception)
@@ -37,7 +29,7 @@ module Parse_timeline_cell =
             when parsing twitter post with html:
             {post_node.OuterHtml}"""
         |>ignore
-        
+    
     let try_parse_post
         previous_cell
         article_node
@@ -45,46 +37,72 @@ module Parse_timeline_cell =
         try
             article_node
             |>Parse_article.parse_twitter_article previous_cell
-            |>Parsed_timeline_cell.Adjacent_post
+            |>Thread_context.Post
         with
         | :? Bad_post_exception
         | :? ArgumentException as exc ->   
             report_error_when_parsing_post exc article_node
-            Parsed_timeline_cell.Error exc.Message
+            Thread_context.Empty_context
  
+    
     let try_article_node_from_cell_node cell_node =
         cell_node
         |>Html_node.try_descendant "article[data-testid='tweet']"
-    
-    let parse_timeline_cell
-        (previous_cell: Parsed_timeline_cell)
-        (html_cell: Html_node)
-        =
         
-        let article_node =
-            try_article_node_from_cell_node html_cell
         
-        match article_node with
+    let try_parse_cell_with_post previous_cell cell_node =
+        match
+            try_article_node_from_cell_node cell_node
+        with
         |Some article_node ->
-            try_parse_post
-                previous_cell
-                article_node
+            try_parse_post previous_cell article_node
+            |>Some
+        |None -> None
+    
+    let is_cell_hidden_replies
+        cell_node
+        =
+        cell_node
+        |>Html_node.descendants "span"
+        |>List.tryHead
+        |>function
+        |Some span_node ->
+            Html_node.inner_text span_node = "Show more replies"
+        |None -> false
+    
+    let try_parse_cell_with_hidden_thread_replies previous_cell cell_node =
+        if is_cell_hidden_replies cell_node then
+            previous_cell
+            |>Thread_context.try_post
+            |>function
+            |Some previous_post ->
+                previous_post
+                |>Thread_context.Hidden_thread_replies
+                |>Some
+            |None ->
+                "this cell contains hidden replies, but there's no post to which they reply"
+                |>Harvesting_exception
+                |>raise
+        else
+            None
+        
+    
+        
+    let parse_timeline_cell
+        (previous_cell: Thread_context)
+        (cell_node: Html_node)
+        =
+        let parsed_cell = 
+            [
+                (try_parse_cell_with_post previous_cell)
+                (try_parse_cell_with_hidden_thread_replies previous_cell)
+            ]|>List.tryPick (fun parser -> parser cell_node)
+        
+        match parsed_cell with
+        |Some timeline_cell ->
+            timeline_cell
         |None->
-            if
-                cell_looks_like_hidden_replies html_cell
-            then
-                previous_cell
-                |>Parsed_timeline_cell.try_post
-                |>function
-                |Some post ->
-                    Parsed_timeline_cell.Distant_connected_post post
-                |None ->
-                    "this cell contains hidden replies, but there's no post to which they reply"
-                    |>Parsed_timeline_cell.Error
-            else
-                "a timeline cell has neither the article in it, nor hidden replies"
-                |>Parsed_timeline_cell.Error
-        //returns: Adjacent_post, Distant_connected_post, Error
+            Thread_context.Empty_context
             
     
     

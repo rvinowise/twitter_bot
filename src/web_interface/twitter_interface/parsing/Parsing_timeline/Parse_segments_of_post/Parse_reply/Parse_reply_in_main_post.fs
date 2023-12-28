@@ -38,30 +38,27 @@ module Parse_reply_in_main_post=
         |>List.isEmpty|>not
     
     let reply_from_local_thread
-        (previous_cell: Parsed_timeline_cell)
+        (previous_cell: Thread_context)
         (article_html)
         =
         if
             post_has_linked_post_before article_html
         then
             match previous_cell with
-            |Adjacent_post post ->
+            |Post post ->
                 Some {
                     Reply.to_user = Main_post.author_handle post
                     to_post=Some post.id
                     is_direct=true
                 }
-            |Distant_connected_post post ->
+            |Hidden_thread_replies last_visible_post ->
                 Some {
-                    Reply.to_user = Main_post.author_handle post
-                    to_post=Some post.id
+                    Reply.to_user = Main_post.author_handle last_visible_post
+                    to_post=Some last_visible_post.id
                     is_direct=false
                 }
-            |No_cell
-            |Error _ ->
-                None
-            |Fail_loading_timeline|Final_post _ ->
-                $"type of timeline cell {Parsed_timeline_cell.human_name previous_cell} can't precede any other timeline cell"
+            |Thread_context.Empty_context ->
+                "a post has a linked thread-post before, but the previous cell context is Empty"
                 |>Harvesting_exception
                 |>raise
         else

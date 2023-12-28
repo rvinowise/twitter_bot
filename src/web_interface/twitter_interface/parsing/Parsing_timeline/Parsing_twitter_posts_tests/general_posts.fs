@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
+open NUnit.Framework.Constraints
 open Xunit
 open FsUnit
 open rvinowise.html_parsing
@@ -13,7 +14,7 @@ module general_posts =
     
     let parse_single_main_twitter_post article_html =
         Parse_article.parse_twitter_article
-            Parsed_timeline_cell.No_cell
+            Thread_context.Empty_context
             article_html
         
     [<Fact>]
@@ -334,7 +335,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
         
         post
         |>Main_post.media_load
-        |>should be Empty 
+        |>should be Empty
         
         
         let check_quoted_source (quoted_source:External_website) =
@@ -400,7 +401,7 @@ https://openlongevity.org""")
         
         post
         |>Main_post.media_load
-        |>should be Empty 
+        |>should be Empty
         
         
         let check_quoted_source (quoted_source:External_website) =
@@ -795,7 +796,7 @@ https://openlongevity.org""")
         
         post
         |>Main_post.media_load
-        |>should be Empty
+        |>should be TopLevelOperators.Empty
         
     [<Fact>]
     let ``parse a post which quotes another post with a twitter space (audio recording)``() =

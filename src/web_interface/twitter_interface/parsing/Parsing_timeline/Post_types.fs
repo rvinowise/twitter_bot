@@ -324,23 +324,19 @@ module Main_post =
 
 
 
-type Parsed_timeline_cell =
-    |Adjacent_post of Main_post
-    |Final_post of Main_post
-    |Distant_connected_post of Main_post
-    |Fail_loading_timeline
-    |Error of string
-    |No_cell
+type Thread_context =
+    |Post of Main_post
+    |Hidden_thread_replies of Main_post
+    |Empty_context
 
-module Parsed_timeline_cell =
+module Thread_context =
     
     let try_post cell =
         match cell with
-        |Adjacent_post post
-        |Final_post post
-        |Distant_connected_post post ->
+        |Post post
+        |Hidden_thread_replies post ->
             Some post
-        |Fail_loading_timeline|Error _ |No_cell ->
+        |Empty_context ->
             None
     let post cell =
         cell
@@ -349,17 +345,11 @@ module Parsed_timeline_cell =
         |Some post -> post
         |None -> raise (Bad_post_exception("timeline cell doesn't have a post"))
     
-    let human_name (cell:Parsed_timeline_cell) =
+    let human_name (cell:Thread_context) =
         match cell with
-        |Adjacent_post post ->
-            $"""Adjacent_post {post.id} from "{Main_post.author_handle post}" """
-        |Final_post post ->
-            $"""Final_post {post.id} from "{Main_post.author_handle post}" """
-        |Distant_connected_post post ->
-            $"""Distant_connected_message {post.id} from "{Main_post.author_handle post}" """
-        |Fail_loading_timeline ->
-            $"""Fail_loading_timeline"""
-        |Error message->
-            $"Error: {message}"
-        |No_cell ->
-            "No_cell"
+        |Post post ->
+            $"""Post {post.id} from "{Main_post.author_handle post}" """
+        |Hidden_thread_replies post ->
+            $"""Hidden_thread_replies with last visible post {post.id} from "{Main_post.author_handle post}" """
+        |Empty_context ->
+            "Empty thread context"

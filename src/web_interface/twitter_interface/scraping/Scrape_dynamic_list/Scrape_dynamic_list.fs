@@ -15,9 +15,9 @@ module Scrape_dynamic_list =
         
     let rec skim_and_scroll_iteration
         load_new_item_batch
-        (process_item: Parsed_timeline_cell -> Html_node -> Parsed_timeline_cell option)
+        (process_item: Thread_context -> Html_node -> Thread_context option)
         (previous_items: list<Html_node>) // sorted 0=top
-        (previous_context: Parsed_timeline_cell)
+        (previous_context: Thread_context)
         scrolling_repetitions
         repetitions_left
         =
@@ -94,7 +94,7 @@ module Scrape_dynamic_list =
             load_new_item_batch
             process_item
             []
-            Parsed_timeline_cell.No_cell
+            Thread_context.Empty_context
             scrolling_repetitions
             scrolling_repetitions
         |>ignore

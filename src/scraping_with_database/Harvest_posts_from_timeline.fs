@@ -27,35 +27,24 @@ module Harvest_posts_from_timeline =
         previous_cell
         html_cell
         =
-        let parsed_cell =
+        let thread_context =
             Parse_timeline_cell.parse_timeline_cell
                 previous_cell
                 html_cell
         
-        match parsed_cell with
-        |Parsed_timeline_cell.Adjacent_post post ->
+        match thread_context with
+        |Thread_context.Post post ->
             if
                 is_finished post
             then
                 None
             else
                 write_post post
-                Some parsed_cell
-        |Distant_connected_post _ ->
+                Some thread_context
+        |Hidden_thread_replies _ |Empty_context ->
             Some previous_cell
-        |Error error ->
-            Log.error $"failed to parse a cell from the timeline: {error}"|>ignore
-            Some Parsed_timeline_cell.No_cell
         
-        |Final_post _ ->
-            None
-        |Fail_loading_timeline ->
-            Log.error "failed to load the timeline"|>ignore
-            None
-        |No_cell ->
-            "a function which parses a timeline cell can't return No_cell as a result"
-            |>Harvesting_exception
-            |>raise
+
             
     let harvest_timeline_cell_for_first_post
         database
@@ -70,7 +59,7 @@ module Harvest_posts_from_timeline =
                 html_cell
         
         match parsed_cell with
-        |Parsed_timeline_cell.Adjacent_post post ->
+        |Thread_context.Post post ->
             if
                 post.is_pinned
             then
@@ -109,7 +98,7 @@ module Harvest_posts_from_timeline =
         |>Browser.wait_till_disappearance browser 60 |>ignore
         
     let parse_timeline
-        (process_item: Parsed_timeline_cell -> Html_node -> Parsed_timeline_cell option)
+        (process_item: Thread_context -> Html_node -> Thread_context option)
         browser
         parsing_context
         scrolling_repetitions
@@ -381,15 +370,11 @@ module Harvest_posts_from_timeline =
                 
             ]
         
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try harvest_all_last_actions_of_users (both tabs)``()=
         let user_timelines =
             [
-                 "davidasinclair"
-                 "BasedBeffJezos"
-                 "PeterDiamandis"
-                 "sama"
-                 "fedichev"
+                 "DrBrianKeating"
             ]
             |>List.map User_handle
             |>List.collect (fun user ->

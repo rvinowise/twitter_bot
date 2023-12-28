@@ -48,6 +48,9 @@ module Read_list_updates =
             |None -> None
         )
     
+    (*
+    empty cells may appear on the first page, and then disappear on the second page after scrolling
+    *)
     let check_that_items_without_id_are_such
         cell_identity
         new_items_after_last_previous_item_with_id
@@ -101,11 +104,6 @@ module Read_list_updates =
                     |>snd
                     |>List.tail
                 
-                check_that_items_without_id_are_such
-                    cell_identity
-                    new_items_after_last_previous_item_with_id
-                    skipped_amount
-                
                 new_items_after_last_previous_item_with_id
                 |>List.skip skipped_amount 
             |None ->
@@ -113,8 +111,9 @@ module Read_list_updates =
                 |>Log.error|>ignore
                 visible_items
         |None ->
-            "previous items don't have any ids, so all visible cells will be considered new"
-            |>Log.error|>ignore
+            if (not previous_items.IsEmpty) then
+                "previous items don't have any ids, so all visible cells will be considered new"
+                |>Log.error|>ignore
             visible_items
      
         
@@ -124,20 +123,20 @@ module Read_list_updates =
         items
         =
         let rec iteration_of_batch_processing
-            context
+            previous_item
             items
             =
             match items with
             |next_item::rest_items ->
                 let new_context =
-                    process_item context next_item
+                    process_item previous_item next_item
                 match new_context with
                 |None->None
                 |Some context ->
                     iteration_of_batch_processing
                         context
                         rest_items
-            |[]->Some context
+            |[]->Some previous_item
             
         
         iteration_of_batch_processing

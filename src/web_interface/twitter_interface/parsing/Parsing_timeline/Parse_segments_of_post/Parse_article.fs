@@ -174,7 +174,7 @@ module Parse_article =
         article_node
         =
         [
-            (try_parse_article_with_poll header);
+            (try_parse_article_with_poll header)
             (try_parse_article_without_poll header)
         ]|>List.pick (fun parser -> parser article_node)
     
@@ -215,7 +215,7 @@ module Parse_article =
         },post_id
         
     let parse_twitter_article
-        (previous_cell: Parsed_timeline_cell )
+        (previous_cell: Thread_context )
         (original_article_node:Html_node)
         =
         
