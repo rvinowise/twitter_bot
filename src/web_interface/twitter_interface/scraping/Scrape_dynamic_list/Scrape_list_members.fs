@@ -45,10 +45,10 @@ module Scrape_list_members =
                       (fun () -> wait_for_list_loading browser)
                 |>List.map Parse_twitter_user.parse_twitter_user_cell
                 
-            Log.important $"list has {Seq.length users} members... "
+            Log.important $"list has {Seq.length users} members"
             users
         else
-            Log.error "Timeline: Member List didn't appear, can't read users... "|>ignore
+            Log.error "Timeline: Member List didn't appear, can't read users"|>ignore
             []
 
     
