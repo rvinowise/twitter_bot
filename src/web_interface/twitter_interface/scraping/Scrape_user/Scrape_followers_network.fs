@@ -12,7 +12,11 @@ module Scrape_followers_network =
         
         
         
-    let scrape_user_catalog browser catalog_url = 
+    let scrape_user_catalog
+        browser
+        html_context
+        catalog_url 
+        = 
         Log.info $"reading elements of catalog {catalog_url} ... " 
         Browser.open_url catalog_url browser
         
@@ -25,6 +29,7 @@ module Scrape_followers_network =
             let items =
                 Scrape_dynamic_list.collect_all_html_items_of_dynamic_list
                     browser
+                    html_context
                     (fun()-> Scrape_list_members.wait_for_list_loading browser)
                     user_catalog_element
             Log.important $"catalogue has {Seq.length items} items"
@@ -35,24 +40,33 @@ module Scrape_followers_network =
     
     let scrape_following_of_user
         browser
+        html_context
         (url_from_user: User_handle -> string)
         starting_user
         =
         starting_user
         |>url_from_user
-        |>scrape_user_catalog browser
+        |>scrape_user_catalog browser html_context
         |>List.map Parse_twitter_user.parse_twitter_user_cell
     
     
     
-    let scrape_acquaintances_of_user browser root_user =
+    let scrape_acquaintances_of_user
+        browser
+        html_context
+        root_user 
+        =
         let followees =
             root_user
-            |>scrape_following_of_user browser
+            |>scrape_following_of_user
+                  browser
+                  html_context
                   followees_url
         let followers =
             root_user
-            |>scrape_following_of_user browser
+            |>scrape_following_of_user
+                  browser
+                  html_context
                   followers_url
         
         followees

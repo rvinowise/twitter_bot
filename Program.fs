@@ -36,7 +36,10 @@ module Program =
     let announce_competition_successes ()=
         try
             let browser = Browser.open_browser()
-            announce_score.scrape_and_announce_user_state browser
+            let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
+            announce_score.scrape_and_announce_user_state
+                browser
+                html_context
             Browser.close_browser browser
         with
         | :? WebDriverException as exc ->
@@ -60,6 +63,7 @@ module Program =
         try
             Announce_user_interactions.scrape_and_announce_user_interactions
                 (Browser.open_browser())
+                (AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default)
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't announce interactions between users (as an adjacency matrix) : {exc.Message}"""|>ignore

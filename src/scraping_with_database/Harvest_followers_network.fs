@@ -24,7 +24,9 @@ module Harvest_followers_network =
 
         let followees,followers =
             user
-            |>Scrape_followers_network.scrape_acquaintances_of_user browser
+            |>Scrape_followers_network.scrape_acquaintances_of_user
+                  browser
+                  parsing_context
         
         Social_following_database.write_social_connections_of_user
             db_connection   

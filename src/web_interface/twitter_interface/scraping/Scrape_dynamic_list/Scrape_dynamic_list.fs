@@ -101,11 +101,11 @@ module Scrape_dynamic_list =
     
     let collect_items_of_dynamic_list
         browser
+        html_parsing_context
         wait_for_loading
         is_item_needed
         item_selector
         =
-        let html_parsing_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
             
         let rec skim_and_scroll_iteration
             (all_items: list<Html_node>)
@@ -141,12 +141,14 @@ module Scrape_dynamic_list =
     
     let collect_all_html_items_of_dynamic_list
         browser
+        html_context
         wait_for_loading
         item_selector
         =
         item_selector
         |>collect_items_of_dynamic_list
             browser
+            html_context
             wait_for_loading
             all_items_are_needed
         

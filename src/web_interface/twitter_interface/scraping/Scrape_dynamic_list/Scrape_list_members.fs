@@ -27,11 +27,16 @@ module Scrape_list_members =
         //     {exc.Message}"""
         //     |>ignore
         
-    let scrape_twitter_list_members browser list_id = 
+    let scrape_twitter_list_members
+        browser
+        html_context
+        list_id 
+        = 
         Log.info $"reading members of list {list_id}" 
-        let members_url = 
+        
+        browser
+        |>Browser.open_url
             $"{Twitter_settings.base_url}/i/lists/{list_id}/members"
-        Browser.open_url members_url browser
         
         let table_css = "div[aria-label='Timeline: List members']"
         if
@@ -44,6 +49,7 @@ module Scrape_list_members =
                 $"{table_css} div[data-testid='UserCell']"
                 |>Scrape_dynamic_list.collect_all_html_items_of_dynamic_list
                       browser
+                      html_context
                       (fun () -> wait_for_list_loading browser)
                 |>List.map Parse_twitter_user.parse_twitter_user_cell
                 
@@ -54,14 +60,52 @@ module Scrape_list_members =
             []
 
     
-  
+    let scrape_twitter_list_members_amount
+        browser
+        html_context
+        list_id
+        = 
+        browser
+        |>Browser.open_url
+            $"{Twitter_settings.base_url}/i/lists/{list_id}"
+        
+        $"a[href='/i/lists/{list_id}/members']"
+        |>Browser.try_element browser 
+        |>function
+        |Some amount_node ->
+            amount_node
+            |>Html_node.from_scraped_node_and_context html_context
+            |>Html_node.descendents_without_deepening "span"
+            |>List.head
+            |>Html_node.inner_text
+            |>Parsing_twitter_datatypes.parse_abbreviated_number
+        |None ->
+            $"""List {list_id} doesn't have the claimed amount of members"""
+            |>Log.error|>ignore
+            0
 
 
-    
-    
-
-
-
-    
-
-
+    let scrape_twitter_list_members_and_amount
+        browser
+        html_context
+        list_id
+        =
+        let supposed_members =
+            scrape_twitter_list_members_amount
+                browser
+                html_context
+                list_id
+        
+        let members =
+            scrape_twitter_list_members
+                browser
+                html_context
+                list_id
+        
+        if
+            List.length members <> supposed_members
+        then
+            $"list {list_id} should have {supposed_members} members, but {List.length members} were scraped "
+            |>Log.error|>ignore
+            
+        members

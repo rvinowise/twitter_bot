@@ -6,13 +6,16 @@ open rvinowise.web_scraping
 
 module Announce_user_interactions =
     
-    let scrape_and_announce_user_interactions browser =
+    let scrape_and_announce_user_interactions
+        browser
+        html_context
+        =
         let database = Twitter_database.open_connection()
         
         let before_scraping_users = DateTime.Now
         let all_users =
             Settings.Competitors.list
-            |>Scrape_list_members.scrape_twitter_list_members browser
+            |>Scrape_list_members.scrape_twitter_list_members browser html_context
             |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)
             
             
@@ -48,6 +51,7 @@ module Announce_user_interactions =
 
     [<Fact(Skip="manual")>]//
     let ``try scrape_and_announce_user_interactions``()=
-        Browser.open_browser()
-        |>scrape_and_announce_user_interactions
+        scrape_and_announce_user_interactions
+            (Browser.open_browser())
+            (AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default)
 

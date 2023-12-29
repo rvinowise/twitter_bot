@@ -7,13 +7,15 @@ open rvinowise.web_scraping
 module announce_score =
     
    
-    let scrape_and_announce_user_state browser =
+    let scrape_and_announce_user_state browser html_context =
         
         
         let before_scraping_competitors = DateTime.Now
         let competitors =
             Settings.Competitors.list
-            |>Scrape_list_members.scrape_twitter_list_members browser
+            |>Scrape_list_members.scrape_twitter_list_members
+                  browser
+                  html_context
             |>List.map Twitter_profile_from_catalog.user
         
         Log.info $"reading list of competitors took {DateTime.Now-before_scraping_competitors}"

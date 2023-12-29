@@ -68,6 +68,7 @@ module Harvest_list_members =
             list
             |>Scrape_list_members.scrape_twitter_list_members
                 browser
+                parsing_context
         members
         |>List.iter(fun user_bio ->
             Harvest_user.harvest_top_of_user_page
@@ -171,8 +172,9 @@ module Harvest_list_members =
         let members_with_amount = 
             lists
             |>List.collect(fun list_id ->
-                Scrape_list_members.scrape_twitter_list_members
+                Scrape_list_members.scrape_twitter_list_members_and_amount
                     browser
+                    html_context
                     list_id
             )
             |>List.map _.user
