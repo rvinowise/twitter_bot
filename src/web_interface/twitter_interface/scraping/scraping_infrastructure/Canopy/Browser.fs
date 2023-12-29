@@ -208,7 +208,7 @@ module Browser =
         =
         browser
         |>element css_selector
-        |>fun element->element.SendKeys(Keys.Shift)
+        |>_.SendKeys(Keys.Shift)
     
     let wait_till_disappearance
         (browser: Browser)

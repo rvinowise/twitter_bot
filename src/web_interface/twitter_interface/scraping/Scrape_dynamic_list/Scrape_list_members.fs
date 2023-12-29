@@ -16,17 +16,19 @@ module Scrape_list_members =
     let focus_on_list_for_scrolling
         browser
         =
-        try
-            "div[data-testid='app-bar-close']"
-            |>Browser.focus_element browser
-        with
-        | :? CanopyException as exc ->
-            Log.error $"""failed at focusing element:
-            {exc.Message}"""
-            |>ignore
+        browser
+        |>Browser.send_key Keys.Tab
+        // try
+        //     "div[data-testid='app-bar-close']"
+        //     |>Browser.focus_element browser
+        // with
+        // | :? ElementNotInteractableException as exc ->
+        //     Log.error $"""failed at focusing element:
+        //     {exc.Message}"""
+        //     |>ignore
         
     let scrape_twitter_list_members browser list_id = 
-        Log.info $"reading members of list {list_id} ... " 
+        Log.info $"reading members of list {list_id}" 
         let members_url = 
             $"{Twitter_settings.base_url}/i/lists/{list_id}/members"
         Browser.open_url members_url browser
@@ -45,7 +47,7 @@ module Scrape_list_members =
                       (fun () -> wait_for_list_loading browser)
                 |>List.map Parse_twitter_user.parse_twitter_user_cell
                 
-            Log.important $"list has {Seq.length users} members"
+            Log.important $"list {list_id} has {Seq.length users} members"
             users
         else
             Log.error "Timeline: Member List didn't appear, can't read users"|>ignore

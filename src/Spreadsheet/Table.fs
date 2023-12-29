@@ -78,6 +78,25 @@ module Cell =
         value = Cell_value.Text text
         style = Text_style.regular
     }
+    let from_plain_integer number = {
+        Cell.color = Color.white
+        value = Cell_value.Integer number
+        style = Text_style.regular
+    }
+    
+    let from_url text url = {
+        Cell.color = Color.white
+        value =
+            Cell_value.Formula $"""=HYPERLINK("{url}", "{text}")"""
+        style = Text_style.regular
+    }
+    
+    let from_formula text url = {
+        Cell.color = Color.white
+        value =
+            Cell_value.Formula $"""=HYPERLINK("{url}", "{text}")"""
+        style = Text_style.regular
+    }
         
     let from_table_with_colored_numbers
         (rows: (int*Color) list list)

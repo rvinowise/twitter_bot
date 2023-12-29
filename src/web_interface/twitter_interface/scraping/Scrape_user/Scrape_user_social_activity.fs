@@ -24,13 +24,8 @@ module User_social_activity =
 
 
 
-
 module Scrape_user_social_activity =
 
-    
-    
-
-    
     [<Fact>]
     let ``try parse twitter-style numbers with final letters``()=
         [

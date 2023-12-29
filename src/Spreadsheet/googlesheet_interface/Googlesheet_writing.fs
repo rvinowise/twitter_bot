@@ -171,6 +171,9 @@ module Googlesheet_writing =
         (sheet: Google_spreadsheet)
         table
         =
+        $"""writing table to googlesheet {sheet.doc_id}, page {sheet.page_name}"""
+        |>Log.important
+        
         let max_x = 
             table
             |>List.head

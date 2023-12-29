@@ -118,7 +118,7 @@ module Export_scores_to_googlesheet =
             
             let user_to_score_on_that_day =
                 scores_on_day
-                |>Seq.map(fun row -> User_handle row.user_handle,row.amount)
+                |>Seq.map(fun row -> row.user_handle, row.amount)
                 |>Map.ofSeq
             
             map_user_to_full_score_history

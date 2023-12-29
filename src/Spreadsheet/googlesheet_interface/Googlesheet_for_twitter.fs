@@ -26,6 +26,10 @@ module Googlesheet_for_twitter =
             (User_handle.url_from_handle user.handle)
             user.name
             
+    let cell_for_twitter_user (user:Twitter_user) =
+        Cell.from_url
+            user.name
+            (User_handle.url_from_handle user.handle)
             
     let hyperlink_of_user
         usernames

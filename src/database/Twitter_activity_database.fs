@@ -5,6 +5,7 @@ namespace rvinowise.twitter
 open System
 open Dapper
 open Npgsql
+open Xunit
 open rvinowise.twitter.database
 open rvinowise.twitter.database.tables
 
@@ -178,6 +179,25 @@ module Social_activity_database =
             |}
         )
     
+    let read_last_amount_for_user
+        (db_connection: NpgsqlConnection)
+        (record_with_amounts: Social_activity_amounts)
+        (user: User_handle)
+        =
+        db_connection.Query<Amount_for_user>(
+            $"""select *
+                from {record_with_amounts}
+                where user_handle = @user_handle
+                order by datetime DESC limit 1
+             """,
+            {|
+                record_with_amounts=record_with_amounts
+                user_handle = user
+            |}
+        )|>Seq.tryHead
+        |>Option.defaultValue (Amount_for_user.empty user)
+            
+            
     let read_amounts_closest_to_the_end_of_day
         (db_connection: NpgsqlConnection)
         amounts_table
@@ -198,18 +218,27 @@ module Social_activity_database =
         (db_connection: NpgsqlConnection)
         (since_datetime:DateTime)
         =
-        db_connection.Query<string>(
+        db_connection.Query<User_handle>(
             @"select user_handle from followers_amount
             where datetime >= @since_datetime
             group by user_handle",
             {|since_datetime=since_datetime|}
         )
+   
     
+    [<Fact(Skip="manual")>] //
+    let ``try read_last_competitors``()=
+        let test =
+            read_last_competitors
+                (Twitter_database.open_connection())
+                (DateTime.Now-TimeSpan.FromDays(5))
+        ()
+     
     let read_last_amounts_closest_to_moment_for_users
         (db_connection: NpgsqlConnection)
         (record_with_amounts: Social_activity_amounts)
         (last_moment: DateTime)
-        (users: string Set)
+        (users: User_handle Set)
         =
         let last_amounts =
             read_last_amounts_closest_to_moment db_connection
@@ -220,7 +249,7 @@ module Social_activity_database =
             users
             |>Set.contains amount_row.user_handle 
         )|>Seq.map(fun amount_row->
-            User_handle amount_row.user_handle,
+            amount_row.user_handle,
             amount_row.amount
         )|>Map.ofSeq
             

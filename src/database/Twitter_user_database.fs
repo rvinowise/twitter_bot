@@ -61,7 +61,10 @@ module Social_user_database =
                 @date_joined,
                 @web_site,
                 @profession
-            )",
+            )
+            on conflict (created_at, handle) do update set 
+            (name, bio, location, date_joined, web_site, profession) = 
+            (@name, @bio, @location, @date_joined, @web_site, @profession)",
             {|
                 handle = User_handle.db_value user.handle
                 name = user.name

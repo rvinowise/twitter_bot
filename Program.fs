@@ -22,8 +22,8 @@ module Program =
                 use browser = Browser.prepare_authentified_browser bot_token
                 use parsing_context = Html_parsing.parsing_context()
                 Harvest_followers_network.harvest_following_network_around_user
-                    parsing_context
                     browser
+                    parsing_context
                     db_connection
                     Settings.repeat_harvesting_if_older_than
                     (User_handle user_to_harvest)

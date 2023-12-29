@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter.database
 
 open System
+open rvinowise.twitter
 
 [<CLIMutable>]
 type Db_twitter_user = {
@@ -11,9 +12,17 @@ type Db_twitter_user = {
 [<CLIMutable>]
 type Amount_for_user = {
     datetime: DateTime
-    user_handle: string
+    user_handle: User_handle
     amount: int
 }
+
+module Amount_for_user =
+    let empty user =
+        {
+            datetime=DateTime.MinValue
+            user_handle = user
+            amount=0
+        }
 
 module tables =
 
