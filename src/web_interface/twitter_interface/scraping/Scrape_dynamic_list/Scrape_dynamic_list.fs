@@ -82,7 +82,7 @@ module Scrape_dynamic_list =
             
             let new_skimmed_items =
                 Read_list_updates.new_items_from_visible_items
-                    Read_list_updates.cell_identity_from_postid
+                    Read_list_updates.cell_id_from_post_id
                     previous_items
                     visible_items
                 
@@ -119,7 +119,7 @@ module Scrape_dynamic_list =
                     is_item_needed
                     item_selector
                 |>Read_list_updates.new_items_from_visible_items
-                      Read_list_updates.cell_identity_from_html
+                      Read_list_updates.cell_id_from_list_user
                       all_items
             
             if

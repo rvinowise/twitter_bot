@@ -32,7 +32,7 @@ by </span><div class="css-175oi2r r-xoduu5"><span class="r-18u37iz"><a dir="ltr"
         let page1 = page2
         
         Read_list_updates.new_items_from_visible_items
-            Read_list_updates.cell_identity_from_postid
+            Read_list_updates.cell_id_from_post_id
             page1
             page2
         |>should be Empty
@@ -103,7 +103,7 @@ Transhumanist, radical life extension enthusiast.</span></div></div></div></div>
             |>List.map Html_node.remove_parts_not_related_to_text
         
         Read_list_updates.new_items_from_visible_items
-            Read_list_updates.cell_identity_from_postid
+            Read_list_updates.cell_id_from_post_id
             page1
             page2
         |>should equal expected_new_items

@@ -53,7 +53,7 @@ by </span><div class="css-175oi2r r-xoduu5"><span class="r-18u37iz"><a dir="ltr"
     [<Benchmark>]
     member this.comparison_between_items_with_ids_from_postid() =
         Read_list_updates.new_items_from_visible_items
-            Read_list_updates.cell_identity_from_postid
+            Read_list_updates.cell_id_from_post_id
             this.nodes1
             this.nodes2
         |>Consumer().Consume
@@ -62,7 +62,7 @@ by </span><div class="css-175oi2r r-xoduu5"><span class="r-18u37iz"><a dir="ltr"
     [<Benchmark>]
     member this.comparison_between_items_with_ids_from_html() =
         Read_list_updates.new_items_from_visible_items
-            Read_list_updates.cell_identity_from_html
+            Read_list_updates.cell_id_from_html
             this.nodes1
             this.nodes2
         |>Consumer().Consume   

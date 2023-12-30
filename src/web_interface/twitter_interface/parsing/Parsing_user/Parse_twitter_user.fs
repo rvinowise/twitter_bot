@@ -36,6 +36,30 @@ module Parse_twitter_user =
             Html_parsing.readable_text_from_html_segments bio_node
         |None->""
            
+    let node_with_textual_user_info
+        user_cell
+        =
+        user_cell
+        |>Html_node.descend 1
+        |>Html_node.direct_children
+        |>Seq.item 1 //the second div is the text of the user-info. skip the first div which is the image
+    
+    let handle_from_textual_user_info_node
+        textual_user_info_node
+        =
+        textual_user_info_node
+        |>Html_node.descendants "div>div>div>div>a[role='link']"
+        |>Seq.head
+        |>Html_node.attribute_value "href"
+        |>fun user->user[1..]
+        |>User_handle
+    
+    let peak_handle_from_user_cell
+        user_cell
+        =
+        user_cell
+        |>node_with_textual_user_info
+        |>handle_from_textual_user_info_node
     
 (*works with both catalogues: "Lists" and "Followers/Following", e.g.:
     https://twitter.com/i/lists/1692215865779892304/members
@@ -48,17 +72,11 @@ module Parse_twitter_user =
             |>Html_parsing.readable_text_from_html_segments
         
         let node_with_textual_user_info =
-            user_cell
-            |>Html_node.descend 1
-            |>Html_node.direct_children
-            |>Seq.item 1 //the second div is the text of the user-info. skip the first div which is the image
+            node_with_textual_user_info user_cell
+            
         let handle =
-            node_with_textual_user_info
-            |>Html_node.descendants "div>div>div>div>a[role='link']"
-            |>Seq.head
-            |>Html_node.attribute_value "href"
-            |>fun user->user[1..]
-            |>User_handle
+            handle_from_textual_user_info_node
+                node_with_textual_user_info
             
         let user_bio =
             parse_user_bio_from_textual_user_div
