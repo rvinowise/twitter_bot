@@ -13,6 +13,8 @@ type Color = {
     b:float
 }
 
+type Google_color = Google.Apis.Sheets.v4.Data.Color
+
 module Color =
     
     let white = {r=1;g=1;b=1}
@@ -32,7 +34,12 @@ module Color =
             Green = float32 color.g
         )
         
-    
+    let from_google_color (google_color:Google_color) =
+        {
+            r=float google_color.Red.Value
+            g=float google_color.Green.Value
+            b=float google_color.Blue.Value
+        }
 
     
     let mix_two_colors

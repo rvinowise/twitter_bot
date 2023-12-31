@@ -81,6 +81,7 @@
     <Compile Include="src\Spreadsheet\Table.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_writing.fs" />
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_reading.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_for_twitter.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Import_scores_from_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
