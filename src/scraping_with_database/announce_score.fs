@@ -16,14 +16,14 @@ module announce_score =
             |>Scrape_list_members.scrape_twitter_list_members
                   browser
                   html_context
-            |>List.map Twitter_profile_from_catalog.user
+            |>Seq.map Twitter_profile_from_catalog.user
         
         Log.info $"reading list of competitors took {DateTime.Now-before_scraping_competitors}"
         
         let before_scraping_activity = DateTime.Now
         let activity_of_competitors =
             competitors
-            |>List.map (fun user ->
+            |>Seq.map (fun user ->
                 let handle = user.handle
                 Reveal_user_page.reveal_user_page browser handle
                 handle,

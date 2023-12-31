@@ -13,11 +13,11 @@ module Scrape_dynamic_list =
     
             
         
-    let rec skim_and_scroll_iteration
+    let rec scraping_list_iteration
         load_new_item_batch
-        (process_item: Thread_context -> Html_node -> Thread_context option)
-        (previous_items: list<Html_node>) // sorted 0=top
-        (previous_context: Thread_context)
+        process_item_batch
+        (previous_items: list<'Item>) // sorted 0=top
+        (previous_context: 'Context)
         scrolling_repetitions
         repetitions_left
         =
@@ -30,9 +30,9 @@ module Scrape_dynamic_list =
             if repetitions_left = 0 then
                 None
             else
-                skim_and_scroll_iteration
+                scraping_list_iteration
                     load_new_item_batch
-                    process_item
+                    process_item_batch
                     previous_items
                     previous_context
                     scrolling_repetitions
@@ -40,16 +40,15 @@ module Scrape_dynamic_list =
         
         |new_skimmed_items ->
             let next_context =
-                Read_list_updates.process_item_batch_providing_previous_items
-                    process_item
+                process_item_batch
                     previous_context
                     new_skimmed_items
                     
             match next_context with
             |Some next_context ->
-                skim_and_scroll_iteration
+                scraping_list_iteration
                     load_new_item_batch
-                    process_item
+                    process_item_batch
                     new_skimmed_items
                     next_context
                     scrolling_repetitions
@@ -57,87 +56,45 @@ module Scrape_dynamic_list =
             |None->
                 None
             
-    
-    let parse_dynamic_list_with_previous_item
+   
+    let load_next_items browser =
+        Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
+     
+    let load_new_item_batch
         wait_for_loading
-        is_item_needed
-        process_item
-        browser
-        html_parsing_context
-        scrolling_repetitions
-        item_selector
+        scrape_items
+        item_id
+        load_next_items
+        previous_items
         =
-        let load_next_items =
-            fun () -> Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
+        wait_for_loading()
+    
+        let visible_items = scrape_items()
         
-        let load_new_item_batch previous_items =
-            wait_for_loading()
-        
-            let visible_items =
-                Scrape_visible_part_of_list.scrape_items
-                    browser
-                    html_parsing_context
-                    is_item_needed
-                    item_selector
+        let new_skimmed_items =
+            Read_list_updates.new_items_from_visible_items
+                item_id
+                previous_items
+                visible_items
             
-            let new_skimmed_items =
-                Read_list_updates.new_items_from_visible_items
-                    Read_list_updates.cell_id_from_post_id
-                    previous_items
-                    visible_items
-                
-            load_next_items()
-            
-            new_skimmed_items
+        load_next_items()
         
-        skim_and_scroll_iteration
+        new_skimmed_items 
+    
+    let parse_dynamic_list_with_context
+        load_new_item_batch
+        process_item_batch
+        scrolling_repetitions
+        =
+        scraping_list_iteration
             load_new_item_batch
-            process_item
+            process_item_batch
             []
             Thread_context.Empty_context
             scrolling_repetitions
             scrolling_repetitions
         |>ignore
     
-    let collect_items_of_dynamic_list
-        browser
-        html_parsing_context
-        wait_for_loading
-        is_item_needed
-        item_selector
-        =
-            
-        let rec skim_and_scroll_iteration
-            (all_items: list<Html_node>)
-            =
-            wait_for_loading()
-            
-            let new_skimmed_items =
-                Scrape_visible_part_of_list.scrape_items
-                    browser
-                    html_parsing_context
-                    is_item_needed
-                    item_selector
-                |>Read_list_updates.new_items_from_visible_items
-                      Read_list_updates.cell_id_from_list_user
-                      all_items
-            
-            if
-                not new_skimmed_items.IsEmpty
-            then
-                Browser.send_keys [Keys.PageDown;Keys.PageDown;Keys.PageDown] browser
-                
-                all_items
-                @
-                new_skimmed_items
-                |>skim_and_scroll_iteration
-            else
-                all_items
-        
-        skim_and_scroll_iteration []     
-
-    
-    let all_items_are_needed _ = true
     
     let collect_all_html_items_of_dynamic_list
         browser
@@ -145,14 +102,35 @@ module Scrape_dynamic_list =
         wait_for_loading
         item_selector
         =
-        item_selector
-        |>collect_items_of_dynamic_list
-            browser
-            html_context
-            wait_for_loading
-            all_items_are_needed
+        let scrape_visible_items () =
+            Scrape_visible_part_of_list.scrape_items
+                browser
+                html_context
+                (fun _ -> true)
+                item_selector 
+            
+        let load_new_item_batch =
+            load_new_item_batch
+                wait_for_loading
+                scrape_visible_items
+                Read_list_updates.cell_id_from_list_user
+                (fun () -> load_next_items browser)
         
-    
+        let items = ResizeArray<Html_node>()
+        let remember_item _ item =
+            items.Add item
+            Some ()
+            
+        scraping_list_iteration
+            load_new_item_batch
+            (Read_list_updates.process_item_batch_providing_previous_items remember_item)
+            []
+            ()
+            1
+            1
+        |>ignore
+        
+        items
 
     
     

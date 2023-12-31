@@ -125,26 +125,26 @@ module Read_list_updates =
         
     let process_item_batch_providing_previous_items
         process_item
-        previous_item
+        thread_context
         items
         =
         let rec iteration_of_batch_processing
-            previous_item
+            thread_context
             items
             =
             match items with
             |next_item::rest_items ->
                 let new_context =
-                    process_item previous_item next_item
+                    process_item thread_context next_item
                 match new_context with
                 |None->None
-                |Some context ->
+                |Some thread_context ->
                     iteration_of_batch_processing
-                        context
+                        thread_context
                         rest_items
-            |[]->Some previous_item
+            |[]->Some thread_context
             
         
         iteration_of_batch_processing
-            previous_item
+            thread_context
             items    

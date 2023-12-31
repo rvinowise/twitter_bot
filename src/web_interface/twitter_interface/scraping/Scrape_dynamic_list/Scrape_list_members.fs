@@ -51,7 +51,7 @@ module Scrape_list_members =
                       browser
                       html_context
                       (fun () -> wait_for_list_loading browser)
-                |>List.map Parse_twitter_user.parse_twitter_user_cell
+                |>Seq.map Parse_twitter_user.parse_twitter_user_cell
                 
             Log.important $"list {list_id} has {Seq.length users} members"
             users
@@ -80,7 +80,7 @@ module Scrape_list_members =
             |>Html_node.inner_text
             |>Parsing_twitter_datatypes.parse_abbreviated_number
         |None ->
-            $"""List {list_id} doesn't have the claimed amount of members"""
+            $"""List {list_id} doesn't have the field announcing its amount of members"""
             |>Log.error|>ignore
             0
 
@@ -103,9 +103,9 @@ module Scrape_list_members =
                 list_id
         
         if
-            List.length members <> supposed_members
+            Seq.length members <> supposed_members
         then
-            $"list {list_id} should have {supposed_members} members, but {List.length members} were scraped "
+            $"list {list_id} should have {supposed_members} members, but {Seq.length members} were scraped "
             |>Log.error|>ignore
             
         members

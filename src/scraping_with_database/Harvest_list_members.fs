@@ -70,7 +70,7 @@ module Harvest_list_members =
                 browser
                 parsing_context
         members
-        |>List.iter(fun user_bio ->
+        |>Seq.iter(fun user_bio ->
             Harvest_user.harvest_top_of_user_page
                 browser
                 parsing_context
@@ -130,10 +130,11 @@ module Harvest_list_members =
         members_with_appearances
         =
         members_with_appearances
-        |>List.map (fun (user,lists_amount) ->
+        |>Seq.map (fun (user,lists_amount) ->
             prepare_row_of_member database user lists_amount
         )
-        |>List.append [table_header]
+        |>Seq.append [table_header]
+        |>List.ofSeq
         |>Googlesheet_writing.write_table
             googlesheet_service
             googlesheet
@@ -171,21 +172,22 @@ module Harvest_list_members =
         
         let members_with_amount = 
             lists
-            |>List.collect(fun list_id ->
+            |>Seq.collect(fun list_id ->
                 Scrape_list_members.scrape_twitter_list_members_and_amount
                     browser
                     html_context
                     list_id
             )
-            |>List.map _.user
-            |>List.countBy id
+            |>Seq.map _.user
+            |>Seq.countBy id
+            |>List.ofSeq
         
         let members = members_with_amount|>List.map fst
             
         Log.important $"found {List.length members} distinct members in given lists"
         
         members
-        |>Seq.iter (fun user ->
+        |>List.iter (fun user ->
             Harvest_user.harvest_top_of_user_page
                 browser
                 html_context

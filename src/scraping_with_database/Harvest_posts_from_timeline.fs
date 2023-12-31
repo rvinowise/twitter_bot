@@ -100,21 +100,34 @@ module Harvest_posts_from_timeline =
     let parse_timeline
         (process_item: Thread_context -> Html_node -> Thread_context option)
         browser
-        parsing_context
+        html_context
         scrolling_repetitions
         =
-        
-        let wait_for_loading = (fun () -> wait_for_timeline_loading browser)
         let is_item_needed =
             is_advertisement>>not
         
-        Twitter_settings.timeline_cell_css
-        |>Scrape_dynamic_list.parse_dynamic_list_with_previous_item
-            wait_for_loading
-            is_item_needed
-            process_item
-            browser
-            parsing_context
+        let scrape_visible_items () =
+            Scrape_visible_part_of_list.scrape_items
+                browser
+                html_context
+                is_item_needed
+                Twitter_settings.timeline_cell_css
+                
+        let load_new_item_batch =
+            Scrape_dynamic_list.load_new_item_batch
+                (fun () -> wait_for_timeline_loading browser)
+                scrape_visible_items
+                Read_list_updates.cell_id_from_post_id
+                (fun () -> Scrape_dynamic_list.load_next_items browser)
+        
+        let process_item_batch =
+            Read_list_updates.process_item_batch_providing_previous_items
+                process_item
+        
+        
+        Scrape_dynamic_list.parse_dynamic_list_with_context
+            load_new_item_batch
+            process_item_batch
             scrolling_repetitions
             
     
@@ -254,9 +267,6 @@ module Harvest_posts_from_timeline =
             $"can't read posts amount from timeline {Timeline_tab.human_name tab} of user {User_handle.value user}"
             |>Log.error|>ignore
             
-        
-        //Log.error $"""insufficient scraping of timeline {tab}: found {posts_found}, but twitter reports {} """    
-            
     
     let harvest_updates_on_timeline_of_user
         browser
@@ -290,7 +300,6 @@ module Harvest_posts_from_timeline =
         |>check_insufficient_scraping browser tab user
         
         
-        ()
     
     let rec resilient_step_of_harvesting_timelines
         (browser: Browser)
@@ -370,7 +379,7 @@ module Harvest_posts_from_timeline =
                 
             ]
         
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try harvest_all_last_actions_of_users (both tabs)``()=
         let user_timelines =
             [

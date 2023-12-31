@@ -32,11 +32,12 @@ module Scrape_followers_network =
                     html_context
                     (fun()-> Scrape_list_members.wait_for_list_loading browser)
                     user_catalog_element
+                |>List.ofSeq
             Log.important $"catalogue has {Seq.length items} items"
             items
         |None->
             Log.error $"{catalog_url} doesn't have a catalogue "|>ignore
-            []    
+            []   
     
     let scrape_following_of_user
         browser
@@ -47,7 +48,7 @@ module Scrape_followers_network =
         starting_user
         |>url_from_user
         |>scrape_user_catalog browser html_context
-        |>List.map Parse_twitter_user.parse_twitter_user_cell
+        |>Seq.map Parse_twitter_user.parse_twitter_user_cell
     
     
     
@@ -70,10 +71,10 @@ module Scrape_followers_network =
                   followers_url
         
         followees
-        |>List.map Twitter_profile_from_catalog.handle
+        |>Seq.map Twitter_profile_from_catalog.handle
         ,
         followers
-        |>List.map Twitter_profile_from_catalog.handle
+        |>Seq.map Twitter_profile_from_catalog.handle
         
         
     

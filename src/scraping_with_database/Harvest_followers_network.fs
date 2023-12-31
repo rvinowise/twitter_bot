@@ -63,8 +63,9 @@ module Harvest_followers_network =
                     observed_user
         
             let new_unknown_users_around =
-                followers@followees
-                |>Set.ofList 
+                followees
+                |>Seq.append followers
+                |>Set.ofSeq 
                 |>Set.filter(fun user->
                     rest_unknown_users
                     |>List.contains user

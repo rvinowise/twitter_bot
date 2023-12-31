@@ -42,16 +42,6 @@ module Scrape_visible_part_of_list =
         |>List.map (Html_node.from_html_string_and_context html_context)
         |>List.filter is_item_needed
     
-    let scrape_all_items
-        browser
-        html_context
-        item_selector
-        =
-        scrape_web_items
-            browser
-            item_selector
-        |>List.map (Html_node.from_html_string_and_context html_context)
-        |>Array.ofList 
     
     let scrape_container
         browser
