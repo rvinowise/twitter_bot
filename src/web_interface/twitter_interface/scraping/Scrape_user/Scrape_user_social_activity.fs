@@ -46,7 +46,7 @@ module Scrape_user_social_activity =
     let try_scrape_posts_amount browser =
         let posts_qty_field =
             "div[aria-label='Home timeline'] div:has(>h2[role='heading']) > div[dir='ltr']"
-            |>Browser.try_element browser
+            |>Browser.try_element_reliably browser
         
         posts_qty_field
         |>function
@@ -63,7 +63,7 @@ module Scrape_user_social_activity =
     let try_scrape_acquaintances_amount_of_user browser user_handle link =
         let followers_qty_field = $"a[href='/{User_handle.value user_handle}/{link}'] span span"
         followers_qty_field
-        |>Browser.try_element browser
+        |>Browser.try_element_reliably browser
         |>function
         |None->
             $"url '{User_handle.url_from_handle user_handle}' doesn't show the {link} field"
@@ -80,7 +80,7 @@ module Scrape_user_social_activity =
     let try_scrape_followees_amount_of_user browser user_handle =
         try_scrape_acquaintances_amount_of_user browser user_handle "following"
     
-    let scrape_user_social_activity browser user_handle =
+    let try_scrape_user_social_activity browser user_handle =
         {
             User_social_activity.posts_amount = try_scrape_posts_amount browser
             followers_amount = try_scrape_followers_amount_of_user browser user_handle

@@ -70,7 +70,7 @@ module Scrape_list_members =
             $"{Twitter_settings.base_url}/i/lists/{list_id}"
         
         $"a[href='/i/lists/{list_id}/members']"
-        |>Browser.try_element browser 
+        |>Browser.try_element_reliably browser 
         |>function
         |Some amount_node ->
             amount_node

@@ -27,7 +27,7 @@ module announce_score =
                 let handle = user.handle
                 Reveal_user_page.reveal_user_page browser handle
                 handle,
-                Scrape_user_social_activity.scrape_user_social_activity browser
+                Scrape_user_social_activity.try_scrape_user_social_activity browser
                     handle
             )
         Log.info $"reading activity of competitors took {DateTime.Now-before_scraping_activity}"
