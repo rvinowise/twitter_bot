@@ -150,7 +150,10 @@ module Harvest_posts_from_timeline =
         let mutable item_count = 0
         let harvest_cell_with_counter item =
             item_count <- item_count+1
-            harvest_timeline_cell write_post is_finished item
+            harvest_timeline_cell
+                write_post
+                (is_finished tab user)
+                item
         
         parse_timeline
             harvest_cell_with_counter
@@ -180,58 +183,6 @@ module Harvest_posts_from_timeline =
         
         
 
-    let reached_last_visited_post
-        last_visited_post
-        (post:Main_post)
-        =
-        post.id = last_visited_post
-    
-    let finish_after_amount_of_invocations amount =
-        let mutable item_count = 0 
-        let is_finished = fun _ ->
-            item_count <- item_count + 1
-            item_count >= amount
-        is_finished
-        
-    let finish_after_time time =
-        let start_time = DateTime.Now
-        let is_finished = (fun _ ->
-             let current_time = DateTime.Now
-             if (current_time - start_time > time) then
-                 Log.debug $"scraping time elapsed at {current_time}"
-                 true
-             else false
-        )
-        is_finished
-    
-    let only_finish_when_no_posts_left =
-        (fun _ -> false)
-    
-    let finish_when_last_newest_post_reached
-        database tab user
-        =
-        let newest_last_visited_post =
-            Twitter_post_database.read_newest_last_visited_post
-                database
-                tab
-                user
-        let work_description =
-            $"""harvesting new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"""
-        
-        let is_finished =
-            match newest_last_visited_post with
-            |Some last_post ->
-                Log.info
-                    $"""{work_description}
-                    will stop when post "{Post_id.value last_post}" is reached"""
-                (reached_last_visited_post last_post)
-            |None->
-                Log.info
-                    $"""{work_description}
-                    will stop when the timeline is ended"""
-                only_finish_when_no_posts_left
-        
-        is_finished
     
     let reveal_timeline browser tab user=
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
@@ -269,6 +220,7 @@ module Harvest_posts_from_timeline =
             
     
     let harvest_updates_on_timeline_of_user
+        is_finished
         browser
         database
         (tab: Timeline_tab)
@@ -279,9 +231,6 @@ module Harvest_posts_from_timeline =
         
         reveal_timeline browser tab user 
         
-        let is_finished =
-            only_finish_when_no_posts_left
-            //finish_when_last_newest_post_reached database tab user
         
         write_newest_post_on_timeline
             browser
@@ -302,6 +251,7 @@ module Harvest_posts_from_timeline =
         
     
     let rec resilient_step_of_harvesting_timelines
+        is_finished
         (browser: Browser)
         database
         (timeline_tabs: (User_handle*Timeline_tab) list)
@@ -313,6 +263,7 @@ module Harvest_posts_from_timeline =
             let browser,rest_tabs =
                 try
                     harvest_updates_on_timeline_of_user
+                        is_finished
                         browser
                         database
                         head_timeline
@@ -332,6 +283,7 @@ module Harvest_posts_from_timeline =
             |[]->()
             |timeline_tabs ->
                 resilient_step_of_harvesting_timelines
+                    is_finished
                     browser
                     database
                     timeline_tabs
@@ -349,6 +301,7 @@ module Harvest_posts_from_timeline =
             ]
         )
         |>resilient_step_of_harvesting_timelines
+            (Finish_harvesting_timeline.finish_when_last_newest_post_reached database)
             browser
             database
     
@@ -357,26 +310,11 @@ module Harvest_posts_from_timeline =
     let ``try harvest_all_last_actions_of_users (specific tabs)``()=
         
         resilient_step_of_harvesting_timelines
+            Finish_harvesting_timeline.only_finish_when_no_posts_left
             (Browser.open_browser())
             (Twitter_database.open_connection())
             [
                 User_handle "davidasinclair", Timeline_tab.Posts_and_replies
-//                    User_handle "BasedBeffJezos", Timeline_tab.Posts_and_replies
-//                    User_handle "PeterDiamandis", Timeline_tab.Posts_and_replies
-//                    User_handle "sama", Timeline_tab.Posts_and_replies
-//                    User_handle "lexfridman", Timeline_tab.Posts_and_replies
-//                    
-//                    
-//                    User_handle "richardDawkins", Timeline_tab.Likes
-//                    User_handle "sapinker", Timeline_tab.Likes
-//                    User_handle "PeterSinger", Timeline_tab.Likes
-//                    User_handle "danieldennett", Timeline_tab.Likes
-//
-//                    User_handle "CosmicSkeptic", Timeline_tab.Likes
-//                    User_handle "seanmcarroll", Timeline_tab.Likes
-//                    User_handle "seanmcarroll", Timeline_tab.Posts_and_replies
-                
-                
             ]
         
     [<Fact(Skip="manual")>]//
@@ -394,6 +332,7 @@ module Harvest_posts_from_timeline =
             )
         
         resilient_step_of_harvesting_timelines
+            Finish_harvesting_timeline.only_finish_when_no_posts_left
             (Browser.open_browser())
             (Twitter_database.open_connection())
             user_timelines

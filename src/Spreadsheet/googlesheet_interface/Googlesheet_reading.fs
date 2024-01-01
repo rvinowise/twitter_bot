@@ -11,42 +11,87 @@ open Xunit
 open rvinowise.twitter
 
 
-
-module Googlesheet_reading =
-    
-    let google_value_to_value
-        (google_value: ExtendedValue)
+type Google_cell = Google.Apis.Sheets.v4.Data.CellData
+module Google_cell =
+    let url
+        (google_cell: Google_cell)
         =
-        if google_value.NumberValue.HasValue then
-           Cell_value.Float (google_value.NumberValue.Value) 
+        google_cell.Hyperlink
+        
+
+module Parse_google_cell =
+    
+    let color_from_google_cell (google_cell:Google_cell) =
+        if isNull google_cell.EffectiveFormat then
+            Color.white
+        else
+            google_cell.EffectiveFormat.BackgroundColor
+            |>Color.from_google_color
+    
+    
+    let visible_text_from_cell
+        (google_cell: Google_cell)
+        =
+        Cell_value.Text google_cell.EffectiveValue.StringValue
+       
+    
+    let url_from_cell
+        (google_cell: Google_cell)
+        =    
+        match google_cell.Hyperlink with
+        |"" ->
+            Cell_value.Text google_cell.EffectiveValue.StringValue
+        |url ->
+            Cell_value.Text (string google_cell.Hyperlink)
+    
+    let value_from_google_cell
+        parse_url_cell
+        (google_cell: CellData)
+        =
+        let google_value = google_cell.EffectiveValue
+        if isNull google_value then
+            Cell_value.Text ""
+        elif google_value.NumberValue.HasValue then
+           Cell_value.Float google_value.NumberValue.Value
         elif google_value.BoolValue.HasValue then
            Cell_value.Text (string google_value.BoolValue.Value)
         else
-           Cell_value.Text google_value.StringValue
-
+            parse_url_cell google_cell
     
-    let google_cell_to_cell
+    let visible_value
         (google_cell:CellData)
         =
         {
             Cell.color=
-                if isNull google_cell.EffectiveFormat then
-                    Color.white
-                else
-                    google_cell.EffectiveFormat.BackgroundColor
-                    |>Color.from_google_color
+                color_from_google_cell
+                    google_cell
+            value=
+                value_from_google_cell
+                    visible_text_from_cell
+                    google_cell
+            style=
+                Text_style.regular
+        }
+    
+    let urls
+        (google_cell:CellData)
+        =
+        {
+            Cell.color=
+                color_from_google_cell
+                    google_cell
                 
             value=
-                if isNull google_cell.EffectiveValue then
-                    Cell_value.Text ""
-                else
-                    google_cell.EffectiveValue
-                    |>google_value_to_value
+                value_from_google_cell
+                    url_from_cell
+                    google_cell
                 
             style=
                 Text_style.regular
         }
-            
+
+module Googlesheet_reading =
+
     
     let range_as_string
         page_name
@@ -81,6 +126,7 @@ module Googlesheet_reading =
     
     
     let read_table
+        parse_google_cell
         (service: SheetsService)
         (sheet: Google_spreadsheet)
         =
@@ -92,7 +138,7 @@ module Googlesheet_reading =
         response.Sheets[0].Data[0].RowData
         |>Seq.map(fun google_row ->
             google_row.Values
-            |>Seq.map google_cell_to_cell
+            |>Seq.map parse_google_cell
             |>List.ofSeq
         )
         |>List.ofSeq
@@ -101,6 +147,7 @@ module Googlesheet_reading =
     let ``try read_table``()=
         let table =
             read_table
+                Parse_google_cell.urls
                 (Googlesheet.create_googlesheet_service())
                 {
                     Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"

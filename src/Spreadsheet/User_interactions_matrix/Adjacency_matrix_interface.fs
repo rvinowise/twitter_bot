@@ -228,21 +228,11 @@ module Adjacency_matrix_interface =
             page_id=0
             page_name="Likes"
         }
-        let likes_enhanced_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=301514205
-            page_name="Likes enhanced average"
-        }
         
         let reposts_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=2108706810
             page_name="Reposts"
-        }
-        let reposts_enhanced_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=1761036256
-            page_name="Reposts enhanced average"
         }
    
         let replies_googlesheet = {
@@ -250,38 +240,14 @@ module Adjacency_matrix_interface =
             page_id=2007335692
             page_name="Replies"
         }
-        let replies_enhanced_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=1973553744
-            page_name="Replies enhanced average"
-        }
         
         let everything_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
             page_id=1019851571
             page_name="Everything"
         }
-        let everything_enhanced_googlesheet = {
-            Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=2048215660
-            page_name="Everything enhanced average"
-        }
             
         let database = Twitter_database.open_connection()
-        
-        
-//        let all_sorted_users =
-//            Settings.Competitors.list
-//            |>Scrape_list_members.scrape_twitter_list_members
-//                (Browser.open_browser())
-//            |>List.map (Twitter_profile_from_catalog.user)
-//        
-//        let all_user_handles =
-//            all_sorted_users
-//            |>List.map Twitter_user.handle
-//            |>Set.ofList
-        
-        
         
         let all_sorted_users =
             sorted_users_from_handles

@@ -97,7 +97,12 @@
     <Compile Include="src\scraping_with_database\Harvest_followers_network.fs" />
     
     
+    <Compile Include="src\scraping_with_database\Finish_harvesting_timeline.fs" />
     <Compile Include="src\scraping_with_database\Harvest_posts_from_timeline.fs" />
+    
+    
+    
+    <Compile Include="src\scraping_with_database\Harvest_timelines_of_table_members.fs" />
     
     <Compile Include="src\scraping_with_database\announce_score.fs" />
     <Compile Include="src\scraping_with_database\announce_user_interactions.fs" />
