@@ -215,7 +215,7 @@ module Googlesheet_writing =
         ()
     
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try write table``() =
         
         let likes_googlesheet = {

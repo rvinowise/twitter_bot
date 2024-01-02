@@ -619,8 +619,6 @@ module Twitter_post_database =
         ) |> ignore
         
             
-    
-    
             
     let write_main_post
         (db_connection:NpgsqlConnection)

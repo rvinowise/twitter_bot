@@ -37,30 +37,62 @@ module Harvest_timelines_of_table_members =
         (users: Map<User_handle, (int*int)>)
         user
         =
-        
+        ()
+    
     
     [<Fact>]//(Skip="manual")
-    let ``try harvest_all_last_actions_of_users (both tabs)``()=
+    let ``try harvest_timelines``()=
   
-        let user_timelines =
-            users_from_spreadsheet
-                (Googlesheet.create_googlesheet_service())
-                {
-                    Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
-                    page_id=0
-                    page_name="Members"
-                }
-            |>List.collect (fun user ->
-                [
-                    user,Timeline_tab.Posts_and_replies;
-                    user,Timeline_tab.Likes
-                ]
-            )
+        let central_db =
+            Central_task_database.open_connection()
         
-        let database = Twitter_database.open_connection()
+        let work_db = Twitter_database.open_connection()
         
-        Harvest_posts_from_timeline.resilient_step_of_harvesting_timelines
-            (Finish_harvesting_timeline.finish_after_amount_of_invocations 500)
-            (Browser.open_browser())
-            database
-            user_timelines
+        let browser = Browser.open_browser()
+        
+        seq {
+            let mutable free_user = Central_task_database.take_next_free_user central_db
+            while free_user.IsSome do
+                yield free_user.Value
+                free_user <- Central_task_database.take_next_free_user central_db
+        }
+        |>Seq.iter(fun user ->
+            let posts_amount =
+                Harvest_posts_from_timeline.resilient_step_of_harvesting_user_timeline
+                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 1)
+                    browser
+                    work_db
+                    Timeline_tab.Posts_and_replies
+                    user
+            
+            let likes_amount =    
+                Harvest_posts_from_timeline.resilient_step_of_harvesting_user_timeline
+                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 1)
+                    browser
+                    work_db
+                    Timeline_tab.Likes
+                    user
+                    
+            Central_task_database.write_user_status
+                central_db
+                user
+                (Scrape_user_status.Done (posts_amount, likes_amount))
+        )        
+        
+        
+       
+
+    [<Fact>]
+    let ``prepare tasks for scraping``() =
+        let central_db =
+            Central_task_database.open_connection()
+            
+        {
+            Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
+            page_id=0
+            page_name="Members"
+        }
+        |>users_from_spreadsheet
+            (Googlesheet.create_googlesheet_service())
+        |>Central_task_database.write_users_for_scraping central_db
+        

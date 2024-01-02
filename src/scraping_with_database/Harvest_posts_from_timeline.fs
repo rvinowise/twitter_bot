@@ -248,8 +248,45 @@ module Harvest_posts_from_timeline =
             user
         |>check_insufficient_scraping browser tab user
         
-        
     
+    let rec resilient_step_of_harvesting_user_timeline
+        is_finished
+        (browser: Browser)
+        database
+        timeline_tab
+        user
+        =
+        let browser,success,posts_amount =
+            try
+                let posts_amount =
+                    harvest_timeline_tab_of_user
+                        browser
+                        (AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default)
+                        database
+                        is_finished
+                        timeline_tab
+                        user
+                    
+                browser,true,posts_amount
+            with
+            | :? WebDriverException as exc ->
+                Log.error $"""
+                can't harvest timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user}:
+                {exc.Message}.
+                Restarting scraping browser"""|>ignore
+                browser.restart()
+                browser,false,0
+        
+        if success then
+            posts_amount
+        else
+            resilient_step_of_harvesting_user_timeline
+                is_finished
+                browser
+                database
+                timeline_tab
+                user
+        
     let rec resilient_step_of_harvesting_timelines
         is_finished
         (browser: Browser)

@@ -41,6 +41,7 @@ module Settings =
             configuration_root.GetValue<int>("repeat_harvesting_if_older_than_days",1)
         TimeSpan.FromDays(days)
     let db_connection_string = configuration_root["db_connection_string"]
+    let central_db = configuration_root["central_db"]
     
     module Google_sheets =
         

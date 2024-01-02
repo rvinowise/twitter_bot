@@ -220,7 +220,7 @@ module Adjacency_matrix_interface =
         //         likes_interactions;
         //     ]
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try update_googlesheet``() =
         //https://docs.google.com/spreadsheets/d/1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY/edit#gid=0
         let likes_googlesheet = {
@@ -287,26 +287,26 @@ module Adjacency_matrix_interface =
             0.4
             likes_interactions
 
-        update_googlesheet_with_interaction_type
-            reposts_googlesheet
-            3
-            0.4
-            reposts_interactions
-
-        update_googlesheet_with_interaction_type
-            replies_googlesheet
-            3
-            0.4
-            replies_interactions
-            
-            
-        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
-            everything_googlesheet
-            3
-            0.4
-            all_sorted_users
-            [
-                likes_interactions;
-                reposts_interactions;
-                replies_interactions
-            ]
+        // update_googlesheet_with_interaction_type
+        //     reposts_googlesheet
+        //     3
+        //     0.4
+        //     reposts_interactions
+        //
+        // update_googlesheet_with_interaction_type
+        //     replies_googlesheet
+        //     3
+        //     0.4
+        //     replies_interactions
+        //     
+        //     
+        // Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+        //     everything_googlesheet
+        //     3
+        //     0.4
+        //     all_sorted_users
+        //     [
+        //         likes_interactions;
+        //         reposts_interactions;
+        //         replies_interactions
+        //     ]

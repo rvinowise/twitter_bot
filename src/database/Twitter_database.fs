@@ -7,6 +7,27 @@ open Npgsql
 open rvinowise.twitter
 
 
+
+type Scrape_user_status =
+    |Free
+    |Taken of string
+    |Done of int*int
+    
+    
+module Scrape_user_status =
+    let db_value (status: Scrape_user_status) =
+        match status with
+        |Free -> "free"
+        |Taken _ -> "taken"
+        |Done _ -> "done"
+
+    let from_db_value value =
+        match value with
+        |"free" -> Scrape_user_status.Free
+        |"taken" -> Scrape_user_status.Taken ""
+        |"done" -> Scrape_user_status.Done (0,0)
+        |unknown_type -> raise (TypeAccessException $"unknown type of Scrape_user_status: {unknown_type}")
+        
 type Timestamp_mapper() =
     (* by default, Dapper transforms time to UTC when writing to the DB,
     but on some machines it doesn't transform it back when reading,
@@ -41,6 +62,18 @@ type User_handle_mapper() =
     override this.Parse(value: obj) =
         User_handle (value :?> string) 
 
+
+type Scrape_user_status_mapper() =
+    inherit SqlMapper.TypeHandler<Scrape_user_status>()
+    override this.SetValue(
+            parameter:IDbDataParameter ,
+            value: Scrape_user_status
+        )
+        =
+        parameter.Value <- Scrape_user_status.db_value value
+    
+    override this.Parse(value: obj) =
+        Scrape_user_status.from_db_value (value :?> string) 
 
 
 type Post_id_mapper() =
@@ -101,22 +134,11 @@ type Option_string_mapper() =
         then None
         else Some (value :?> string)
 
-module Twitter_database =
 
-    let set_timezone_of_this_machine
-        (connection:NpgsqlConnection)
-        =
-        let utc_offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Negate()
-        connection.Query<DateTime>(
-            $"""set timezone to '{utc_offset}'"""
-        )|>ignore
-        
-    let open_connection () =
-        let connection_string = Settings.db_connection_string
-        let data_source = NpgsqlDataSource.Create(connection_string)
-        let db_connection = data_source.OpenConnection()
-        
-        set_timezone_of_this_machine db_connection
+
+module Twitter_database =
+    
+    let set_twitter_type_handlers () =
         SqlMapper.AddTypeHandler(Timestamp_mapper()) //sometimes it's needed, sometimes not
         SqlMapper.AddTypeHandler(User_handle_mapper())
         SqlMapper.AddTypeHandler(Post_id_mapper())
@@ -124,5 +146,11 @@ module Twitter_database =
         SqlMapper.AddTypeHandler(Option_mapper<User_handle>(User_handle_mapper()))
         SqlMapper.AddTypeHandler(Option_mapper<Post_id>(Post_id_mapper()))
         SqlMapper.AddTypeHandler(Option_string_mapper())
+        SqlMapper.AddTypeHandler(Scrape_user_status_mapper())
+        
+    let open_connection () =
+        let db_connection = Database.open_connection Settings.db_connection_string
+        
+        set_twitter_type_handlers()
         
         db_connection
