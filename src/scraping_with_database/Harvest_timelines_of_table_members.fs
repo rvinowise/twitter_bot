@@ -42,19 +42,15 @@ module Harvest_timelines_of_table_members =
     
     [<Fact>]//(Skip="manual")
     let ``try harvest_timelines``()=
-  
-        let central_db =
-            Central_task_database.open_connection()
-        
         let work_db = Twitter_database.open_connection()
         
         let browser = Browser.open_browser()
         
         seq {
-            let mutable free_user = Central_task_database.take_next_free_job central_db
+            let mutable free_user = Central_task_database.resiliently_take_next_free_job ()
             while free_user.IsSome do
                 yield free_user.Value
-                free_user <- Central_task_database.take_next_free_job central_db
+                free_user <- Central_task_database.resiliently_take_next_free_job ()
         }
         |>Seq.iter(fun user ->
             let posts_amount =
@@ -73,8 +69,7 @@ module Harvest_timelines_of_table_members =
                     Timeline_tab.Likes
                     user
                     
-            Central_task_database.set_task_as_complete
-                central_db
+            Central_task_database.resiliently_set_task_as_complete
                 Central_task_database.this_working_session_id
                 user
                 posts_amount

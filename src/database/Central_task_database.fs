@@ -73,7 +73,32 @@ module Central_task_database =
             Log.info "the central database didn't return next free user"
             
         free_user
+   
+    
+    let rec resiliently_take_next_free_job () =
+        let central_db =
+            open_connection()
         
+        let taken_job,is_successful =
+            try try
+                    let taken_job =
+                        take_next_free_job
+                            central_db
+                    taken_job, true
+                with
+                | :? NpgsqlException as exc ->
+                    $"""Exception when trying to take the next free job from the central datbase: {exc.Message}.
+                    trying again with reistablishing the connection"""
+                    |>Log.error|>ignore
+                    None, false
+            finally
+                Database.try_close_connection central_db
+                
+        if is_successful then
+            taken_job
+        else
+            resiliently_take_next_free_job ()
+       
     [<Fact(Skip="manual")>]
     let ``try take_next_free_user``()=
         let result =
@@ -94,7 +119,7 @@ module Central_task_database =
             "
         )
     
-    let read_job_worker
+    let read_worker_of_job
         (db_connection: NpgsqlConnection)
         (user: User_handle)
         =
@@ -112,12 +137,12 @@ module Central_task_database =
             |}
         )|>Seq.tryHead
     
-    [<Fact(Skip="manual")>]
-    let ``try read_worker_of_user``()=
+    [<Fact>]//(Skip="manual")
+    let ``try read_worker_of_job``()=
         let result =
-            read_job_worker
+            read_worker_of_job
                 (open_connection())
-                (User_handle "MartinBJensen")
+                (User_handle "LapierreLab")
         ()
         
     let write_job_status
@@ -146,7 +171,7 @@ module Central_task_database =
         (user: User_handle)
         =
         let last_worker =
-            read_job_worker
+            read_worker_of_job
                 db_connection
                 user
         match last_worker with
@@ -201,7 +226,40 @@ module Central_task_database =
             |}
         ) |> ignore
         
+    let rec resiliently_set_task_as_complete
+        worker
+        (user: User_handle)
+        posts_amount
+        likes_amount
+        =
+        let central_db =
+            open_connection()
         
+        let is_successful =
+            try try
+                    set_task_as_complete
+                        central_db
+                        worker
+                        (user: User_handle)
+                        posts_amount
+                        likes_amount
+                    true
+                with
+                | :? NpgsqlException as exc ->
+                    $"""Exception when trying to set task as complete in the central datbase: {exc.Message}.
+                    trying again with reistablishing the connection"""
+                    |>Log.error|>ignore
+                    false
+            finally
+                Database.try_close_connection central_db
+                
+        if not is_successful then
+            resiliently_set_task_as_complete
+                worker
+                (user: User_handle)
+                posts_amount
+                likes_amount
+                
     let write_taken_user
         (db_connection:NpgsqlConnection)
         (user: User_handle)

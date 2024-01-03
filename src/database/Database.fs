@@ -24,3 +24,11 @@ module Database =
         set_timezone_of_this_machine db_connection
         
         db_connection
+        
+    let try_close_connection (db_connection:NpgsqlConnection) =
+        try
+            db_connection.Close()
+        with
+        | :? NpgsqlException as exc ->
+            $"failed to close the database connection: {exc.Message}"
+            |>Log.error|>ignore
