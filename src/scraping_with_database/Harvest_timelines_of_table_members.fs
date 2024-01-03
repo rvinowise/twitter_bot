@@ -40,7 +40,7 @@ module Harvest_timelines_of_table_members =
         ()
     
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try harvest_timelines``()=
   
         let central_db =

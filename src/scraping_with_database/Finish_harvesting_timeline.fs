@@ -23,7 +23,7 @@ module Finish_harvesting_timeline =
         let mutable item_count = 0 
         let is_finished = fun _ _ _->
             item_count <- item_count + 1
-            item_count >= amount
+            item_count > amount
         is_finished
         
     let finish_after_time time =
