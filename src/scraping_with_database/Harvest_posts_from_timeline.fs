@@ -115,7 +115,8 @@ module Harvest_posts_from_timeline =
                 
         let load_new_item_batch =
             Scrape_dynamic_list.load_new_item_batch
-                (fun () -> wait_for_timeline_loading browser)
+                //(fun () -> wait_for_timeline_loading browser)
+                (fun() -> ())
                 scrape_visible_items
                 Read_list_updates.cell_id_from_post_id
                 (fun () -> Scrape_dynamic_list.load_next_items browser)
@@ -249,13 +250,15 @@ module Harvest_posts_from_timeline =
         |>check_insufficient_scraping browser tab user
         
     
-    let rec resilient_step_of_harvesting_user_timeline
+    let rec resiliently_harvest_user_timeline
         is_finished
         (browser: Browser)
         database
         timeline_tab
         user
         =
+        reveal_timeline browser timeline_tab user 
+            
         let browser,success,posts_amount =
             try
                 let posts_amount =
@@ -280,7 +283,7 @@ module Harvest_posts_from_timeline =
         if success then
             posts_amount
         else
-            resilient_step_of_harvesting_user_timeline
+            resiliently_harvest_user_timeline
                 is_finished
                 browser
                 database

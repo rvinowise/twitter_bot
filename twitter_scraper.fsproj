@@ -149,6 +149,7 @@
 
     <!--app  -->
     <PackageReference Include="Fparsec" Version="1.1.1" />
+    <PackageReference Include="DeviceId" Version="6.6.0" />
     
     <!-- web scraping   -->
     <PackageReference Include="canopy" Version="2.1.5" />

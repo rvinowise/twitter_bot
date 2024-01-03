@@ -207,7 +207,7 @@ module Export_scores_to_googlesheet =
             Social_activity_amounts.Posts
             Settings.Google_sheets.posts_amount
     
-    [<Fact(Skip="manual")>]//(Skip="manual")
+    [<Fact(Skip="manual")>]
     let ``try update_googlesheets``() =
         Twitter_database.open_connection()
         |>update_googlesheets

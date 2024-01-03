@@ -10,22 +10,22 @@ open rvinowise.twitter
 
 type Scrape_user_status =
     |Free
-    |Taken of string
-    |Done of int*int
+    |Taken
+    |Done
     
     
 module Scrape_user_status =
     let db_value (status: Scrape_user_status) =
         match status with
         |Free -> "free"
-        |Taken _ -> "taken"
-        |Done _ -> "done"
+        |Taken -> "taken"
+        |Done -> "done"
 
     let from_db_value value =
         match value with
         |"free" -> Scrape_user_status.Free
-        |"taken" -> Scrape_user_status.Taken ""
-        |"done" -> Scrape_user_status.Done (0,0)
+        |"taken" -> Scrape_user_status.Taken
+        |"done" -> Scrape_user_status.Done 
         |unknown_type -> raise (TypeAccessException $"unknown type of Scrape_user_status: {unknown_type}")
         
 type Timestamp_mapper() =

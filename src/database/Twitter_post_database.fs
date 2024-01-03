@@ -20,7 +20,7 @@ module Twitter_post_database =
         (stats: Post_stats)
         =
         db_connection.Query( 
-            $"insert into {tables.post.stats} (
+            $"insert into {tables.post_tables.stats} (
                 post_id,
                 datetime,
                 replies,
@@ -61,7 +61,7 @@ module Twitter_post_database =
         (is_quotation:bool)
         =
         db_connection.Query( 
-            $"insert into {tables.post.image} (
+            $"insert into {tables.post_tables.image} (
                 post_id,
                 url,
                 description,
@@ -94,7 +94,7 @@ module Twitter_post_database =
         (is_quotation:bool)
         =
         db_connection.Query( 
-            $"insert into {tables.post.video} (
+            $"insert into {tables.post_tables.video} (
                 post_id,
                 url,
                 sorting_index,
@@ -164,7 +164,7 @@ module Twitter_post_database =
         (post:Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.reply} (
+            $"insert into {tables.post_tables.reply} (
                 previous_post,
                 previous_user,
                 next_post,
@@ -195,7 +195,7 @@ module Twitter_post_database =
         (is_quotation:bool)
         =
         db_connection.Query(
-            $"insert into {tables.post.header} (
+            $"insert into {tables.post_tables.header} (
                 main_post_id,
                 author,
                 created_at,
@@ -234,7 +234,7 @@ module Twitter_post_database =
         (is_quotation:bool)
         =
         db_connection.Query(
-            $"insert into {tables.post.twitter_space} (
+            $"insert into {tables.post_tables.twitter_space} (
                 main_post_id,
                 is_quotation,
                 host,
@@ -274,7 +274,7 @@ module Twitter_post_database =
                 "", name
             
         db_connection.Query(
-            $"insert into {tables.post.twitter_event} (
+            $"insert into {tables.post_tables.twitter_event} (
                 id,
                 presenter_handle,
                 presenter_name,
@@ -304,7 +304,7 @@ module Twitter_post_database =
         event_id
         =
         db_connection.Query(
-            $"insert into {tables.post.twitter_event_in_post} (
+            $"insert into {tables.post_tables.twitter_event_in_post} (
                 main_post_id,
                 event_id
             )
@@ -339,7 +339,7 @@ module Twitter_post_database =
                 true
 
         db_connection.Query(
-            $"insert into {tables.post.quotable_message_body} (
+            $"insert into {tables.post_tables.quotable_message_body} (
                 main_post_id,
                 message,
                 show_more_url,
@@ -404,7 +404,7 @@ module Twitter_post_database =
         (post_id:Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.external_url} (
+            $"insert into {tables.post_tables.external_url} (
                 post_id,
                 base_url,
                 page,
@@ -437,7 +437,7 @@ module Twitter_post_database =
         (post_id: Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.poll_choice} (
+            $"insert into {tables.post_tables.poll_choice} (
                 post_id,
                 text,
                 votes_percent
@@ -465,7 +465,7 @@ module Twitter_post_database =
         (is_quotation: bool)
         =
         db_connection.Query(
-            $"insert into {tables.post.quotable_part_of_poll} (
+            $"insert into {tables.post_tables.quotable_part_of_poll} (
                 post_id,
                 question,
                 is_quotation
@@ -491,7 +491,7 @@ module Twitter_post_database =
         (post_id: Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.poll_summary} (
+            $"insert into {tables.post_tables.poll_summary} (
                 post_id,
                 votes_amount
             )
@@ -579,7 +579,7 @@ module Twitter_post_database =
         (post_id: Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.repost} (
+            $"insert into {tables.post_tables.repost} (
                 post,
                 reposter
             )
@@ -602,7 +602,7 @@ module Twitter_post_database =
         (post_id: Post_id)
         =
         db_connection.Query(
-            $"insert into {tables.post.like} (
+            $"insert into {tables.post_tables.like} (
                 post,
                 liker
             )

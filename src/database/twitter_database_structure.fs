@@ -38,7 +38,7 @@ module tables =
             |Posts -> "posts_amount"
 
 
-    type Post() =
+    type Post_tables() =
         member _.quotable_message_body = "post_quotable_message_body"
         member _.header = "post_header"
         member _.external_url = "post_external_url"
@@ -55,4 +55,16 @@ module tables =
         member _.repost= "post_repost"
         member _.like= "post_like"
         
-    let post = Post()
+    let post_tables = Post_tables()
+    
+    type Users_to_scrape() =
+        override _.ToString() = "users_to_scrape"
+        member _.created_at = "created_at"
+        member _.handle = "handle"
+        member _.taken_by = "taken_by"
+        member _.status = "status"
+        member _.posts_amount = "posts_amount"
+        member _.likes_amount = "likes_amount"
+       
+        
+    let users_to_scrape = Users_to_scrape()

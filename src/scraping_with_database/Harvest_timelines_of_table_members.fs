@@ -51,38 +51,40 @@ module Harvest_timelines_of_table_members =
         let browser = Browser.open_browser()
         
         seq {
-            let mutable free_user = Central_task_database.take_next_free_user central_db
+            let mutable free_user = Central_task_database.take_next_free_job central_db
             while free_user.IsSome do
                 yield free_user.Value
-                free_user <- Central_task_database.take_next_free_user central_db
+                free_user <- Central_task_database.take_next_free_job central_db
         }
         |>Seq.iter(fun user ->
             let posts_amount =
-                Harvest_posts_from_timeline.resilient_step_of_harvesting_user_timeline
-                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 1)
+                Harvest_posts_from_timeline.resiliently_harvest_user_timeline
+                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 100)
                     browser
                     work_db
                     Timeline_tab.Posts_and_replies
                     user
             
             let likes_amount =    
-                Harvest_posts_from_timeline.resilient_step_of_harvesting_user_timeline
-                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 1)
+                Harvest_posts_from_timeline.resiliently_harvest_user_timeline
+                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 100)
                     browser
                     work_db
                     Timeline_tab.Likes
                     user
                     
-            Central_task_database.write_user_status
+            Central_task_database.set_task_as_complete
                 central_db
+                Central_task_database.this_working_session_id
                 user
-                (Scrape_user_status.Done (posts_amount, likes_amount))
+                posts_amount
+                likes_amount
         )        
         
         
        
 
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``prepare tasks for scraping``() =
         let central_db =
             Central_task_database.open_connection()

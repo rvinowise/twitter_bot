@@ -178,7 +178,7 @@ module Harvest_list_members =
             googlesheet_service
             members_sheet
     
-    [<Fact>] //(Skip="manual")
+    [<Fact(Skip="manual")>] //
     let ``harvest lists``() =
         let browser = Browser.open_browser()
         let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
@@ -218,7 +218,7 @@ module Harvest_list_members =
     
 
 
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try scrape erraneous users``() =
         let browser = Browser.open_browser()
         let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
