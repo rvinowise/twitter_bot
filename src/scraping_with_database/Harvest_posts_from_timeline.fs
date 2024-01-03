@@ -115,8 +115,8 @@ module Harvest_posts_from_timeline =
                 
         let load_new_item_batch =
             Scrape_dynamic_list.load_new_item_batch
-                //(fun () -> wait_for_timeline_loading browser)
-                (fun() -> ())
+                (fun () -> wait_for_timeline_loading browser)
+                //(fun() -> ())
                 scrape_visible_items
                 Read_list_updates.cell_id_from_post_id
                 (fun () -> Scrape_dynamic_list.load_next_items browser)
@@ -140,7 +140,9 @@ module Harvest_posts_from_timeline =
         (tab: Timeline_tab)
         user
         =
+        let mutable post_count = 0
         let write_post =
+            post_count <- post_count + 1
             match tab with
             |Likes ->
                 write_liked_post user database
@@ -148,9 +150,9 @@ module Harvest_posts_from_timeline =
                 Twitter_post_database.write_main_post    
                     database
         
-        let mutable item_count = 0
+        let mutable cell_count = 0
         let harvest_cell_with_counter item =
-            item_count <- item_count+1
+            cell_count <- cell_count + 1
             harvest_timeline_cell
                 write_post
                 (is_finished tab user)
@@ -163,9 +165,9 @@ module Harvest_posts_from_timeline =
             50
             
         Log.info $"""
-        {item_count} posts have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".
+        {post_count} posts from {cell_count} cells have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".
         """
-        item_count
+        cell_count
         
     let write_newest_post_on_timeline
         browser

@@ -143,7 +143,7 @@ module Googlesheet_reading =
         )
         |>List.ofSeq
         
-    [<Fact>]
+    [<Fact(Skip="Manual")>]
     let ``try read_table``()=
         let table =
             read_table
