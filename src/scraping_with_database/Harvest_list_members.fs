@@ -145,7 +145,7 @@ module Harvest_list_members =
         =
         ()
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try import_users_from_spreadsheet``()=
         let googlesheet_service = Googlesheet.create_googlesheet_service()
         let users =
@@ -154,7 +154,7 @@ module Harvest_list_members =
                 members_sheet
         ()
         
-    [<Fact>]
+    [<Fact(Skip="manual")>]//
     let ``try export members``()=
         let database = Twitter_database.open_connection() 
         let googlesheet_service = Googlesheet.create_googlesheet_service()
@@ -218,24 +218,5 @@ module Harvest_list_members =
     
 
 
-    [<Fact(Skip="manual")>]
-    let ``try scrape erraneous users``() =
-        let browser = Browser.open_browser()
-        let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
-        let database = Twitter_database.open_connection()
-        [
-            "ShefHealthspan"
-            "seb_hofer"
-            "Longevity_Intl"
-        ]
-        |>List.map User_handle
-        |>List.iter (fun user ->
-            Harvest_user.harvest_top_of_user_page
-                browser
-                html_context
-                database
-                user
-        )
-    
 
 
