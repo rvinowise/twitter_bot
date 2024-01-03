@@ -141,14 +141,14 @@ module Harvest_posts_from_timeline =
         user
         =
         let mutable post_count = 0
-        let write_post =
+        let write_post post =
             post_count <- post_count + 1
             match tab with
             |Likes ->
-                write_liked_post user database
+                write_liked_post user database post
             |_ ->
                 Twitter_post_database.write_main_post    
-                    database
+                    database post
         
         let mutable cell_count = 0
         let harvest_cell_with_counter item =
@@ -167,7 +167,7 @@ module Harvest_posts_from_timeline =
         Log.info $"""
         {post_count} posts from {cell_count} cells have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".
         """
-        cell_count
+        post_count
         
     let write_newest_post_on_timeline
         browser

@@ -34,7 +34,7 @@ module Central_task_database =
         Log.info $"the id of this working session is {id}"
         id    
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try this_working_session_id``()=
         let id = this_working_session_id
         ()
@@ -74,7 +74,7 @@ module Central_task_database =
             
         free_user
         
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try take_next_free_user``()=
         let result =
             take_next_free_job
@@ -112,7 +112,7 @@ module Central_task_database =
             |}
         )|>Seq.tryHead
     
-    [<Fact>]
+    [<Fact(Skip="manual")>]
     let ``try read_worker_of_user``()=
         let result =
             read_job_worker
