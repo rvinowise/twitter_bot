@@ -162,7 +162,7 @@ module Harvest_posts_from_timeline =
             harvest_cell_with_counter
             browser
             html_parsing_context
-            50
+            Settings.repeat_scrolling_timeline
             
         Log.info $"""
         {post_count} posts from {cell_count} cells have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".

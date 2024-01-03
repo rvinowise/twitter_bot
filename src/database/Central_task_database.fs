@@ -16,7 +16,6 @@ open DeviceId
 module Central_task_database =
     
     
-    
     let open_connection () =
         let db_connection = Database.open_connection Settings.central_db
         
@@ -49,7 +48,8 @@ module Central_task_database =
                 update users_to_scrape 
                 set 
                     {tables.users_to_scrape.status} = '{Scrape_user_status.db_value Scrape_user_status.Taken}',
-                    {tables.users_to_scrape.taken_by} = @worker
+                    {tables.users_to_scrape.taken_by} = @worker,
+                    {tables.users_to_scrape.when_taken} = @when_taken
                 where 
                     handle = (
                         select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
@@ -63,6 +63,7 @@ module Central_task_database =
                 ",
                 {|
                     worker=this_working_session_id
+                    when_taken=DateTime.Now
                 |}
             )|>Seq.tryHead
         
@@ -74,25 +75,22 @@ module Central_task_database =
             
         free_user
    
-    
+            
     let rec resiliently_take_next_free_job () =
-        let central_db =
-            open_connection()
         
         let taken_job,is_successful =
-            try try
-                    let taken_job =
-                        take_next_free_job
-                            central_db
-                    taken_job, true
-                with
-                | :? NpgsqlException as exc ->
-                    $"""Exception when trying to take the next free job from the central datbase: {exc.Message}.
-                    trying again with reistablishing the connection"""
-                    |>Log.error|>ignore
-                    None, false
-            finally
-                Database.try_close_connection central_db
+            try
+                use central_db = open_connection()    
+                let taken_job =
+                    take_next_free_job
+                        central_db
+                taken_job, true
+            with
+            | :? NpgsqlException as exc ->
+                $"""Exception {exc.GetType()} when trying to take the next free job from the central datbase: {exc.Message}.
+                trying again with reistablishing the connection"""
+                |>Log.error|>ignore
+                None, false
                 
         if is_successful then
             taken_job
@@ -199,7 +197,7 @@ module Central_task_database =
             user
             status
     
-    let set_task_as_complete
+    let set_task_as_completed
         (db_connection:NpgsqlConnection)
         worker
         (user: User_handle)
@@ -214,17 +212,21 @@ module Central_task_database =
         db_connection.Query<User_handle>(
             $"update {tables.users_to_scrape} 
             set
-                {tables.users_to_scrape.status}  = '{Scrape_user_status.Done}',
+                {tables.users_to_scrape.status}  = '{Scrape_user_status.Completed}',
                 {tables.users_to_scrape.posts_amount} = @posts_amount,
-                {tables.users_to_scrape.likes_amount} = @likes_amount
+                {tables.users_to_scrape.likes_amount} = @likes_amount,
+                {tables.users_to_scrape.when_completed} = @when_completed
             where 
                 {tables.users_to_scrape.handle} = @handle",
             {|
                 handle = user
                 posts_amount = posts_amount
                 likes_amount = likes_amount
+                when_completed = DateTime.Now
             |}
         ) |> ignore
+    
+    
         
     let rec resiliently_set_task_as_complete
         worker
@@ -232,26 +234,24 @@ module Central_task_database =
         posts_amount
         likes_amount
         =
-        let central_db =
-            open_connection()
-        
         let is_successful =
-            try try
-                    set_task_as_complete
-                        central_db
-                        worker
-                        (user: User_handle)
-                        posts_amount
-                        likes_amount
-                    true
-                with
-                | :? NpgsqlException as exc ->
-                    $"""Exception when trying to set task as complete in the central datbase: {exc.Message}.
-                    trying again with reistablishing the connection"""
-                    |>Log.error|>ignore
-                    false
-            finally
-                Database.try_close_connection central_db
+            try
+                use central_db = open_connection()
+                
+                set_task_as_completed
+                    central_db
+                    worker
+                    (user: User_handle)
+                    posts_amount
+                    likes_amount
+                true
+            with
+            | :? NpgsqlException as exc ->
+                $"""Exception {exc.GetType()} when trying to set task as complete in the central datbase: {exc.Message}.
+                trying again with reistablishing the connection"""
+                |>Log.error|>ignore
+                false
+
                 
         if not is_successful then
             resiliently_set_task_as_complete
@@ -269,12 +269,11 @@ module Central_task_database =
         db_connection.Query<User_handle>(
             $"update {tables.users_to_scrape} 
             set 
-                {tables.users_to_scrape.status}  = @status
+                {tables.users_to_scrape.status}  = '{Scrape_user_status.Taken}'
                 {tables.users_to_scrape.taken_by} = @worker
             where 
                 {tables.users_to_scrape.handle} = @user",
             {|
-                status=Scrape_user_status.Taken
                 worker=this_working_session_id
                 handle = user
             |}

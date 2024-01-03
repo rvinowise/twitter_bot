@@ -33,18 +33,14 @@ module Harvest_timelines_of_table_members =
         )
     
   
-    let needed_posts_amount_of_user
-        (users: Map<User_handle, (int*int)>)
-        user
-        =
-        ()
     
-    
-    [<Fact>]//(Skip="manual")
-    let ``try harvest_timelines``()=
+    let harvest_timelines_from_central_database posts_amount =
         let work_db = Twitter_database.open_connection()
         
         let browser = Browser.open_browser()
+        
+        let when_to_stop needed_amount =
+            Finish_harvesting_timeline.finish_after_amount_of_invocations needed_amount
         
         seq {
             let mutable free_user = Central_task_database.resiliently_take_next_free_job ()
@@ -53,9 +49,10 @@ module Harvest_timelines_of_table_members =
                 free_user <- Central_task_database.resiliently_take_next_free_job ()
         }
         |>Seq.iter(fun user ->
+            
             let posts_amount =
                 Harvest_posts_from_timeline.resiliently_harvest_user_timeline
-                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 100)
+                    (when_to_stop posts_amount)
                     browser
                     work_db
                     Timeline_tab.Posts_and_replies
@@ -63,7 +60,7 @@ module Harvest_timelines_of_table_members =
             
             let likes_amount =    
                 Harvest_posts_from_timeline.resiliently_harvest_user_timeline
-                    (Finish_harvesting_timeline.finish_after_amount_of_invocations 100)
+                    (when_to_stop posts_amount)
                     browser
                     work_db
                     Timeline_tab.Likes
@@ -74,10 +71,13 @@ module Harvest_timelines_of_table_members =
                 user
                 posts_amount
                 likes_amount
-        )        
+        ) 
         
+    
+    [<Fact(Skip="manual")>]//
+    let ``try harvest_timelines``()=
+        harvest_timelines_from_central_database 100
         
-       
 
     [<Fact(Skip="manual")>]
     let ``prepare tasks for scraping``() =

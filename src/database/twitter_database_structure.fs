@@ -65,6 +65,8 @@ module tables =
         member _.status = "status"
         member _.posts_amount = "posts_amount"
         member _.likes_amount = "likes_amount"
+        member _.when_taken = "when_taken"
+        member _.when_completed = "when_completed"
        
         
     let users_to_scrape = Users_to_scrape()

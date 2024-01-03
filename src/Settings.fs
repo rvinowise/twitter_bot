@@ -43,6 +43,8 @@ module Settings =
     let db_connection_string = configuration_root["db_connection_string"]
     let central_db = configuration_root["central_db"]
     
+    let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)
+    
     module Google_sheets =
         
         let followers_amount =

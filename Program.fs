@@ -79,9 +79,16 @@ module Program =
             harvest_following rest
         | "interactions"::rest ->
             announce_user_interactions()
-        |_->
+        | "tasks"::posts_amount::rest ->
+            posts_amount
+            |>int
+            |>Harvest_timelines_of_table_members.harvest_timelines_from_central_database
+        | "competition"::rest ->
             //Scraping.set_canopy_configuration_directories()
             announce_competition_successes()
+        | unknown_parameters ->
+            $"unknown parameters: {unknown_parameters}"
+            |>Log.error|>ignore
         
         Log.important "bot finished execution."
         0

@@ -20,10 +20,10 @@ module Finish_harvesting_timeline =
         post.id = last_visited_post
     
     let finish_after_amount_of_invocations amount =
-        let mutable item_count = 0 
+        let mutable items_left = amount 
         let is_finished = fun _ _ _->
-            item_count <- item_count + 1
-            item_count > amount
+            items_left <- items_left - 1
+            items_left < 0
         is_finished
         
     let finish_after_time time =
