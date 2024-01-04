@@ -23,28 +23,43 @@ module This_worker =
         
         database.Query<string>(
             $"insert into 
-                {tables.this_node} (tables.this_node.id)
+                {tables.this_node} ({tables.this_node.id})
             values (@node_id)
             
             ",
-            [|
+            {|
                 node_id = node_id
-                
-            |]
+            |}
         )|>ignore
     
+    
+    [<Fact>]
+    let ``try write_this_worker_id``() =
+        let result =
+            write_this_worker_id
+                (Twitter_database.open_connection())
+                "Main_supermicro"
+        ()
+        
+        
     let read_this_worker_id
         (database:NpgsqlConnection)
         =
         
         database.Query<string>(
             $"select 
-                {tables.this_node.id},
+                {tables.this_node.id}
                 
             from {tables.this_node}
             "
         )|>Seq.tryHead
     
+    [<Fact>]
+    let ``try read_this_worker_id``() =
+        let result =
+            read_this_worker_id
+                (Twitter_database.open_connection())
+        ()
     
     let mutable memoised_id = None
     let this_worker_id

@@ -197,30 +197,34 @@ module Harvest_posts_from_timeline =
         browser
         tab
         user
-        posts_found
+        scraped_amount
         =
         
-        let minimum_posts_ratio =
+        let minimum_posts_percentage =
             [
                 (*70% of scraped likes, relative to the reported amount by twitter, is OK
                 possibly because liked Ads are skipped*)
-                Timeline_tab.Likes, 0.7
+                Timeline_tab.Likes, 70
                 
                 (*posts_and_replies tab includes the posts to which the reply is made,
                 so, it normally has more posts than the targeted user wrote*)
-                Timeline_tab.Posts_and_replies, 1
+                Timeline_tab.Posts_and_replies, 100
             ]|>Map.ofList
         
         let posts_supposed_amount =
             Scrape_user_social_activity.try_scrape_posts_amount browser
         match posts_supposed_amount with
-        |Some amount ->
+        |Some supposed_amount ->
+            let scraped_percent =
+                if (supposed_amount>0) then
+                    (float scraped_amount)/(float supposed_amount) * 100.0
+                else 100.0
             if
-                (float posts_found)/(float amount) < (minimum_posts_ratio[tab])
+                scraped_percent < minimum_posts_percentage[tab]
             then
                 $"""insufficient scraping of timeline {Timeline_tab.human_name tab} of user {User_handle.value user}:
-                twitter reports {posts_supposed_amount} posts, but only {posts_found} posts were found,
-                which is less than {minimum_posts_ratio[tab]*100.0} %%
+                twitter reports {supposed_amount} posts, but only {scraped_amount} posts were found,
+                which is {scraped_percent}%% and less than needed {minimum_posts_percentage[tab]} %%
                 """
                 |>Log.error|>ignore
         |None ->

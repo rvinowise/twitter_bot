@@ -59,10 +59,10 @@ module Harvest_timelines_of_table_members =
                 work_db
                 tab
                 user
-        if needed_posts_amount < posts_amount then
+        if posts_amount < needed_posts_amount then
             Harvest_posts_from_timeline.check_insufficient_scraping
                 browser
-                Timeline_tab.Posts_and_replies
+                tab
                 user
                 posts_amount
         posts_amount
@@ -115,7 +115,7 @@ module Harvest_timelines_of_table_members =
     [<Fact>]//(Skip="manual")
     let ``try harvest_timelines``()=
         [
-            User_handle "OnDeckLongevity"
+            User_handle "williamwang28"
         ]
         |>harvest_timelines_from_jobs
               (Twitter_database.open_connection())
