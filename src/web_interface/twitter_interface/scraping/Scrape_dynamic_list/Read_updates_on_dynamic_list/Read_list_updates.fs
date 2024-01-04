@@ -117,9 +117,6 @@ module Read_list_updates =
                 |>Log.error|>ignore
                 visible_items
         |None ->
-            if (not previous_items.IsEmpty) then
-                "previous items don't have any ids, so all visible cells will be considered new"
-                |>Log.error|>ignore
             visible_items
      
         

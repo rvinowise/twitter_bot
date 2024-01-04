@@ -33,50 +33,88 @@ module Harvest_timelines_of_table_members =
         )
     
   
-    
-    let harvest_timelines_from_central_database posts_amount =
-        let work_db = Twitter_database.open_connection()
-        
-        let browser = Browser.open_browser()
-        
-        let when_to_stop needed_amount =
-            Finish_harvesting_timeline.finish_after_amount_of_invocations needed_amount
-        
+    let jobs_from_central_database =
         seq {
             let mutable free_user = Central_task_database.resiliently_take_next_free_job ()
             while free_user.IsSome do
                 yield free_user.Value
                 free_user <- Central_task_database.resiliently_take_next_free_job ()
-        }
+        }    
+    
+    
+    let harvest_timeline_with_error_check
+        browser
+        work_db
+        tab
+        user
+        needed_posts_amount
+        =
+        let when_to_stop needed_amount =
+            Finish_harvesting_timeline.finish_after_amount_of_invocations needed_amount
+        
+        let posts_amount =
+            Harvest_posts_from_timeline.resiliently_harvest_user_timeline
+                (when_to_stop needed_posts_amount)
+                browser
+                work_db
+                tab
+                user
+        if needed_posts_amount < posts_amount then
+            Harvest_posts_from_timeline.check_insufficient_scraping
+                browser
+                Timeline_tab.Posts_and_replies
+                user
+                posts_amount
+        posts_amount
+    let harvest_timelines_from_jobs
+        announce_completeness
+        needed_posts_amount
+        jobs
+        =
+        let work_db = Twitter_database.open_connection()
+        
+        let browser = Browser.open_browser()
+        
+        jobs
         |>Seq.iter(fun user ->
             
             let posts_amount =
-                Harvest_posts_from_timeline.resiliently_harvest_user_timeline
-                    (when_to_stop posts_amount)
+                harvest_timeline_with_error_check
                     browser
                     work_db
                     Timeline_tab.Posts_and_replies
                     user
+                    needed_posts_amount
             
             let likes_amount =    
-                Harvest_posts_from_timeline.resiliently_harvest_user_timeline
-                    (when_to_stop posts_amount)
+                harvest_timeline_with_error_check
                     browser
                     work_db
                     Timeline_tab.Likes
                     user
-                    
-            Central_task_database.resiliently_set_task_as_complete
-                Central_task_database.this_working_session_id
+                    needed_posts_amount
+            
+            announce_completeness
                 user
                 posts_amount
                 likes_amount
         ) 
         
     
-    [<Fact(Skip="manual")>]//
+    let harvest_timelines_from_central_database article_amount =
+        harvest_timelines_from_jobs
+            (Central_task_database.resiliently_set_task_as_complete Central_task_database.this_working_session_id)
+            article_amount
+            jobs_from_central_database
+    
+    [<Fact>]//(Skip="manual")
     let ``try harvest_timelines``()=
-        harvest_timelines_from_central_database 100
+        [
+            User_handle "GordianBio"
+        ]
+        |>harvest_timelines_from_jobs
+              (Central_task_database.resiliently_set_task_as_complete Central_task_database.this_working_session_id)
+              100
         
 
     [<Fact(Skip="manual")>]

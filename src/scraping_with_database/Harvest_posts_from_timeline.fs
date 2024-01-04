@@ -193,7 +193,13 @@ module Harvest_posts_from_timeline =
     
         
     
-    let check_insufficient_scraping browser tab user posts_found =
+    let check_insufficient_scraping
+        browser
+        tab
+        user
+        posts_found
+        =
+        
         let minimum_posts_ratio =
             [
                 (*70% of scraped likes, relative to the reported amount by twitter, is OK
