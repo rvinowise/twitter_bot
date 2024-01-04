@@ -33,12 +33,12 @@ module Harvest_timelines_of_table_members =
         )
     
   
-    let jobs_from_central_database =
+    let jobs_from_central_database worker_id =
         seq {
-            let mutable free_user = Central_task_database.resiliently_take_next_free_job ()
+            let mutable free_user = Central_task_database.resiliently_take_next_free_job worker_id
             while free_user.IsSome do
                 yield free_user.Value
-                free_user <- Central_task_database.resiliently_take_next_free_job ()
+                free_user <- Central_task_database.resiliently_take_next_free_job worker_id
         }    
     
     
@@ -67,12 +67,11 @@ module Harvest_timelines_of_table_members =
                 posts_amount
         posts_amount
     let harvest_timelines_from_jobs
+        local_db
         announce_completeness
         needed_posts_amount
         jobs
         =
-        let work_db = Twitter_database.open_connection()
-        
         let browser = Browser.open_browser()
         
         jobs
@@ -81,7 +80,7 @@ module Harvest_timelines_of_table_members =
             let posts_amount =
                 harvest_timeline_with_error_check
                     browser
-                    work_db
+                    local_db
                     Timeline_tab.Posts_and_replies
                     user
                     needed_posts_amount
@@ -89,31 +88,38 @@ module Harvest_timelines_of_table_members =
             let likes_amount =    
                 harvest_timeline_with_error_check
                     browser
-                    work_db
+                    local_db
                     Timeline_tab.Likes
                     user
                     needed_posts_amount
             
             announce_completeness
+                (This_worker.this_worker_id local_db)
                 user
                 posts_amount
                 likes_amount
         ) 
         
     
-    let harvest_timelines_from_central_database article_amount =
+    let harvest_timelines_from_central_database
+        local_db
+        article_amount 
+        =
+        let worker_id = This_worker.this_worker_id local_db
         harvest_timelines_from_jobs
-            (Central_task_database.resiliently_set_task_as_complete Central_task_database.this_working_session_id)
+            local_db
+            (Central_task_database.resiliently_set_task_as_complete)
             article_amount
-            jobs_from_central_database
+            (jobs_from_central_database worker_id)
     
     [<Fact>]//(Skip="manual")
     let ``try harvest_timelines``()=
         [
-            User_handle "GordianBio"
+            User_handle "OnDeckLongevity"
         ]
         |>harvest_timelines_from_jobs
-              (Central_task_database.resiliently_set_task_as_complete Central_task_database.this_working_session_id)
+              (Twitter_database.open_connection())
+              (fun _ _ _ _-> ())
               100
         
 

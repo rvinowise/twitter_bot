@@ -23,27 +23,17 @@ module Central_task_database =
         
         db_connection    
 
-    let this_working_session_id =
-        let id =
-            DeviceIdBuilder()
-                .AddMachineName()
-                .UseFormatter(StringDeviceIdFormatter(PlainTextDeviceIdComponentEncoder()))
-                .ToString()+" "+(DateTime.Now.ToString("yyyy-MM-dd HH:mm"))
-        
-        Log.info $"the id of this working session is {id}"
-        id    
+      
     
-    [<Fact(Skip="manual")>]
-    let ``try this_working_session_id``()=
-        let id = this_working_session_id
-        ()
+
     
     let take_next_free_job
-        (db_connection: NpgsqlConnection)
+        (central_db: NpgsqlConnection)
+        worker_id
         =
         
         let free_user =
-            db_connection.Query<User_handle>(
+            central_db.Query<User_handle>(
                 $"
                 update users_to_scrape 
                 set 
@@ -62,7 +52,7 @@ module Central_task_database =
                 returning handle    
                 ",
                 {|
-                    worker=this_working_session_id
+                    worker=worker_id
                     when_taken=DateTime.Now
                 |}
             )|>Seq.tryHead
@@ -76,7 +66,7 @@ module Central_task_database =
         free_user
    
             
-    let rec resiliently_take_next_free_job () =
+    let rec resiliently_take_next_free_job worker_id =
         
         let taken_job,is_successful =
             try
@@ -84,6 +74,7 @@ module Central_task_database =
                 let taken_job =
                     take_next_free_job
                         central_db
+                        worker_id
                 taken_job, true
             with
             | :? NpgsqlException as exc ->
@@ -95,7 +86,7 @@ module Central_task_database =
         if is_successful then
             taken_job
         else
-            resiliently_take_next_free_job ()
+            resiliently_take_next_free_job worker_id
        
     [<Fact(Skip="manual")>]
     let ``try take_next_free_user``()=
@@ -260,26 +251,49 @@ module Central_task_database =
                 posts_amount
                 likes_amount
                 
-    let write_taken_user
-        (db_connection:NpgsqlConnection)
-        (user: User_handle)
+
+    let read_last_user_jobs_with_status
+        (database:NpgsqlConnection)
+        (status: Scrape_user_status)
         =
-        Log.info $"take user {User_handle.value user} for scraping as a task"
         
-        db_connection.Query<User_handle>(
-            $"update {tables.users_to_scrape} 
-            set 
-                {tables.users_to_scrape.status}  = '{Scrape_user_status.Taken}'
-                {tables.users_to_scrape.taken_by} = @worker
+        database.Query<string>(
+            $"select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
             where 
-                {tables.users_to_scrape.handle} = @user",
-            {|
-                worker=this_working_session_id
-                handle = user
-            |}
-        ) |> ignore
-
-
+                {tables.users_to_scrape.created_at} = (
+                        SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
+                    )
+                and {tables.users_to_scrape.status} = '{status}'
+            "
+        )|>Seq.tryHead
+    
+    type User_to_scrape = {
+        handle: User_handle
+        posts_amount: int
+        likes_amount: int
+        taken_by: string
+    }
+    
+    let read_results_of_last_jobs
+        (database:NpgsqlConnection)
+        =
+        
+        database.Query<string>(
+            $"select 
+                {tables.users_to_scrape.handle},
+                {tables.users_to_scrape.posts_amount},
+                {tables.users_to_scrape.likes_amount},
+                {tables.users_to_scrape.taken_by},
+                
+            from {tables.users_to_scrape}
+            where 
+                {tables.users_to_scrape.created_at} = (
+                        SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
+                    )
+                and {tables.users_to_scrape.status} = '{Scrape_user_status.Completed}'
+            "
+        )|>Seq.tryHead
+    
     let write_user_for_scraping
         (database:NpgsqlConnection)
         created_at

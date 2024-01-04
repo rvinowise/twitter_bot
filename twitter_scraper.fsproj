@@ -72,12 +72,13 @@
 
     <Compile Include="src\database\twitter_database_structure.fs" />
     <Compile Include="src\database\Twitter_user_database.fs" />
-    <Compile Include="src\database\Central_task_database.fs" />
     <Compile Include="src\database\Twitter_activity_database.fs" />
     <Compile Include="src\database\Twitter_post_database.fs" />
     <Folder Include="src\database\Twitter_post_database" />
     <Compile Include="src\database\Twitter_following_database.fs" />
     <Compile Include="src\database\User_interaction.fs" />
+    <Compile Include="src\database\Distribuing_tasks\This_worker.fs" />
+    <Compile Include="src\database\Distribuing_tasks\Central_task_database.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
     <!-- google spread sheets interface   -->

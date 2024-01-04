@@ -83,6 +83,7 @@ module Program =
             posts_amount
             |>int
             |>Harvest_timelines_of_table_members.harvest_timelines_from_central_database
+                (Twitter_database.open_connection())
         | "competition"::rest ->
             //Scraping.set_canopy_configuration_directories()
             announce_competition_successes()

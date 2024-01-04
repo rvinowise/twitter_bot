@@ -89,18 +89,20 @@ module Read_list_updates =
                 cell_identity cell_node,
                 index
             )
+        let visible_items_ids =    
+            visible_items
+            |>List.map (fun cell_node ->
+                cell_identity cell_node,
+                cell_node
+            )
+        
         match
             last_previous_item_with_id previous_items_ids
         with
         |Some (last_known_id,skipped_amount) ->
-            let new_items_ids =    
-                visible_items
-                |>List.map (fun cell_node ->
-                    cell_identity cell_node,
-                    cell_node
-                )
-            new_items_ids
-            |>List.tryFindIndex (fun (new_item_id,node) ->
+            
+            visible_items_ids
+            |>List.tryFindIndex (fun (new_item_id,_) ->
                 new_item_id = last_known_id
             )|>function
             |Some i_first_previously_known_item ->
@@ -117,7 +119,21 @@ module Read_list_updates =
                 |>Log.error|>ignore
                 visible_items
         |None ->
-            visible_items
+            let visible_items_have_ids visible_items_ids =
+                visible_items_ids
+                |>List.exists (fun (item_id, _) -> Option.isSome item_id)
+            
+            if (not previous_items.IsEmpty) then
+                if (visible_items_have_ids visible_items_ids) then
+                    "previous items don't have any ids, and visible items have ids, so all visible cells will be considered new"
+                    |>Log.info
+                    visible_items
+                else
+                    "neither previous nor visible items have any ids, so no items are returned"
+                    |>Log.info
+                    []
+            else
+                visible_items
      
         
     let process_item_batch_providing_previous_items

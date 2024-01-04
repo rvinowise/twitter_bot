@@ -70,3 +70,9 @@ module tables =
        
         
     let users_to_scrape = Users_to_scrape()
+    
+    
+    type This_node() =
+        override _.ToString() = "this_node"
+        member _.id = "id"
+    let this_node = This_node()
