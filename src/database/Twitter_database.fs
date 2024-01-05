@@ -8,25 +8,28 @@ open rvinowise.twitter
 
 
 
-type Scrape_user_status =
+type Scraping_user_status =
     |Free
     |Taken
     |Completed
+    |Insufficient
     
     
-module Scrape_user_status =
-    let db_value (status: Scrape_user_status) =
+module Scraping_user_status =
+    let db_value (status: Scraping_user_status) =
         match status with
         |Free -> "Free"
         |Taken -> "Taken"
         |Completed -> "Completed"
+        |Insufficient -> "Insufficient"
 
     let from_db_value value =
         match value with
-        |"Free" -> Scrape_user_status.Free
-        |"Taken" -> Scrape_user_status.Taken
-        |"Completed" -> Scrape_user_status.Completed 
-        |unknown_type -> raise (TypeAccessException $"unknown type of Scrape_user_status: {unknown_type}")
+        |"Free" -> Scraping_user_status.Free
+        |"Taken" -> Scraping_user_status.Taken
+        |"Completed" -> Scraping_user_status.Completed 
+        |"Insufficient" -> Scraping_user_status.Insufficient 
+        |unknown_type -> raise (TypeAccessException $"unknown type of Scraping_user_status: {unknown_type}")
         
 type Timestamp_mapper() =
     (* by default, Dapper transforms time to UTC when writing to the DB,
@@ -64,16 +67,16 @@ type User_handle_mapper() =
 
 
 type Scrape_user_status_mapper() =
-    inherit SqlMapper.TypeHandler<Scrape_user_status>()
+    inherit SqlMapper.TypeHandler<Scraping_user_status>()
     override this.SetValue(
             parameter:IDbDataParameter ,
-            value: Scrape_user_status
+            value: Scraping_user_status
         )
         =
-        parameter.Value <- Scrape_user_status.db_value value
+        parameter.Value <- Scraping_user_status.db_value value
     
     override this.Parse(value: obj) =
-        Scrape_user_status.from_db_value (value :?> string) 
+        Scraping_user_status.from_db_value (value :?> string) 
 
 
 type Post_id_mapper() =

@@ -11,7 +11,9 @@ open rvinowise.twitter.database
 
 open DeviceId
    
-        
+
+
+
 
 module Central_task_database =
     
@@ -22,8 +24,6 @@ module Central_task_database =
         Twitter_database.set_twitter_type_handlers()
         
         db_connection    
-
-      
     
 
     
@@ -37,7 +37,7 @@ module Central_task_database =
                 $"
                 update users_to_scrape 
                 set 
-                    {tables.users_to_scrape.status} = '{Scrape_user_status.db_value Scrape_user_status.Taken}',
+                    {tables.users_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Taken}',
                     {tables.users_to_scrape.taken_by} = @worker,
                     {tables.users_to_scrape.when_taken} = @when_taken
                 where 
@@ -45,7 +45,7 @@ module Central_task_database =
                         select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
                         where 
                             {tables.users_to_scrape.created_at} = (SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape})
-                            and {tables.users_to_scrape.status} = '{Scrape_user_status.db_value Scrape_user_status.Free}'
+                            and {tables.users_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Free}'
                             and {tables.users_to_scrape.taken_by} = ''
                         limit 1
                     )
@@ -137,9 +137,9 @@ module Central_task_database =
     let write_job_status
         (db_connection:NpgsqlConnection)
         (user: User_handle)
-        (status: Scrape_user_status)
+        (status: Scraping_user_status)
         =
-        Log.info $"writing status {Scrape_user_status.db_value status} for user {User_handle.value user} in the central database"
+        Log.info $"writing status {Scraping_user_status.db_value status} for user {User_handle.value user} in the central database"
         
         db_connection.Query<User_handle>(
             $"update {tables.users_to_scrape} 
@@ -176,7 +176,7 @@ module Central_task_database =
         (db_connection:NpgsqlConnection)
         worker
         (user: User_handle)
-        (status: Scrape_user_status)
+        (status: Scraping_user_status)
         =
         check_job_worker_is_same
             db_connection
@@ -188,29 +188,30 @@ module Central_task_database =
             user
             status
     
-    let set_task_as_completed
+    let write_final_result
         (db_connection:NpgsqlConnection)
         worker
-        (user: User_handle)
+        (user_task: User_handle)
         posts_amount
         likes_amount
+        (result:Scraping_user_status)
         =
         check_job_worker_is_same
             db_connection
             worker
-            user
+            user_task
             
         db_connection.Query<User_handle>(
             $"update {tables.users_to_scrape} 
             set
-                {tables.users_to_scrape.status}  = '{Scrape_user_status.Completed}',
+                {tables.users_to_scrape.status}  = '{result}',
                 {tables.users_to_scrape.posts_amount} = @posts_amount,
                 {tables.users_to_scrape.likes_amount} = @likes_amount,
                 {tables.users_to_scrape.when_completed} = @when_completed
             where 
                 {tables.users_to_scrape.handle} = @handle",
             {|
-                handle = user
+                handle = user_task
                 posts_amount = posts_amount
                 likes_amount = likes_amount
                 when_completed = DateTime.Now
@@ -219,22 +220,24 @@ module Central_task_database =
     
     
         
-    let rec resiliently_set_task_as_complete
+    let rec resiliently_write_final_result
         worker
         (user: User_handle)
         posts_amount
         likes_amount
+        result
         =
         let is_successful =
             try
                 use central_db = open_connection()
                 
-                set_task_as_completed
+                write_final_result
                     central_db
                     worker
                     (user: User_handle)
                     posts_amount
                     likes_amount
+                    result
                 true
             with
             | :? NpgsqlException as exc ->
@@ -245,16 +248,17 @@ module Central_task_database =
 
                 
         if not is_successful then
-            resiliently_set_task_as_complete
+            resiliently_write_final_result
                 worker
                 (user: User_handle)
                 posts_amount
                 likes_amount
+                result
                 
 
     let read_last_user_jobs_with_status
         (database:NpgsqlConnection)
-        (status: Scrape_user_status)
+        (status: Scraping_user_status)
         =
         
         database.Query<string>(
@@ -290,7 +294,7 @@ module Central_task_database =
                 {tables.users_to_scrape.created_at} = (
                         SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
                     )
-                and {tables.users_to_scrape.status} = '{Scrape_user_status.Completed}'
+                and {tables.users_to_scrape.status} = '{Scraping_user_status.Completed}'
             "
         )|>Seq.tryHead
     
@@ -309,7 +313,7 @@ module Central_task_database =
             values (
                 @created_at,
                 @handle,
-                '{Scrape_user_status.db_value Scrape_user_status.Free}'
+                '{Scraping_user_status.db_value Scraping_user_status.Free}'
             )
             ",
             {|

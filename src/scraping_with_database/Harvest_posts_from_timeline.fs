@@ -193,7 +193,7 @@ module Harvest_posts_from_timeline =
     
         
     
-    let check_insufficient_scraping
+    let is_scraping_sufficient
         browser
         tab
         user
@@ -227,9 +227,12 @@ module Harvest_posts_from_timeline =
                 which is {scraped_percent}%% and less than needed {minimum_posts_percentage[tab]} %%
                 """
                 |>Log.error|>ignore
+                false
+            else true
         |None ->
             $"can't read posts amount from timeline {Timeline_tab.human_name tab} of user {User_handle.value user}"
             |>Log.error|>ignore
+            false
             
     
     let harvest_updates_on_timeline_of_user
@@ -259,7 +262,7 @@ module Harvest_posts_from_timeline =
             is_finished
             tab
             user
-        |>check_insufficient_scraping browser tab user
+        |>is_scraping_sufficient browser tab user
         
     
     let rec resiliently_harvest_user_timeline
@@ -320,6 +323,7 @@ module Harvest_posts_from_timeline =
                         database
                         head_timeline
                         head_user
+                    |>ignore
                         
                     browser,rest_tabs
                 with

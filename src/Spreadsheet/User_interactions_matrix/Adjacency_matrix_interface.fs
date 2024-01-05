@@ -319,7 +319,7 @@ module Adjacency_matrix_interface =
         let all_users =
             Central_task_database.read_last_user_jobs_with_status
                 central_db
-                Scrape_user_status.Completed
+                Scraping_user_status.Completed
     
         ()
         

@@ -6,6 +6,10 @@ open Xunit
 open rvinowise.html_parsing
 open rvinowise.web_scraping
 
+
+
+
+
 module Harvest_timelines_of_table_members =
     
     
@@ -59,16 +63,19 @@ module Harvest_timelines_of_table_members =
                 work_db
                 tab
                 user
-        if posts_amount < needed_posts_amount then
-            Harvest_posts_from_timeline.check_insufficient_scraping
-                browser
-                tab
-                user
-                posts_amount
-        posts_amount
+        let is_sufficient = 
+            if posts_amount < needed_posts_amount then
+                Harvest_posts_from_timeline.is_scraping_sufficient
+                    browser
+                    tab
+                    user
+                    posts_amount
+            else true
+        posts_amount,is_sufficient
+        
     let harvest_timelines_from_jobs
         local_db
-        announce_completeness
+        announce_result
         needed_posts_amount
         jobs
         =
@@ -77,7 +84,7 @@ module Harvest_timelines_of_table_members =
         jobs
         |>Seq.iter(fun user ->
             
-            let posts_amount =
+            let posts_amount,is_enough_posts =
                 harvest_timeline_with_error_check
                     browser
                     local_db
@@ -85,7 +92,7 @@ module Harvest_timelines_of_table_members =
                     user
                     needed_posts_amount
             
-            let likes_amount =    
+            let likes_amount,is_enough_likes =    
                 harvest_timeline_with_error_check
                     browser
                     local_db
@@ -93,11 +100,17 @@ module Harvest_timelines_of_table_members =
                     user
                     needed_posts_amount
             
-            announce_completeness
+            match is_enough_likes,is_enough_posts with
+            |true,true ->
+                Scraping_user_status.Completed    
+            | _ ->
+                Scraping_user_status.Insufficient
+            |>announce_result
                 (This_worker.this_worker_id local_db)
                 user
                 posts_amount
                 likes_amount
+                
         ) 
         
     
@@ -108,7 +121,7 @@ module Harvest_timelines_of_table_members =
         let worker_id = This_worker.this_worker_id local_db
         harvest_timelines_from_jobs
             local_db
-            (Central_task_database.resiliently_set_task_as_complete)
+            (Central_task_database.resiliently_write_final_result)
             article_amount
             (jobs_from_central_database worker_id)
     
@@ -119,7 +132,7 @@ module Harvest_timelines_of_table_members =
         ]
         |>harvest_timelines_from_jobs
               (Twitter_database.open_connection())
-              (fun _ _ _ _-> ())
+              (fun _ _ _ _ _-> ())
               100
         
 
