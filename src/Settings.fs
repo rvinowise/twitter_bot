@@ -3,12 +3,17 @@
 open System
 open Microsoft.Extensions.Configuration
 
-//type Config = AppSettings<"app.config">
 type Google_spreadsheet = {
     doc_id: string
     page_id: int
     page_name: string
 }
+module Google_spreadsheet =
+    let default_sheet = {
+        Google_spreadsheet.doc_id=""
+        page_id=0
+        page_name=""
+    }
 
 type Browser = {
     path: string
@@ -19,61 +24,88 @@ type Browser = {
 
 module Settings = 
     
-    
-    let configuration_builder = (ConfigurationBuilder()).AddJsonFile("appsettings.json", false, true);
+    let configuration_builder = ConfigurationBuilder().AddJsonFile("appsettings.json", false, true);
     let configuration_root = configuration_builder.Build() :> IConfiguration
-    let auth_tokens =
-        configuration_root.GetSection("auth_tokens").Get<string[]>()
     
-    let login = configuration_root["login"]
-    let password = configuration_root["password"]
     
-    let competitors_section =
-            configuration_root.GetSection("competitors")
-    module Competitors =
-        let list = competitors_section["list"]
-        (*bot can't recognise whether a participant is removed from the list, or the list didn't load fully.
-        to avoid disappearance of participants due to twitter malfunctioning,
-        they are included from the recent past*) 
-        let include_from_past = int (competitors_section["include_from_past_hours"])
-    let repeat_harvesting_if_older_than =
-        let days = 
-            configuration_root.GetValue<int>("repeat_harvesting_if_older_than_days",1)
-        TimeSpan.FromDays(days)
-    let db_connection_string = configuration_root["db_connection_string"]
-    let central_db = configuration_root["central_db"]
-    
-    let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)
-    
-    module Google_sheets =
+    module Influencer_competition =
         
-        let followers_amount =
-            let followers_amount_section =
-                configuration_root.GetSection("google_tables").GetSection("followers_amount")
-            {
-                Google_spreadsheet.doc_id = followers_amount_section["doc_id"]
-                page_id = int followers_amount_section["page_id"]
-                page_name = followers_amount_section["page_name"]
-            }
+        let competition_section =
+                configuration_root.GetSection("influencer_competition")
+        module Competitors =
+            
+            let list,include_from_past =
+                if competition_section.Exists() then
+                    let competitors_section =
+                        competition_section.GetSection("competitors")
+                    let list = competitors_section["list"]
+                    (*bot can't recognise whether a participant is removed from the list, or the list didn't load fully.
+                    to avoid disappearance of participants due to twitter malfunctioning,
+                    they are included from the recent past*) 
+                    let include_from_past = competitors_section.GetValue<int>("include_from_past_hours",72)
+                    list,include_from_past
+                else
+                    "",0
         
-        let posts_amount =
-            let posts_amount_section =
-                configuration_root.GetSection("google_tables").GetSection("posts_amount")
-            {
-                Google_spreadsheet.doc_id = posts_amount_section["doc_id"]
-                page_id = int posts_amount_section["page_id"]
-                page_name = posts_amount_section["page_name"]
-            }
-        let read_referrals =
-            let posts_amount_section =
-                configuration_root.GetSection("google_tables").GetSection("read_referrals")
-            {
-                Google_spreadsheet.doc_id = posts_amount_section["doc_id"]
-                page_id = int posts_amount_section["page_id"]
-                page_name = posts_amount_section["page_name"]
-            }
-    
+        module Google_sheets =
+            
+            let followers_amount,posts_amount,read_referrals =
+            
+                if competition_section.Exists() then
+                    let google_tables_section =
+                        competition_section.GetSection("google_tables")
+                    
+                    let followers_amount =
+                        let followers_amount_section =
+                            google_tables_section.GetSection("followers_amount")
+                            
+                        {
+                            Google_spreadsheet.doc_id = followers_amount_section["doc_id"]
+                            page_id = int followers_amount_section["page_id"]
+                            page_name = followers_amount_section["page_name"]
+                        }
+                    
+                    let posts_amount =
+                        let posts_amount_section =
+                            google_tables_section.GetSection("posts_amount")
+                        {
+                            Google_spreadsheet.doc_id = posts_amount_section["doc_id"]
+                            page_id = int posts_amount_section["page_id"]
+                            page_name = posts_amount_section["page_name"]
+                        }
+                    let read_referrals =
+                        let posts_amount_section =
+                            google_tables_section.GetSection("read_referrals")
+                        {
+                            Google_spreadsheet.doc_id = posts_amount_section["doc_id"]
+                            page_id = int posts_amount_section["page_id"]
+                            page_name = posts_amount_section["page_name"]
+                        }
+                    followers_amount,posts_amount,read_referrals
+                else
+                    Google_spreadsheet.default_sheet,
+                    Google_spreadsheet.default_sheet,
+                    Google_spreadsheet.default_sheet
+                    
 
+    
+    
+    //module social_connections    
+    let repeat_harvesting_if_older_than =
+        if configuration_root.GetSection("repeat_harvesting_if_older_than_days").Exists() then
+            let days = 
+                configuration_root.GetValue<int>("repeat_harvesting_if_older_than_days",0)
+            TimeSpan.FromDays(days)
+        else
+            TimeSpan.MaxValue
+    
+    //module Databases
+    let db_connection_string = configuration_root.GetValue<string>("db_connection_string","")
+    let central_db = configuration_root.GetValue<string>("central_db","")
+    
+    
+    //module Scraping
+    
     let browser =
         let browser_section =
             configuration_root.GetSection("browser")
@@ -81,7 +113,6 @@ module Settings =
             path = browser_section["path"]
             webdriver_version = browser_section["webdriver_version"]
             profile_path = browser_section["profile_path"]
-            headless = browser_section["headless"] = "true"
+            headless = browser_section.GetValue<bool>("headless",true)
         }
-        
-        
+    let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)    

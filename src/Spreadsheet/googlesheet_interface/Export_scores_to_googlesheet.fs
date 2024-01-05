@@ -83,7 +83,7 @@ module Export_scores_to_googlesheet =
             Social_activity_database.read_last_followers_amount_time db_connection
         let competitors =
             Social_activity_database.read_last_competitors db_connection
-                (last_datetime - TimeSpan.FromHours(Settings.Competitors.include_from_past))
+                (last_datetime - TimeSpan.FromHours(Settings.Influencer_competition.Competitors.include_from_past))
             |>Set.ofSeq
 
         let last_amounts =
@@ -201,11 +201,11 @@ module Export_scores_to_googlesheet =
         update_googlesheet
             database
             Social_activity_amounts.Followers
-            Settings.Google_sheets.followers_amount
+            Settings.Influencer_competition.Google_sheets.followers_amount
         update_googlesheet
             database
             Social_activity_amounts.Posts
-            Settings.Google_sheets.posts_amount
+            Settings.Influencer_competition.Google_sheets.posts_amount
     
     [<Fact(Skip="manual")>]
     let ``try update_googlesheets``() =

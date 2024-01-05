@@ -14,7 +14,7 @@ module Announce_user_interactions =
         
         let before_scraping_users = DateTime.Now
         let all_users =
-            Settings.Competitors.list
+            Settings.Influencer_competition.Competitors.list
             |>Scrape_list_members.scrape_twitter_list_members browser html_context
             |>List.ofSeq
             |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)

@@ -12,7 +12,7 @@ module announce_score =
         
         let before_scraping_competitors = DateTime.Now
         let competitors =
-            Settings.Competitors.list
+            Settings.Influencer_competition.Competitors.list
             |>Scrape_list_members.scrape_twitter_list_members
                   browser
                   html_context

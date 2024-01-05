@@ -61,8 +61,6 @@
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Timeline_types.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Twitter_notifications.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_followers_network.fs" />
-    
-    <Compile Include="src\web_interface\twitter_interface\login_to_twitter.fs" />
     <Compile Include="src\web_interface\twitter_interface\writing\post_on_twitter.fs" />
 
 

@@ -13,25 +13,25 @@ module Program =
     let harvest_following
         root_users
         =
-        try
-            root_users
-            |>Seq.zip Settings.auth_tokens
-            |>Array.ofSeq
-            |>Array.Parallel.iter(fun (bot_token, user_to_harvest)->
-                use db_connection = Twitter_database.open_connection() 
-                use browser = Browser.prepare_authentified_browser bot_token
-                use parsing_context = Html_parsing.parsing_context()
-                Harvest_followers_network.harvest_following_network_around_user
-                    browser
-                    parsing_context
-                    db_connection
-                    Settings.repeat_harvesting_if_older_than
-                    (User_handle user_to_harvest)
-            )
-        with
-        | :? WebDriverException as exc ->
-            Log.error $"""can't harvest acquaintances: {exc.Message}"""|>ignore
-    
+        // try
+        //     root_users
+        //     |>Seq.zip Settings.auth_tokens
+        //     |>Array.ofSeq
+        //     |>Array.Parallel.iter(fun (bot_token, user_to_harvest)->
+        //         use db_connection = Twitter_database.open_connection() 
+        //         use browser = Browser.prepare_authentified_browser bot_token
+        //         use parsing_context = Html_parsing.parsing_context()
+        //         Harvest_followers_network.harvest_following_network_around_user
+        //             browser
+        //             parsing_context
+        //             db_connection
+        //             Settings.repeat_harvesting_if_older_than
+        //             (User_handle user_to_harvest)
+        //     )
+        // with
+        // | :? WebDriverException as exc ->
+        //     Log.error $"""can't harvest acquaintances: {exc.Message}"""|>ignore
+        ()
         
     let announce_competition_successes ()=
         try
@@ -51,7 +51,7 @@ module Program =
             Import_referrals_from_googlesheet.import_referrals
                 (Googlesheet.create_googlesheet_service())
                 (Twitter_database.open_connection())
-                Settings.Google_sheets.read_referrals
+                Settings.Influencer_competition.Google_sheets.read_referrals
         with
         | :? TaskCanceledException as exc ->
             Log.error $"""can't read referrals from googlesheet: {exc.Message}"""|>ignore

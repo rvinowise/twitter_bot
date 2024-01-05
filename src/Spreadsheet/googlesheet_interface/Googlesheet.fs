@@ -141,7 +141,7 @@ module Googlesheet =
     [<Fact(Skip="manual")>]//
     let ``try clean_sheet``() =  
         clean_sheet
-            Settings.Google_sheets.followers_amount
+            Settings.Influencer_competition.Google_sheets.followers_amount
             
             
     let username_from_handle

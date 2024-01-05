@@ -81,7 +81,7 @@ module Parse_twitter_event =
             | link_node::_ ->
                 link_node
                 |>Html_node.attribute_value "href"
-                |>fun url->url.Split("/")
+                |>_.Split("/")
                 |>List.ofArray
                 |>List.rev
                 |>function
