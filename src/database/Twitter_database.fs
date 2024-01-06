@@ -65,6 +65,17 @@ type User_handle_mapper() =
     override this.Parse(value: obj) =
         User_handle (value :?> string) 
 
+type Email_mapper() =
+    inherit SqlMapper.TypeHandler<Email>()
+    override this.SetValue(
+            parameter:IDbDataParameter ,
+            value: Email
+        )
+        =
+        parameter.Value <- Email.value value
+    
+    override this.Parse(value: obj) =
+        Email (value :?> string) 
 
 type Scrape_user_status_mapper() =
     inherit SqlMapper.TypeHandler<Scraping_user_status>()
@@ -144,6 +155,7 @@ module Twitter_database =
     let set_twitter_type_handlers () =
         SqlMapper.AddTypeHandler(Timestamp_mapper()) //sometimes it's needed, sometimes not
         SqlMapper.AddTypeHandler(User_handle_mapper())
+        SqlMapper.AddTypeHandler(Email_mapper())
         SqlMapper.AddTypeHandler(Post_id_mapper())
         SqlMapper.AddTypeHandler(Event_id_mapper())
         SqlMapper.AddTypeHandler(Option_mapper<User_handle>(User_handle_mapper()))

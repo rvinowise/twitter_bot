@@ -77,6 +77,7 @@
     <Compile Include="src\database\User_interaction.fs" />
     <Compile Include="src\database\Distribuing_tasks\This_worker.fs" />
     <Compile Include="src\database\Distribuing_tasks\Central_task_database.fs" />
+    <Compile Include="src\database\Distribuing_tasks\Assigning_browser_profiles.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
     <!-- google spread sheets interface   -->

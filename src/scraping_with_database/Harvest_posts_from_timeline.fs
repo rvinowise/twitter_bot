@@ -4,6 +4,7 @@ open System
 open OpenQA.Selenium
 open Xunit
 open rvinowise.html_parsing
+open rvinowise.twitter
 open rvinowise.web_scraping
 
 module Harvest_posts_from_timeline =
@@ -187,9 +188,7 @@ module Harvest_posts_from_timeline =
         
 
     
-    let reveal_timeline browser tab user=
-        Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
-        Reveal_user_page.surpass_content_warning browser
+    
     
         
     
@@ -224,7 +223,7 @@ module Harvest_posts_from_timeline =
             then
                 $"""insufficient scraping of timeline {Timeline_tab.human_name tab} of user {User_handle.value user}:
                 twitter reports {supposed_amount} posts, but only {scraped_amount} posts were found,
-                which is {scraped_percent}%% and less than needed {minimum_posts_percentage[tab]} %%
+                which is {int scraped_percent}%% and less than needed {minimum_posts_percentage[tab]} %%
                 """
                 |>Log.error|>ignore
                 false
@@ -245,7 +244,11 @@ module Harvest_posts_from_timeline =
         Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
         let html_parsing_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
         
-        reveal_timeline browser tab user 
+        Reveal_user_page.reveal_timeline
+            browser 
+            html_parsing_context
+            tab
+            user 
         
         
         write_newest_post_on_timeline
@@ -264,27 +267,57 @@ module Harvest_posts_from_timeline =
             user
         |>is_scraping_sufficient browser tab user
         
+    let reveal_and_harvest_timeline
+        (browser:Browser)
+        html_context
+        database
+        is_finished
+        timeline_tab
+        user
+        =
+        match
+            Reveal_user_page.reveal_timeline
+                browser
+                html_context
+                timeline_tab
+                user
+        with
+        |Revealed ->
+            harvest_timeline_tab_of_user
+                browser
+                html_context
+                database
+                is_finished
+                timeline_tab
+                user
+        |Timeline_failed ->
+            Log.info $"""
+            Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
+            Switching browser profiles"""
+            browser.restart()
+            0
+        
+        
     
     let rec resiliently_harvest_user_timeline
         is_finished
         (browser: Browser)
+        html_context
         database
         timeline_tab
         user
         =
-        reveal_timeline browser timeline_tab user 
-            
         let browser,success,posts_amount =
             try
                 let posts_amount =
-                    harvest_timeline_tab_of_user
+                    reveal_and_harvest_timeline
                         browser
-                        (AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default)
+                        html_context
                         database
                         is_finished
                         timeline_tab
                         user
-                    
+                        
                 browser,true,posts_amount
             with
             | :? WebDriverException as exc ->
@@ -301,6 +334,7 @@ module Harvest_posts_from_timeline =
             resiliently_harvest_user_timeline
                 is_finished
                 browser
+                html_context
                 database
                 timeline_tab
                 user

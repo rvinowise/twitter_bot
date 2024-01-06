@@ -11,7 +11,7 @@ open canopy.types
 open rvinowise.twitter
 
 
-type Browser(cookies:Cookie seq) =
+type Browser() =
     
     let ensure_webdriver_is_downloaded version =
         let webdriver_download_path =
@@ -60,53 +60,45 @@ type Browser(cookies:Cookie seq) =
         let options = browser_options local_browser_path browser_profile_path
         new ChromeDriver(local_webdriver_path, options,TimeSpan.FromSeconds(180))
     
-    let prepare_browser (cookies:Cookie seq) =
+    let run_webdriver profile_path =
         
         let local_webdriver_path =
             ensure_webdriver_is_downloaded Settings.browser.webdriver_version
         let local_browser_path =
             Settings.browser.path
-        let browser_profile = 
-            Settings.browser.profile_path
             
         let browser = 
             if Settings.browser.headless = true then
                 start_headless_browser
                     local_webdriver_path
                     local_browser_path
-                    browser_profile
+                    profile_path
             else
                 start_visible_browser
                     local_webdriver_path
                     local_browser_path
-                    browser_profile
+                    profile_path
     
         browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(3))
         browser.Manage().Timeouts().PageLoad <- (TimeSpan.FromSeconds(180))
         
         canopy.parallell.functions.url Twitter_settings.base_url browser
         
-        cookies
-        |>Seq.iter(
-            browser.Manage().Cookies.AddCookie
-        )
         browser
     
-    let mutable private_webdriver = prepare_browser cookies
+    let mutable private_webdriver =
+        run_webdriver Settings.browser.profile_path
     member this.webdriver = private_webdriver
         
     member this.restart()=
         this.webdriver.Quit()
-        private_webdriver <- prepare_browser cookies
+        private_webdriver <- run_webdriver Settings.browser.profile_path
     
     interface IDisposable
         with
         member this.Dispose() =
             this.webdriver.Quit()
-            
-    static member from_cookies(cookies) =
-        new Browser(cookies)
-        
+
         
 module Browser =
     let webdriver (browser:Browser) =
@@ -122,16 +114,10 @@ module Browser =
             DateTime.Now.AddYears(1);
         )
     
-    let prepare_authentified_browser token =
-        Log.info $"preparing a browser with twitter authorisation token: {token} "
-        token
-        |>authorisation_cookie
-        |>Seq.singleton
-        |>Browser.from_cookies
     
     let open_browser () =
-        Log.info $"preparing a browser without tweaking it"
-        Browser.from_cookies []
+        Log.info "preparing a browser without tweaking it"
+        new Browser()
     
     let close_browser (browser: Browser) =
         Log.info $"browser {browser} is closed"

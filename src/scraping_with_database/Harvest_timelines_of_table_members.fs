@@ -48,6 +48,7 @@ module Harvest_timelines_of_table_members =
     
     let harvest_timeline_with_error_check
         browser
+        html_context
         work_db
         tab
         user
@@ -60,6 +61,7 @@ module Harvest_timelines_of_table_members =
             Harvest_posts_from_timeline.resiliently_harvest_user_timeline
                 (when_to_stop needed_posts_amount)
                 browser
+                html_context
                 work_db
                 tab
                 user
@@ -80,6 +82,7 @@ module Harvest_timelines_of_table_members =
         jobs
         =
         let browser = Browser.open_browser()
+        let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
         
         jobs
         |>Seq.iter(fun user ->
@@ -87,6 +90,7 @@ module Harvest_timelines_of_table_members =
             let posts_amount,is_enough_posts =
                 harvest_timeline_with_error_check
                     browser
+                    html_context
                     local_db
                     Timeline_tab.Posts_and_replies
                     user
@@ -95,6 +99,7 @@ module Harvest_timelines_of_table_members =
             let likes_amount,is_enough_likes =    
                 harvest_timeline_with_error_check
                     browser
+                    html_context
                     local_db
                     Timeline_tab.Likes
                     user

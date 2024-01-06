@@ -15,11 +15,22 @@ module Google_spreadsheet =
         page_name=""
     }
 
+type Email = Email of string
+module Email =
+    let value (email:Email) =
+        let (Email value) = email
+        value
+        
+type Browser_profile = {
+    email: Email
+    path: string
+}
 type Browser = {
     path: string
     webdriver_version: string
-    profile_path: string
     headless: bool
+    profile_path: string
+    profiles: Browser_profile list
 }
 
 module Settings = 
@@ -112,7 +123,16 @@ module Settings =
         {
             path = browser_section["path"]
             webdriver_version = browser_section["webdriver_version"]
-            profile_path = browser_section["profile_path"]
             headless = browser_section.GetValue<bool>("headless",true)
+            profile_path = browser_section["profile_path"]
+            profiles =
+                browser_section.GetSection("profiles").GetChildren()
+                |>Seq.map(fun section ->
+                    {
+                        Browser_profile.email = Email section["email"]
+                        path = section["path"]
+                    }
+                )
+                |>List.ofSeq
         }
     let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)    

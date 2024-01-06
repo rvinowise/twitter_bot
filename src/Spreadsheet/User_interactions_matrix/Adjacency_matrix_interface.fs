@@ -313,13 +313,14 @@ module Adjacency_matrix_interface =
             
             
     let combine_pieces_of_matrix () =
-        let local_db = Twitter_database.open_connection()
         let central_db = Central_task_database.open_connection()
+        let local_db = Twitter_database.open_connection()
+        let this_worker = This_worker.this_worker_id local_db
         
         let all_users =
-            Central_task_database.read_last_user_jobs_with_status
+            Central_task_database.read_jobs_completed_by_worker
                 central_db
-                Scraping_user_status.Completed
+                this_worker 
     
         ()
         

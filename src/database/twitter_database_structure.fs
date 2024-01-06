@@ -76,3 +76,11 @@ module tables =
         override _.ToString() = "this_node"
         member _.id = "id"
     let this_node = This_node()
+    
+    type Browser_profile() =
+        override _.ToString() = "browser_profiles"
+        member _.email = "email"
+        member _.worker = "worker"
+        member _.last_used = "last_used"
+        
+    let browser_profile = Browser_profile()

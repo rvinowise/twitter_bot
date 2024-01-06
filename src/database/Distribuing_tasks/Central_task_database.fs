@@ -35,13 +35,13 @@ module Central_task_database =
         let free_user =
             central_db.Query<User_handle>(
                 $"
-                update users_to_scrape 
+                update {tables.users_to_scrape} 
                 set 
                     {tables.users_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Taken}',
                     {tables.users_to_scrape.taken_by} = @worker,
                     {tables.users_to_scrape.when_taken} = @when_taken
                 where 
-                    handle = (
+                    {tables.users_to_scrape.handle} = (
                         select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
                         where 
                             {tables.users_to_scrape.created_at} = (SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape})
@@ -49,7 +49,7 @@ module Central_task_database =
                             and {tables.users_to_scrape.taken_by} = ''
                         limit 1
                     )
-                returning handle    
+                returning {tables.users_to_scrape.handle}    
                 ",
                 {|
                     worker=worker_id
@@ -269,6 +269,25 @@ module Central_task_database =
                     )
                 and {tables.users_to_scrape.status} = '{status}'
             "
+        )|>Seq.tryHead
+    
+    let read_jobs_completed_by_worker
+        (database:NpgsqlConnection)
+        (worker: string)
+        =
+        
+        database.Query<string>(
+            $"select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
+            where 
+                {tables.users_to_scrape.created_at} = (
+                        SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
+                    )
+                and {tables.users_to_scrape.status} = '{Scraping_user_status.Completed}'
+                and {tables.users_to_scrape.taken_by} = @worker
+            ",
+            {|
+                worker = worker  
+            |}
         )|>Seq.tryHead
     
     type User_to_scrape = {

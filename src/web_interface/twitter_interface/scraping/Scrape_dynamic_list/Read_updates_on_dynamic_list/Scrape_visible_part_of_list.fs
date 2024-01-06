@@ -29,6 +29,7 @@ module Scrape_visible_part_of_list =
                 Log.error $"skim_displayed_items error: {exc.Message}"|>ignore
                 None
         )|>List.choose id
+        //todo this causes list out-or-range exception. load the full page?
         
     let scrape_items
         browser
