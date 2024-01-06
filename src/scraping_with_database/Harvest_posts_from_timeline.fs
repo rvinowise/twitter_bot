@@ -283,6 +283,7 @@ module Harvest_posts_from_timeline =
                 user
         with
         |Revealed ->
+            browser,
             harvest_timeline_tab_of_user
                 browser
                 html_context
@@ -294,7 +295,8 @@ module Harvest_posts_from_timeline =
             Log.info $"""
             Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
             Switching browser profiles"""
-            browser.restart()
+            Assigning_browser_profiles.switch_profile
+            |>Browser.restart_with_profile browser
             0
         
         
@@ -325,8 +327,8 @@ module Harvest_posts_from_timeline =
                 can't harvest timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user}:
                 {exc.Message}.
                 Restarting scraping browser"""|>ignore
-                browser.restart()
-                browser,false,0
+                browser|>Browser.restart,
+                false,0
         
         if success then
             posts_amount
@@ -366,8 +368,8 @@ module Harvest_posts_from_timeline =
                     can't harvest timeline {Timeline_tab.human_name head_timeline} of user {User_handle.value head_user}:
                     {exc.Message}.
                     Restarting scraping browser"""|>ignore
-                    browser.restart()
-                    browser,timeline_tabs
+                    browser|>Browser.restart,
+                    timeline_tabs
         
             match rest_tabs with
             |[]->()

@@ -40,7 +40,7 @@ module Program =
             announce_score.scrape_and_announce_user_state
                 browser
                 html_context
-            Browser.close_browser browser
+            Browser.close browser
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't scrape state of twitter-competitors: {exc.Message}"""|>ignore

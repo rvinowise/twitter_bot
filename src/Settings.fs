@@ -25,12 +25,17 @@ type Browser_profile = {
     email: Email
     path: string
 }
-type Browser = {
+module Browser_profile =
+    let from_pair (email,path) =
+        {
+            email=email
+            path=path
+        }
+type Browser_settings = {
     path: string
     webdriver_version: string
     headless: bool
-    profile_path: string
-    profiles: Browser_profile list
+    profiles: Map<Email, string>
 }
 
 module Settings = 
@@ -124,15 +129,12 @@ module Settings =
             path = browser_section["path"]
             webdriver_version = browser_section["webdriver_version"]
             headless = browser_section.GetValue<bool>("headless",true)
-            profile_path = browser_section["profile_path"]
             profiles =
                 browser_section.GetSection("profiles").GetChildren()
                 |>Seq.map(fun section ->
-                    {
-                        Browser_profile.email = Email section["email"]
-                        path = section["path"]
-                    }
+                    Email section["email"],
+                    section["path"]
                 )
-                |>List.ofSeq
+                |>Map.ofSeq
         }
     let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)    

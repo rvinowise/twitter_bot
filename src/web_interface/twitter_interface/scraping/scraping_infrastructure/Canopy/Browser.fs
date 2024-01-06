@@ -11,7 +11,18 @@ open canopy.types
 open rvinowise.twitter
 
 
-type Browser() =
+type Browser =
+    {
+        webdriver: ChromeDriver
+        profile: Browser_profile
+    }
+    interface IDisposable
+        with
+        member this.Dispose() =
+            this.webdriver.Quit() 
+
+        
+module Browser =
     
     let ensure_webdriver_is_downloaded version =
         let webdriver_download_path =
@@ -40,7 +51,7 @@ type Browser() =
         options.AddArgument("--disable-notifications")
         options.AddArgument("--ignore-certificate-errors")
         options.AddArgument("--ignore-ssl-errors")
-        options.AddArgument("--user-agent=Chrome/119.0.0.0")
+        //options.AddArgument("--user-agent=Chrome/119.0.0.0")
         options
     
     let start_headless_browser 
@@ -67,7 +78,7 @@ type Browser() =
         let local_browser_path =
             Settings.browser.path
             
-        let browser = 
+        let webdriver = 
             if Settings.browser.headless = true then
                 start_headless_browser
                     local_webdriver_path
@@ -79,49 +90,51 @@ type Browser() =
                     local_browser_path
                     profile_path
     
-        browser.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(3))
-        browser.Manage().Timeouts().PageLoad <- (TimeSpan.FromSeconds(180))
+        webdriver.Manage().Timeouts().ImplicitWait <- (TimeSpan.FromSeconds(3))
+        webdriver.Manage().Timeouts().PageLoad <- (TimeSpan.FromSeconds(180))
         
-        canopy.parallell.functions.url Twitter_settings.base_url browser
+        canopy.parallell.functions.url Twitter_settings.base_url webdriver
         
-        browser
+        webdriver
     
-    let mutable private_webdriver =
-        run_webdriver Settings.browser.profile_path
-    member this.webdriver = private_webdriver
-        
-    member this.restart()=
-        this.webdriver.Quit()
-        private_webdriver <- run_webdriver Settings.browser.profile_path
-    
-    interface IDisposable
-        with
-        member this.Dispose() =
-            this.webdriver.Quit()
 
-        
-module Browser =
-    let webdriver (browser:Browser) =
-        browser.webdriver
-    
-    
-    let authorisation_cookie auth_token =
-        Cookie(
-            "auth_token",
-            auth_token,
-            ".twitter.com",
-            "/",
-            DateTime.Now.AddYears(1);
-        )
-    
-    
     let open_browser () =
         Log.info "preparing a browser without tweaking it"
-        new Browser()
+        let first_profile =
+            Settings.browser.profiles
+            |>Map.toSeq
+            |>Seq.head
+            |>Browser_profile.from_pair
+        {
+            Browser.webdriver =
+                first_profile.path
+                |>run_webdriver
+            profile = first_profile
+        }
     
-    let close_browser (browser: Browser) =
+    let open_with_profile profile =
+        Log.info $"preparing a browser with profile {profile}"
+        {
+            Browser.webdriver = run_webdriver profile
+            profile = profile
+        }
+    
+    let close (browser: Browser) =
         Log.info $"browser {browser} is closed"
         browser.webdriver.Close()
+    
+    let restart (browser: Browser) =
+        close browser
+    
+        open_with_profile browser.profile
+    
+    let restart_with_profile
+        (browser: Browser)
+        profile
+        =
+        close browser
+        
+        open_with_profile profile
         
     let open_url url_string (browser: Browser) =
         canopy.parallell.functions.url url_string browser.webdriver

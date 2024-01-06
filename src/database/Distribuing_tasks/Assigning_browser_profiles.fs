@@ -8,6 +8,7 @@ open Npgsql
 open Xunit
 open rvinowise.twitter
 open rvinowise.twitter.database
+open rvinowise.web_scraping
 
 
 
@@ -45,6 +46,7 @@ module Assigning_browser_profiles =
      
     let take_next_free_profile
         (central_db: NpgsqlConnection)
+        possible_profiles
         worker_id
         =
         
@@ -54,20 +56,21 @@ module Assigning_browser_profiles =
                 update {tables.browser_profile} 
                 set 
                     {tables.browser_profile.worker} = @worker,
-                    {tables.browser_profile.last_used} = @last_used
+                    {tables.browser_profile.last_used} = now()
                 where 
                     {tables.browser_profile.email} = (
                         select {tables.browser_profile.email} from {tables.browser_profile}
                         where 
                             {tables.browser_profile.last_used} = (SELECT MIN({tables.browser_profile.last_used}) FROM {tables.browser_profile})
                             and {tables.browser_profile.worker} = ''
+                            and {tables.browser_profile.email} in @possible_profiles
                         limit 1
                     )
                 returning {tables.browser_profile.email}    
                 ",
                 {|
                     worker=worker_id
-                    when_taken=DateTime.Now
+                    possible_profiles=possible_profiles
                 |}
             )|>Seq.tryHead
         
@@ -78,9 +81,24 @@ module Assigning_browser_profiles =
             Log.info "the central database didn't return next free profile"
             
         free_profile
+    
+    [<Fact>]
+    let ``try take_next_free_profile``()=
+        let result =
+            Twitter_database.open_connection()
+            |>This_worker.this_worker_id
+            |>take_next_free_profile
+                (Central_task_database.open_connection())
+                [
+                    Email "victortwitter@yandex.com"
+                    Email "nonexistent@yandex.com"
+                    Email "tehprom.moscow@gmail.com"
+                ]
+        ()
         
-    let switch_profile
+    let switch_profile_in_central_database
         (central_db: NpgsqlConnection)
+        possible_profiles
         worker_id
         =
         release_browser_profile
@@ -90,4 +108,24 @@ module Assigning_browser_profiles =
         
         take_next_free_profile
             central_db
+            possible_profiles
             worker_id
+            
+            
+    let switch_profile
+        (central_db: NpgsqlConnection)
+        worker_id
+        (browser:Browser)
+        =
+        switch_profile_in_central_database
+            central_db
+            (Map.keys Settings.browser.profiles)
+            worker_id
+        |>function
+        |Some profile_email ->
+            profile_email
+            |>Settings.browser.profiles
+            |>Browser.restart_with_profile browser
+        |None ->
+            "can't switch browser profiles, because the central database didn't yield the next free one"
+            |>Log.error

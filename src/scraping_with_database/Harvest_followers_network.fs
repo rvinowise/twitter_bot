@@ -102,12 +102,13 @@ module Harvest_followers_network =
             with
             | :? WebDriverException as exc ->
                 Log.error $"""can't harvest user: {exc.Message}. Restarting scraping browser"""|>ignore
-                browser.restart()
-                browser,unknown_users_around
+                
+                browser|>Browser.restart,
+                unknown_users_around
             | :? ArgumentNullException as exc ->
                 Log.error $"""was the browser closed? {exc.Message}. Restarting scraping browser"""|>ignore
-                browser.restart()
-                browser,unknown_users_around
+                browser|>Browser.restart,
+                unknown_users_around
             | :? CanopyElementNotFoundException as exc ->
                 Log.error $"""scraping user {List.head unknown_users_around} failed: {exc.Message}. skipping this user"""|>ignore
                 browser,List.tail unknown_users_around
