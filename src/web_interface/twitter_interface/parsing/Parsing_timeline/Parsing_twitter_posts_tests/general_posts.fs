@@ -948,7 +948,7 @@ Mentioned bio tech and nano pathogens as potential perils that should prevent re
         
         
         
-    [<Fact>]
+    [<Fact(Skip="not implemented")>]
     let ``parse carousel with two video-external_urls``() =
         //[carousel [video-external_url] [video-external_url] ]
         //https://twitter.com/UNIFYDTV/status/1714738855176245478

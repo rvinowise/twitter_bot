@@ -57,7 +57,7 @@ module Harvest_timelines_of_table_members =
         let when_to_stop needed_amount =
             Finish_harvesting_timeline.finish_after_amount_of_invocations needed_amount
         
-        let posts_amount =
+        let browser,posts_amount =
             Harvest_posts_from_timeline.resiliently_harvest_user_timeline
                 (when_to_stop needed_posts_amount)
                 browser
@@ -73,7 +73,7 @@ module Harvest_timelines_of_table_members =
                     user
                     posts_amount
             else true
-        posts_amount,is_sufficient
+        browser,posts_amount,is_sufficient
         
     let harvest_timelines_from_jobs
         local_db
@@ -81,13 +81,17 @@ module Harvest_timelines_of_table_members =
         needed_posts_amount
         jobs
         =
-        let browser = Browser.open_browser()
+        let browser =
+            Assigning_browser_profiles.open_browser_with_free_profile
+                (Central_task_database.resiliently_open_connection())
+                (This_worker.this_worker_id local_db)
+                
         let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
         
         jobs
-        |>Seq.iter(fun user ->
+        |>Seq.fold(fun browser user ->
             
-            let posts_amount,is_enough_posts =
+            let browser,posts_amount,is_enough_posts =
                 harvest_timeline_with_error_check
                     browser
                     html_context
@@ -96,7 +100,7 @@ module Harvest_timelines_of_table_members =
                     user
                     needed_posts_amount
             
-            let likes_amount,is_enough_likes =    
+            let browser,likes_amount,is_enough_likes =    
                 harvest_timeline_with_error_check
                     browser
                     html_context
@@ -115,9 +119,10 @@ module Harvest_timelines_of_table_members =
                 user
                 posts_amount
                 likes_amount
-                
-        ) 
-        
+            browser    
+        )
+            browser
+        |>ignore
     
     let harvest_timelines_from_central_database
         local_db
@@ -130,7 +135,7 @@ module Harvest_timelines_of_table_members =
             article_amount
             (jobs_from_central_database worker_id)
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]//
     let ``try harvest_timelines``()=
         [
             User_handle "williamwang28"

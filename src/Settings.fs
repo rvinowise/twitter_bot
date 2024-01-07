@@ -21,16 +21,7 @@ module Email =
         let (Email value) = email
         value
         
-type Browser_profile = {
-    email: Email
-    path: string
-}
-module Browser_profile =
-    let from_pair (email,path) =
-        {
-            email=email
-            path=path
-        }
+
 type Browser_settings = {
     path: string
     webdriver_version: string

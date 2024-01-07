@@ -6,7 +6,8 @@ open rvinowise.web_scraping
 
 type Revealing_user_page =
 |Revealed
-|Timeline_failed
+|Failed_loading
+|Protected
 
 module Reveal_user_page =
 
@@ -21,7 +22,27 @@ module Reveal_user_page =
         |>List.exists(fun span_node ->
             span_node
             |>Html_node.direct_text = "Something went wrong. Try reloading."
-        )
+        )|>function
+        |true->
+            Some Failed_loading
+        |false->
+            None
+    
+    let is_timeline_protected_from_strangers
+        browser
+        html_context
+        =
+        browser
+        |>Browser.elements "span"
+        |>List.map (Html_node.from_scraped_node_and_context html_context)
+        |>List.exists(fun span_node ->
+            span_node
+            |>Html_node.direct_text = "These posts are protected"
+        )|>function
+        |true->
+            Some Protected
+        |false->
+            None
     
     
     let surpass_content_warning browser =
@@ -37,6 +58,11 @@ module Reveal_user_page =
         surpass_content_warning browser
         
 
+    let timeline_visibility_testers = [
+        is_timeline_failing_loading
+        is_timeline_protected_from_strangers
+    ]
+    
     let reveal_timeline
         browser
         html_context
@@ -45,14 +71,13 @@ module Reveal_user_page =
         =
         Browser.open_url $"{Twitter_settings.base_url}/{User_handle.value user}/{tab}" browser
         surpass_content_warning browser
-        if
-            is_timeline_failing_loading
-                browser
-                html_context
-        then
-            Revealing_user_page.Timeline_failed
-        else
-            Revealed
+        
+        timeline_visibility_testers
+        |>List.tryPick(fun parser -> 
+            parser browser html_context
+        )
+        |>Option.defaultValue Revealed
+     
 
   
 

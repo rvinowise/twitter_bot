@@ -25,7 +25,24 @@ module Central_task_database =
         
         db_connection    
     
-
+    
+    let rec resiliently_open_connection () =
+        let db_connection =
+            try
+                open_connection ()
+                |>Some
+            with
+            | :? NpgsqlException as exc ->
+                $"""failed opening the connection with the central database: {exc.Message}, trying again."""
+                |>Log.error|>ignore
+                None
+       
+        match db_connection with
+        |Some db_connection ->
+            db_connection
+        |None ->
+            resiliently_open_connection ()
+        
     
     let take_next_free_job
         (central_db: NpgsqlConnection)
@@ -126,7 +143,7 @@ module Central_task_database =
             |}
         )|>Seq.tryHead
     
-    [<Fact>]//(Skip="manual")
+    [<Fact(Skip="manual")>]
     let ``try read_worker_of_job``()=
         let result =
             read_worker_of_job

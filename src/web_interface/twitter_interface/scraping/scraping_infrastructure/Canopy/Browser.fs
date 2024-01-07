@@ -11,6 +11,34 @@ open canopy.types
 open rvinowise.twitter
 
 
+type Browser_profile = {
+    email: Email
+    path: string
+}
+module Browser_profile =
+    let from_pair (email,path) =
+        {
+            email=email
+            path=path
+        }
+    let from_email email =
+        (
+            email,
+            Settings.browser.profiles[email]
+        )
+        |>from_pair
+
+    let try_from_email email =
+        Settings.browser.profiles
+        |>Map.tryFind email
+        |>function
+        |Some path ->
+            (email,path)
+            |>from_pair
+            |>Some
+        |None ->
+            None
+
 type Browser =
     {
         webdriver: ChromeDriver
@@ -103,7 +131,8 @@ module Browser =
         let first_profile =
             Settings.browser.profiles
             |>Map.toSeq
-            |>Seq.head
+            //|>Seq.head
+            |>Seq.last
             |>Browser_profile.from_pair
         {
             Browser.webdriver =
@@ -115,7 +144,7 @@ module Browser =
     let open_with_profile profile =
         Log.info $"preparing a browser with profile {profile}"
         {
-            Browser.webdriver = run_webdriver profile
+            Browser.webdriver = run_webdriver profile.path
             profile = profile
         }
     
