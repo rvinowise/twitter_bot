@@ -135,10 +135,10 @@ module Harvest_timelines_of_table_members =
             article_amount
             (jobs_from_central_database worker_id)
     
-    [<Fact(Skip="manual")>]//
+    [<Fact>]//(Skip="manual")
     let ``try harvest_timelines``()=
         [
-            User_handle "williamwang28"
+            User_handle "AD74593974"
         ]
         |>harvest_timelines_from_jobs
               (Twitter_database.open_connection())

@@ -13,6 +13,7 @@ type Scraping_user_status =
     |Taken
     |Completed
     |Insufficient
+    |Hidden
     
     
 module Scraping_user_status =
@@ -22,6 +23,7 @@ module Scraping_user_status =
         |Taken -> "Taken"
         |Completed -> "Completed"
         |Insufficient -> "Insufficient"
+        |Hidden -> "Hidden"
 
     let from_db_value value =
         match value with
@@ -29,6 +31,7 @@ module Scraping_user_status =
         |"Taken" -> Scraping_user_status.Taken
         |"Completed" -> Scraping_user_status.Completed 
         |"Insufficient" -> Scraping_user_status.Insufficient 
+        |"Hidden" -> Scraping_user_status.Hidden 
         |unknown_type -> raise (TypeAccessException $"unknown type of Scraping_user_status: {unknown_type}")
         
 type Timestamp_mapper() =

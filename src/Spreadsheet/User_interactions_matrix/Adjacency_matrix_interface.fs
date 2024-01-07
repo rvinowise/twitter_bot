@@ -317,7 +317,7 @@ module Adjacency_matrix_interface =
         let local_db = Twitter_database.open_connection()
         let this_worker = This_worker.this_worker_id local_db
         
-        let all_users =
+        let users =
             Central_task_database.read_jobs_completed_by_worker
                 central_db
                 this_worker 

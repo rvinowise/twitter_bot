@@ -4,10 +4,13 @@ open canopy.parallell.functions
 open rvinowise.html_parsing
 open rvinowise.web_scraping
 
-type Revealing_user_page =
-|Revealed
+type Page_invisibility =
 |Failed_loading
 |Protected
+
+type Page_revealing =
+|Revealed
+|Failed of Page_invisibility
 
 module Reveal_user_page =
 
@@ -76,7 +79,8 @@ module Reveal_user_page =
         |>List.tryPick(fun parser -> 
             parser browser html_context
         )
-        |>Option.defaultValue Revealed
+        |>Option.map Page_revealing.Failed
+        |>Option.defaultValue Page_revealing.Revealed
      
 
   

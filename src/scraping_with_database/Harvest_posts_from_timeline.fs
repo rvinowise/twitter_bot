@@ -7,6 +7,13 @@ open rvinowise.html_parsing
 open rvinowise.twitter
 open rvinowise.web_scraping
 
+
+
+type Harvesting_timeline_result =
+|Success of int
+|Insufficient of int
+|Hidden of Page_invisibility 
+
 module Harvest_posts_from_timeline =
     
     let write_liked_post
@@ -291,11 +298,11 @@ module Harvest_posts_from_timeline =
                 is_finished
                 timeline_tab
                 user
-            |>Some
-        |Protected ->
+            |>Harvesting_timeline_result.Success
+        |Page_revealing.Failed Protected ->
             Log.info $"Timelines of user {User_handle.value user} are protected from strangers."
-            browser,Some 0
-        |Failed_loading ->
+            browser, Harvesting_timeline_result.Hidden Protected
+        |Page_revealing.Failed Page_invisibility.Failed_loading ->
             Log.info $"""
             Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
             Switching browser profiles"""
@@ -303,7 +310,7 @@ module Harvest_posts_from_timeline =
                 (Central_task_database.resiliently_open_connection())
                 (This_worker.this_worker_id database)    
                 browser,
-            None
+            Harvesting_timeline_result.Hidden Failed_loading
         
         
     
@@ -315,7 +322,7 @@ module Harvest_posts_from_timeline =
         timeline_tab
         user
         =
-        let browser,posts_amount =
+        let browser,result =
             try
                 let browser, posts_amount =
                     reveal_and_harvest_timeline
@@ -338,8 +345,8 @@ module Harvest_posts_from_timeline =
                 Restarting scraping browser"""|>ignore
                 browser|>Browser.restart,None
         
-        match posts_amount with
-        |Some posts_amount ->
+        match result with
+        |Success posts_amount ->
             browser, posts_amount
         |None->
             resiliently_harvest_user_timeline

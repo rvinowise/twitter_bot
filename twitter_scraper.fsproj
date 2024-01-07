@@ -130,7 +130,7 @@
     <!--database access-->
     <PackageReference Include="Dapper" Version="2.0.143" />
     <PackageReference Include="Dapper.FSharp" Version="4.6.1" />
-    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.61.0.3141" />
+    <PackageReference Include="Faithlife.Utility.Dapper" Version="1.1.0" />
     <PackageReference Include="Npgsql" Version="7.0.4" />
 
 
@@ -175,6 +175,7 @@
 
     <!--visualisation-->
     <PackageReference Include="Plotly.NET" Version="4.2.0" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.61.0.3141" />
 
   </ItemGroup>
 

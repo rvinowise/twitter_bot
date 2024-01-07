@@ -61,9 +61,9 @@ module Assigning_browser_profiles =
                     {tables.browser_profile.email} = (
                         select {tables.browser_profile.email} from {tables.browser_profile}
                         where 
-                            {tables.browser_profile.last_used} = (SELECT MIN({tables.browser_profile.last_used}) FROM {tables.browser_profile})
-                            and {tables.browser_profile.worker} = ''
+                            {tables.browser_profile.worker} = ''
                             and {tables.browser_profile.email} = any (@possible_profiles)
+                        order by {tables.browser_profile.last_used}
                         limit 1
                     )
                 returning {tables.browser_profile.email}    
