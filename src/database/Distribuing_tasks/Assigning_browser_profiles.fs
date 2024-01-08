@@ -120,12 +120,11 @@ module Assigning_browser_profiles =
         =
         take_next_free_profile
             central_db
-            (Map.keys Settings.browser.profiles)
+            Settings.browser.profiles
             worker_id
         |>function
         |Some email ->
             email
-            |>Browser_profile.from_email
             |>Browser.open_with_profile 
         |None ->
             "can't open a browser with a free profile from the central database, because it didn't return any free profile"
@@ -140,12 +139,11 @@ module Assigning_browser_profiles =
         =
         switch_profile_in_central_database
             central_db
-            (Map.keys Settings.browser.profiles)
+            Settings.browser.profiles
             worker_id
         |>function
         |Some profile_email ->
-            (profile_email,Settings.browser.profiles[profile_email])
-            |>Browser_profile.from_pair
+            profile_email
             |>Browser.restart_with_profile browser
         |None ->
             "can't switch browser profiles, because the central database didn't yield the next free one"

@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
+open System.IO
 open Microsoft.Extensions.Configuration
 
 type Google_spreadsheet = {
@@ -20,13 +21,19 @@ module Email =
     let value (email:Email) =
         let (Email value) = email
         value
-        
+    
+    let name (email:Email) =
+        email
+        |>value
+        |>fun value -> value.Split '@'
+        |>Array.head
 
 type Browser_settings = {
     path: string
     webdriver_version: string
     headless: bool
-    profiles: Map<Email, string>
+    profile_root: string
+    profiles: Email array
 }
 
 module Settings = 
@@ -113,19 +120,31 @@ module Settings =
     
     //module Scraping
     
+    
+    
     let browser =
         let browser_section =
             configuration_root.GetSection("browser")
+        
         {
             path = browser_section["path"]
             webdriver_version = browser_section["webdriver_version"]
             headless = browser_section.GetValue<bool>("headless",true)
+            profile_root = browser_section.GetValue<string>("profiles_root","")
             profiles =
-                browser_section.GetSection("profiles").GetChildren()
-                |>Seq.map(fun section ->
-                    Email section["email"],
-                    section["path"]
-                )
-                |>Map.ofSeq
+                browser_section.GetSection("profiles").Get<string[]>()
+                |>Array.map Email
         }
-    let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)    
+    let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)
+    
+    
+    let browser_profile_from_email (email: Email) =
+        [|
+            browser.profile_root;
+            Email.name email
+        |]
+        |>Path.Combine
+        
+        
+        
+        

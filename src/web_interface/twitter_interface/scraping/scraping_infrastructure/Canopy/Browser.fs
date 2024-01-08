@@ -11,38 +11,10 @@ open canopy.types
 open rvinowise.twitter
 
 
-type Browser_profile = {
-    email: Email
-    path: string
-}
-module Browser_profile =
-    let from_pair (email,path) =
-        {
-            email=email
-            path=path
-        }
-    let from_email email =
-        (
-            email,
-            Settings.browser.profiles[email]
-        )
-        |>from_pair
-
-    let try_from_email email =
-        Settings.browser.profiles
-        |>Map.tryFind email
-        |>function
-        |Some path ->
-            (email,path)
-            |>from_pair
-            |>Some
-        |None ->
-            None
-
 type Browser =
     {
         webdriver: ChromeDriver
-        profile: Browser_profile
+        profile: Email
     }
     interface IDisposable
         with
@@ -79,7 +51,12 @@ module Browser =
         options.AddArgument("--disable-notifications")
         options.AddArgument("--ignore-certificate-errors")
         options.AddArgument("--ignore-ssl-errors")
-        //options.AddArgument("--user-agent=Chrome/119.0.0.0")
+        let browser_version_as_agent =
+            Settings.browser.webdriver_version
+            |>fun version -> version.Split '.'
+            |>Array.head
+            |>fun major_number -> $"{major_number}.0.0.0"
+        options.AddArgument($"--user-agent=Chrome/{browser_version_as_agent}")
         options
     
     let start_headless_browser 
@@ -130,13 +107,10 @@ module Browser =
         Log.info "preparing a browser without tweaking it"
         let first_profile =
             Settings.browser.profiles
-            |>Map.toSeq
-            //|>Seq.head
-            |>Seq.last
-            |>Browser_profile.from_pair
+            |>Seq.head
         {
             Browser.webdriver =
-                first_profile.path
+                Settings.browser_profile_from_email first_profile
                 |>run_webdriver
             profile = first_profile
         }
@@ -144,7 +118,10 @@ module Browser =
     let open_with_profile profile =
         Log.info $"preparing a browser with profile {profile}"
         {
-            Browser.webdriver = run_webdriver profile.path
+            Browser.webdriver =
+                profile
+                |>Settings.browser_profile_from_email
+                |>run_webdriver
             profile = profile
         }
     

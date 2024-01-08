@@ -9,10 +9,7 @@ open rvinowise.web_scraping
 
 
 
-type Harvesting_timeline_result =
-|Success of int
-|Insufficient of int
-|Hidden of Page_invisibility 
+
 
 module Harvest_posts_from_timeline =
     
@@ -86,19 +83,14 @@ module Harvest_posts_from_timeline =
                 None
         | _ ->
             Some parsed_cell
-            
+    
+    (* it only detects ADs in the visible browser, but in the headless mode --
+    normal video-posts are mistaken for the ADs *)
     let is_advertisement cell_node =
         cell_node
         |>Html_node.descendants "div[data-testid='placementTracking']"
         <> []
     
-    let cell_contains_post cell_node =
-        cell_node
-        |>is_advertisement|>not
-        &&
-        cell_node
-        |>Html_node.try_descendant "article[data-testid='tweet']"
-        |>Option.isSome
     
     let wait_for_timeline_loading browser =
         //Browser.sleep 1
@@ -111,8 +103,7 @@ module Harvest_posts_from_timeline =
         html_context
         scrolling_repetitions
         =
-        let is_item_needed =
-            is_advertisement>>not
+        let is_item_needed = fun _ -> true
         
         let scrape_visible_items () =
             Scrape_visible_part_of_list.scrape_items
@@ -290,7 +281,6 @@ module Harvest_posts_from_timeline =
                 user
         with
         |Revealed ->
-            browser,
             harvest_timeline_tab_of_user
                 browser
                 html_context
@@ -298,19 +288,12 @@ module Harvest_posts_from_timeline =
                 is_finished
                 timeline_tab
                 user
-            |>Harvesting_timeline_result.Success
-        |Page_revealing.Failed Protected ->
+            |>Harvesting_timeline_result.Harvested_some_amount
+        |Page_revealing_result.Failed Protected ->
             Log.info $"Timelines of user {User_handle.value user} are protected from strangers."
-            browser, Harvesting_timeline_result.Hidden Protected
-        |Page_revealing.Failed Page_invisibility.Failed_loading ->
-            Log.info $"""
-            Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
-            Switching browser profiles"""
-            Assigning_browser_profiles.switch_profile
-                (Central_task_database.resiliently_open_connection())
-                (This_worker.this_worker_id database)    
-                browser,
-            Harvesting_timeline_result.Hidden Failed_loading
+            Harvesting_timeline_result.Hidden_timeline Protected
+        |Page_revealing_result.Failed Timeline_hiding_reason.Loading_denied ->
+            Harvesting_timeline_result.Hidden_timeline Loading_denied
         
         
     
@@ -322,40 +305,51 @@ module Harvest_posts_from_timeline =
         timeline_tab
         user
         =
-        let browser,result =
+        let result =
             try
-                let browser, posts_amount =
-                    reveal_and_harvest_timeline
-                        browser
-                        html_context
-                        database
-                        is_finished
-                        timeline_tab
-                        user
-                        
-                browser, posts_amount
+                reveal_and_harvest_timeline
+                    browser
+                    html_context
+                    database
+                    is_finished
+                    timeline_tab
+                    user
             with
             | :? WebDriverException
             | :? ArgumentException
             | :? Harvesting_exception as exc ->
-                Log.error $"""
-                can't harvest timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user}:
-                {exc.GetType()}
-                {exc.Message}.
-                Restarting scraping browser"""|>ignore
-                browser|>Browser.restart,None
+                Harvesting_timeline_result.Exception exc 
         
         match result with
-        |Success posts_amount ->
-            browser, posts_amount
-        |None->
+        |Harvested_some_amount _
+        |Success _
+        |Insufficient _
+        |Hidden_timeline Protected ->
+            browser, result
+        |Hidden_timeline Loading_denied ->
+            Log.info $"""
+            Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
+            Switching browser profiles"""
+            let new_browser = 
+                Assigning_browser_profiles.switch_profile
+                    (Central_task_database.resiliently_open_connection())
+                    (This_worker.this_worker_id database)
+                    browser
             resiliently_harvest_user_timeline
                 is_finished
-                browser
+                new_browser
                 html_context
                 database
                 timeline_tab
                 user
+        |Exception exc ->
+            Log.error $"""
+                can't harvest timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user}:
+                {exc.GetType()}
+                {exc.Message}.
+                Restarting scraping browser and skipping the user"""|>ignore
+            Browser.restart browser, result
+            
         
     let rec resilient_step_of_harvesting_timelines
         is_finished

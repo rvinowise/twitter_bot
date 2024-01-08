@@ -4,13 +4,21 @@ open canopy.parallell.functions
 open rvinowise.html_parsing
 open rvinowise.web_scraping
 
-type Page_invisibility =
-|Failed_loading
+
+type Timeline_hiding_reason =
+|Loading_denied
 |Protected
 
-type Page_revealing =
+module Timeline_hiding_reason =
+    let db_value (reason:Timeline_hiding_reason) =
+        match reason with
+        |Loading_denied -> "Loading_denied"
+        |Protected -> "Protected"
+        
+type Page_revealing_result =
 |Revealed
-|Failed of Page_invisibility
+|Failed of Timeline_hiding_reason
+
 
 module Reveal_user_page =
 
@@ -27,7 +35,7 @@ module Reveal_user_page =
             |>Html_node.direct_text = "Something went wrong. Try reloading."
         )|>function
         |true->
-            Some Failed_loading
+            Some Loading_denied
         |false->
             None
     
@@ -79,8 +87,8 @@ module Reveal_user_page =
         |>List.tryPick(fun parser -> 
             parser browser html_context
         )
-        |>Option.map Page_revealing.Failed
-        |>Option.defaultValue Page_revealing.Revealed
+        |>Option.map Page_revealing_result.Failed
+        |>Option.defaultValue Page_revealing_result.Revealed
      
 
   

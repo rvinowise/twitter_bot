@@ -211,7 +211,7 @@ module Central_task_database =
         (user_task: User_handle)
         posts_amount
         likes_amount
-        (result:Scraping_user_status)
+        (result:Harvesting_timeline_result)
         =
         check_job_worker_is_same
             db_connection
@@ -221,7 +221,7 @@ module Central_task_database =
         db_connection.Query<User_handle>(
             $"update {tables.users_to_scrape} 
             set
-                {tables.users_to_scrape.status}  = '{result}',
+                {tables.users_to_scrape.status}  = @status,
                 {tables.users_to_scrape.posts_amount} = @posts_amount,
                 {tables.users_to_scrape.likes_amount} = @likes_amount,
                 {tables.users_to_scrape.when_completed} = @when_completed
@@ -232,6 +232,7 @@ module Central_task_database =
                 posts_amount = posts_amount
                 likes_amount = likes_amount
                 when_completed = DateTime.Now
+                status=Scraping_user_status.Completed result
             |}
         ) |> ignore
     
@@ -242,7 +243,7 @@ module Central_task_database =
         (user: User_handle)
         posts_amount
         likes_amount
-        result
+        (result:Harvesting_timeline_result)
         =
         let is_successful =
             try
@@ -258,7 +259,7 @@ module Central_task_database =
                 true
             with
             | :? NpgsqlException as exc ->
-                $"""Exception {exc.GetType()} when trying to set task as complete in the central datbase: {exc.Message}.
+                $"""Exception {exc.GetType()} when trying to set a task as complete in the central datbase: {exc.Message}.
                 trying again with reistablishing the connection"""
                 |>Log.error|>ignore
                 false

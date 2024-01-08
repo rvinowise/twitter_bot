@@ -4,6 +4,7 @@ open System
 open OpenQA.Selenium
 open Xunit
 open rvinowise.html_parsing
+open rvinowise.twitter
 open rvinowise.web_scraping
 
 
@@ -57,7 +58,7 @@ module Harvest_timelines_of_table_members =
         let when_to_stop needed_amount =
             Finish_harvesting_timeline.finish_after_amount_of_invocations needed_amount
         
-        let browser,posts_amount =
+        let browser,result =
             Harvest_posts_from_timeline.resiliently_harvest_user_timeline
                 (when_to_stop needed_posts_amount)
                 browser
@@ -65,15 +66,62 @@ module Harvest_timelines_of_table_members =
                 work_db
                 tab
                 user
-        let is_sufficient = 
-            if posts_amount < needed_posts_amount then
+        
+        browser
+        ,
+        match result with
+        |Harvested_some_amount amount ->
+            if
+                amount < needed_posts_amount
+                &&
                 Harvest_posts_from_timeline.is_scraping_sufficient
                     browser
                     tab
                     user
-                    posts_amount
-            else true
-        browser,posts_amount,is_sufficient
+                    amount
+                |>not
+            then
+                Insufficient amount
+            else
+                Success amount
+        |Hidden_timeline Protected ->
+            result
+        |Exception _ ->
+            result
+        |Success _
+        |Insufficient _
+        |Hidden_timeline Loading_denied ->
+            $"unexpected harvesting result at this point: {result}"
+            |>Log.error
+            |>ignore
+            result
+        
+    
+    
+    let unify_results
+        (results: Harvesting_timeline_result seq)
+        =
+        let importance (result: Harvesting_timeline_result) =
+            match result with
+            |Harvested_some_amount _-> 0
+            |Success _-> 1
+            |Insufficient _-> 3
+            |Hidden_timeline reason ->
+                match reason with
+                |Protected -> 2
+                |Loading_denied -> 4
+            |Exception _-> 5
+        
+        results
+        |>Seq.fold(fun combined_result result ->
+            if
+                importance result > importance combined_result
+            then
+                result
+            else
+                combined_result
+        )
+            (Success 0)
         
     let harvest_timelines_from_jobs
         local_db
@@ -91,7 +139,7 @@ module Harvest_timelines_of_table_members =
         jobs
         |>Seq.fold(fun browser user ->
             
-            let browser,posts_amount,is_enough_posts =
+            let browser,posts_result =
                 harvest_timeline_with_error_check
                     browser
                     html_context
@@ -100,7 +148,7 @@ module Harvest_timelines_of_table_members =
                     user
                     needed_posts_amount
             
-            let browser,likes_amount,is_enough_likes =    
+            let browser,likes_result =    
                 harvest_timeline_with_error_check
                     browser
                     html_context
@@ -109,16 +157,13 @@ module Harvest_timelines_of_table_members =
                     user
                     needed_posts_amount
             
-            match is_enough_likes,is_enough_posts with
-            |true,true ->
-                Scraping_user_status.Completed    
-            | _ ->
-                Scraping_user_status.Insufficient
+            unify_results
+                [posts_result;likes_result]
             |>announce_result
                 (This_worker.this_worker_id local_db)
                 user
-                posts_amount
-                likes_amount
+                (Harvesting_timeline_result.posts_amount posts_result)
+                (Harvesting_timeline_result.posts_amount likes_result)
             browser    
         )
             browser
@@ -138,7 +183,7 @@ module Harvest_timelines_of_table_members =
     [<Fact>]//(Skip="manual")
     let ``try harvest_timelines``()=
         [
-            User_handle "AD74593974"
+            User_handle "oxytheca"
         ]
         |>harvest_timelines_from_jobs
               (Twitter_database.open_connection())
