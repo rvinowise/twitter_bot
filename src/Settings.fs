@@ -32,7 +32,7 @@ type Browser_settings = {
     path: string
     webdriver_version: string
     headless: bool
-    profile_root: string
+    profiles_root: string
     profiles: Email array
 }
 
@@ -130,7 +130,7 @@ module Settings =
             path = browser_section["path"]
             webdriver_version = browser_section["webdriver_version"]
             headless = browser_section.GetValue<bool>("headless",true)
-            profile_root = browser_section.GetValue<string>("profiles_root","")
+            profiles_root = browser_section.GetValue<string>("profiles_root","")
             profiles =
                 browser_section.GetSection("profiles").Get<string[]>()
                 |>Array.map Email
@@ -140,7 +140,7 @@ module Settings =
     
     let browser_profile_from_email (email: Email) =
         [|
-            browser.profile_root;
+            browser.profiles_root;
             Email.name email
         |]
         |>Path.Combine
