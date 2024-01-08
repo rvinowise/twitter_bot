@@ -48,7 +48,8 @@ In the appsettings.json, write two connection strings:
 **"central_db"** - for the shared database, which distributes tasks among working nodes  
 **"db_connection_string"** - your local database  
 
-
+#### Usage
+Run the scraper with parameters "tasks 100", where 100 is the maximum desired amount of posts from the timelines.
 
 ### Competition of influencers (this manual may be obsolete)
 Bot ranks competitors according to their amount of followers and posts, results are shown in a google spreadsheet, 
