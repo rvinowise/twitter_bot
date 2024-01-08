@@ -2,7 +2,7 @@
 Scrapes twitter pages to collect data about users.
 ## Use cases
 
-### Collecting big data about users on twitter 
+### Collecting posts from timelines
 
 #### Prerequisites
 
@@ -50,10 +50,10 @@ In the appsettings.json, write two connection strings:
 
 
 
-## Competition of influencers (this manual may be obsolete)
+### Competition of influencers (this manual may be obsolete)
 Bot ranks competitors according to their amount of followers and posts, results are shown in a google spreadsheet, 
 e.g. here: https://docs.google.com/spreadsheets/d/1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU/edit#gid=1892937278
-### Usage
+#### Usage
 Bot can be scheduled for an automatic launch every hour or so by Task Scheduler on windows.
 The file appsettings.json should be edited and put in the folder with bot's executable. 
 In that file, the following parameters should be provided:
