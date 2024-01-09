@@ -101,7 +101,7 @@ type Email_mapper() =
     override this.Parse(value: obj) =
         Email (value :?> string) 
 
-type Scrape_user_status_mapper() =
+type Scraping_user_status_mapper() =
     inherit SqlMapper.TypeHandler<Scraping_user_status>()
     override this.SetValue(
             parameter:IDbDataParameter ,
@@ -185,7 +185,7 @@ module Twitter_database =
         SqlMapper.AddTypeHandler(Option_mapper<User_handle>(User_handle_mapper()))
         SqlMapper.AddTypeHandler(Option_mapper<Post_id>(Post_id_mapper()))
         SqlMapper.AddTypeHandler(Option_string_mapper())
-        SqlMapper.AddTypeHandler(Scrape_user_status_mapper())
+        SqlMapper.AddTypeHandler(Scraping_user_status_mapper())
         
     let open_connection () =
         let db_connection = Database.open_connection Settings.db_connection_string

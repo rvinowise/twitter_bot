@@ -260,19 +260,19 @@ module Adjacency_matrix_interface =
         let likes_interactions =
             interaction_type_from_db
                 all_user_handles
-                (User_interaction.read_likes_by_user database)
+                (User_interactions_from_posts.read_likes_by_user database)
                 likes_color
         
         let reposts_interactions =
             interaction_type_from_db
                 all_user_handles
-                (User_interaction.read_reposts_by_user database)
+                (User_interactions_from_posts.read_reposts_by_user database)
                 reposts_color
         
         let replies_interactions =
             interaction_type_from_db
                 all_user_handles
-                (User_interaction.read_replies_by_user database)
+                (User_interactions_from_posts.read_replies_by_user database)
                 replies_color
         
         

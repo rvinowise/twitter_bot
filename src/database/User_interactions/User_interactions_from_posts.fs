@@ -10,7 +10,7 @@ open rvinowise.twitter.database.tables
 
 
 
-module User_interaction =
+module User_interactions_from_posts =
         
     [<CLIMutable>]
     type Amount_for_user = {

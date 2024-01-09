@@ -293,20 +293,24 @@ module Central_task_database =
         (database:NpgsqlConnection)
         (worker: string)
         =
-        
-        database.Query<string>(
+        let success_marker =
+            Success 0
+            |>Scraping_user_status.Completed
+            |>Scraping_user_status.db_value
+            
+        database.Query<User_handle>(
             $"select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
             where 
                 {tables.users_to_scrape.created_at} = (
                         SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
                     )
-                and {tables.users_to_scrape.status} = '{Scraping_user_status.Completed}'
+                and {tables.users_to_scrape.status} = '{success_marker}'
                 and {tables.users_to_scrape.taken_by} = @worker
             ",
             {|
-                worker = worker  
+                worker = worker
             |}
-        )|>Seq.tryHead
+        )
     
     type User_to_scrape = {
         handle: User_handle

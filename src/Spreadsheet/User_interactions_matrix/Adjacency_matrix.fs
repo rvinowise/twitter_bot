@@ -10,7 +10,7 @@ type Interaction_colorscheme = {
     max_color: Color
 }
 
-type Key_values = {
+type Border_values = {
     min:int
     max:int
     average:int
@@ -18,8 +18,8 @@ type Key_values = {
 
 type Interaction_type = {
     values: Map<User_handle, Map<User_handle, int>>
-    key_values_with_others: Key_values
-    key_values_with_oneself: Key_values
+    border_values_with_others: Border_values
+    border_values_with_oneself: Border_values
     color: Color
 }
 
@@ -54,7 +54,7 @@ module Adjacency_matrix =
         
     let key_values_of_interactions interactions =
         {
-            Key_values.min=
+            Border_values.min=
                 Seq.min interactions
             max =
                 Seq.max interactions
@@ -72,11 +72,11 @@ module Adjacency_matrix =
         {
             values=interactions
             color=color
-            key_values_with_oneself=
+            border_values_with_oneself=
                 interactions
                 |>interactions_with_others
                 |>key_values_of_interactions
-            key_values_with_others=
+            border_values_with_others=
                 interactions
                 |>interactions_with_others
                 |>key_values_of_interactions
@@ -87,7 +87,7 @@ module Adjacency_matrix =
     let coefficient_between_values
         enhancing_accuracy
         amplifier_of_average
-        (key_values: Key_values)
+        (key_values: Border_values)
         (value_between: int)
         =
         if value_between = 254 then
@@ -138,7 +138,7 @@ module Adjacency_matrix =
         (max_color:Color)
         amplifying_accuracy
         amplification_of_average
-        (key_values: Key_values)
+        (key_values: Border_values)
         (value_between: int)
         =
         let multiplier_to =

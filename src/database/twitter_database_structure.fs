@@ -84,3 +84,12 @@ module tables =
         member _.last_used = "last_used"
         
     let browser_profile = Browser_profile()
+    
+    type User_interaction() =
+        override _.ToString() = "public.matrix_user_interaction"
+        member _.matrix = "matrix"
+        member _.attentive_user = "attentive_user"
+        member _.target = "target"
+        member _.amount = "amount"
+        
+    let user_interaction = User_interaction()

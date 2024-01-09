@@ -74,10 +74,11 @@
     <Compile Include="src\database\Twitter_post_database.fs" />
     <Folder Include="src\database\Twitter_post_database" />
     <Compile Include="src\database\Twitter_following_database.fs" />
-    <Compile Include="src\database\User_interaction.fs" />
     <Compile Include="src\database\Distribuing_tasks\This_worker.fs" />
     <Compile Include="src\database\Distribuing_tasks\Central_task_database.fs" />
     <Compile Include="src\database\Distribuing_tasks\Assigning_browser_profiles.fs" />
+    <Compile Include="src\database\User_interactions\User_interactions_from_posts.fs" />
+    <Compile Include="src\database\User_interactions\Combining_user_interactions.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
     <!-- google spread sheets interface   -->
@@ -91,6 +92,8 @@
     <Compile Include="src\Spreadsheet\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix.fs" />
+    <Compile Include="src\Spreadsheet\User_interactions_matrix\Export_local_interactinos.fs" />
+    <Compile Include="src\Spreadsheet\User_interactions_matrix\Stitched_interactions_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_single.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_compound.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_interface.fs" />

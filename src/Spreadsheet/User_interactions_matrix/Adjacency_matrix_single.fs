@@ -46,7 +46,7 @@ module Adjacency_matrix_single =
                 interactions.color
                 amplifying_accuracy
                 amplification_of_average
-                interactions.key_values_with_others 
+                interactions.border_values_with_others 
         
         let self_interaction_to_intensity_color =
             Adjacency_matrix.cell_color_for_value
@@ -54,7 +54,7 @@ module Adjacency_matrix_single =
                 {r=0.5;g=0.5;b=0.5}
                 amplifying_accuracy
                 amplification_of_average
-                interactions.key_values_with_oneself
+                interactions.border_values_with_oneself
         
         let all_sorted_handles =
             all_sorted_users

@@ -20,7 +20,7 @@ module Adjacency_matrix_compound =
         
         let interactions_to_color_coefficient =
             interaction_types
-            |>List.map(fun {key_values_with_others = key_values} ->
+            |>List.map(fun {border_values_with_others = key_values} ->
                 Adjacency_matrix.coefficient_between_values
                     amplifying_accuracy
                     amplifier_of_average

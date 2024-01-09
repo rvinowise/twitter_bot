@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
+open Npgsql
 open OpenQA.Selenium
 open Xunit
 open rvinowise.html_parsing
@@ -315,8 +316,9 @@ module Harvest_posts_from_timeline =
                     timeline_tab
                     user
             with
-            | :? WebDriverException
             | :? ArgumentException
+            | :? WebDriverException
+            | :? PostgresException
             | :? Harvesting_exception as exc ->
                 Harvesting_timeline_result.Exception exc 
         
