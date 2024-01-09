@@ -208,11 +208,13 @@ module Googlesheet_writing =
                 )
             )
         
-        let batch = BatchUpdateSpreadsheetRequest()
-        batch.Requests <- List<Request>()
-        batch.Requests.Add(updateCellsRequest)
+        let batch =
+            BatchUpdateSpreadsheetRequest(
+                Requests = List<Request>([updateCellsRequest])
+            )
         let result = service.Spreadsheets.BatchUpdate(batch, sheet.doc_id).Execute()
         ()
+        //service.Spreadsheets.Values.BatchUpdate(BatchUpdateValuesRequest)
     
     
     [<Fact(Skip="manual")>]

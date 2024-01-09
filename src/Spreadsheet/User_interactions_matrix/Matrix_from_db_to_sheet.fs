@@ -32,16 +32,16 @@ module Matrix_from_db_to_sheet =
                 central_db
                 (Scraping_user_status.Completed (Success 0))
         
-        let result =
-            [
-                
-            ]
-            |>Adjacency_matrix_compound.update_googlesheet_with_total_interactions
-                (Central_task_database.open_connection())
-                combined_sheet
-                _
-                _
-                all_users
+        // let result =
+        //     [
+        //         
+        //     ]
+        //     |>Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+        //         (Central_task_database.open_connection())
+        //         combined_sheet
+        //         _
+        //         _
+        //         all_users
                 
         ()
    

@@ -102,7 +102,22 @@ module Combining_user_interactions =
     let ``manually upload_all_local_interactions``() =
         upload_all_local_interactions ()
     
-    let read_interactions
+    
+    
+    let rows_of_user_interactions_to_maps
+        rows
+        =
+        rows
+        |>Seq.groupBy (fun interaction -> interaction.attentive_user)//_.attentive_user
+        |>Seq.map (fun (attentive_user, interaction) ->
+            attentive_user,
+            interaction
+            |>Seq.map (fun interaction -> interaction.target, interaction.amount)
+            |>Map.ofSeq
+        )
+        |>Map.ofSeq
+        
+    let read_all_interactions
         (database:NpgsqlConnection)
         matrix
         =
@@ -120,14 +135,8 @@ module Combining_user_interactions =
                 matrix=matrix
             |}
         )
-        |>Seq.groupBy (fun interaction -> interaction.attentive_user)//_.attentive_user
-        |>Seq.map (fun (attentive_user, interaction) ->
-            attentive_user,
-            interaction
-            |>Seq.map (fun interaction -> interaction.target, interaction.amount)
-            |>Map.ofSeq
-        )
-        |>Map.ofSeq
+        |>rows_of_user_interactions_to_maps
+        
         
         
     [<Fact>]    

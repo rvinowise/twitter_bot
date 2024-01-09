@@ -142,14 +142,15 @@ module Adjacency_matrix_interface =
             
     
     [<Fact>]
-    let ``update googlesheet with all matricex``() =
+    let ``update googlesheet with all matrices``() =
         let database = Central_task_database.open_connection()
         
         let all_users =
             Central_task_database.read_last_user_jobs_with_status
                 database
                 (Scraping_user_status.Completed (Success 0))
-        
+            |>List.ofSeq //how to sort?
+            
         update_googlesheet
             database
             "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
