@@ -279,15 +279,18 @@ module Central_task_database =
         (status: Scraping_user_status)
         =
         
-        database.Query<string>(
+        database.Query<User_handle>(
             $"select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
             where 
                 {tables.users_to_scrape.created_at} = (
                         SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
                     )
-                and {tables.users_to_scrape.status} = '{status}'
-            "
-        )|>Seq.tryHead
+                and {tables.users_to_scrape.status} = @status
+            ",
+            {|
+                status = status
+            |}
+        )
     
     let read_jobs_completed_by_worker
         (database:NpgsqlConnection)

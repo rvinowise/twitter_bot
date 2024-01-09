@@ -24,23 +24,21 @@ module Combining_user_interactions =
     
     
     let upload_interactions
-        (central_db:NpgsqlConnection)
-        (local_db:NpgsqlConnection)
-        (matrix)
-        (attentive_users: User_handle seq)
-        (targets: User_handle Set)
+        read_interactions
+        (target_db:NpgsqlConnection)
+        (matrix_name)
+        (local_attentive_users: User_handle seq)
+        (all_targets: User_handle Set)
         =
             
         let interactions =
-            attentive_users
+            local_attentive_users
             |>Seq.collect(fun attentive_user ->
-                User_interactions_from_posts.read_likes_by_user
-                    local_db
-                    attentive_user
-                |>Seq.filter (fun (target,_) -> Set.contains target targets)
+                read_interactions attentive_user
+                |>Seq.filter (fun (target,_) -> Set.contains target all_targets)
                 |>Seq.map(fun (target, amount) ->
                     {|
-                        matrix=matrix
+                        matrix=matrix_name
                         attentive_user=attentive_user
                         target=target
                         amount=amount
@@ -48,7 +46,7 @@ module Combining_user_interactions =
                 )
             )
         
-        central_db.BulkInsert(
+        target_db.BulkInsert(
             $"""insert into {user_interaction} (
                 {user_interaction.matrix},
                 {user_interaction.attentive_user},
@@ -72,13 +70,37 @@ module Combining_user_interactions =
                 {tables.user_interaction.target}
             )
             do update set ({tables.user_interaction.amount}) = row(@amount)*)
-    [<Fact>]
-    let ``try upload_interactions``()=
-        upload_interactions
-            (Central_task_database.open_connection())
-            (Twitter_database.open_connection())
-            "User_interactions"
     
+    let upload_all_local_interactions () =
+        let central_db = Central_task_database.open_connection()
+        let local_db = Twitter_database.open_connection()
+        
+        let local_attentive_users = 
+            This_worker.this_worker_id local_db
+            |>Central_task_database.read_jobs_completed_by_worker central_db
+        
+        let all_targets =
+            Central_task_database.read_last_user_jobs_with_status
+                central_db
+                (Scraping_user_status.Completed (Success 0))
+       
+        [
+            User_interactions_from_posts.read_likes_by_user, "Likes"
+            User_interactions_from_posts.read_reposts_by_user, "Reposts"
+            User_interactions_from_posts.read_replies_by_user, "Replies"
+        ]
+        |>List.iter (fun (read,matrix_name) -> 
+            upload_interactions
+                (read local_db)
+                central_db
+                matrix_name
+                local_attentive_users
+                (Set.ofSeq all_targets)
+        )
+        
+    [<Fact>]
+    let ``manually upload_all_local_interactions``() =
+        upload_all_local_interactions ()
     
     let read_interactions
         (database:NpgsqlConnection)
@@ -106,3 +128,24 @@ module Combining_user_interactions =
             |>Map.ofSeq
         )
         |>Map.ofSeq
+        
+        
+    [<Fact>]    
+    let ``try export interactions of one user ``()=
+        let central_db = Central_task_database.open_connection()
+        let local_db= Twitter_database.open_connection()
+        let this_worker = This_worker.this_worker_id local_db
+        
+        let local_attentive_users =
+            Central_task_database.read_jobs_completed_by_worker
+                central_db
+                this_worker 
+        
+        let result =
+            upload_interactions
+                (User_interactions_from_posts.read_likes_by_user local_db)
+                central_db
+                "User_interactions"
+                local_attentive_users
+                (Set.ofSeq local_attentive_users)
+        ()

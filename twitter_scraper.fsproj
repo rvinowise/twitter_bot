@@ -92,11 +92,11 @@
     <Compile Include="src\Spreadsheet\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Export_local_interactinos.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Stitched_interactions_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_single.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_compound.fs" />
+    <Compile Include="src\Spreadsheet\User_interactions_matrix\Matrix_from_db_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_interface.fs" />
+    <Compile Include="src\Spreadsheet\User_interactions_matrix\Color_blending_example.fs" />
     
     
     <Compile Include="src\scraping_with_database\Harvest_user.fs" />
