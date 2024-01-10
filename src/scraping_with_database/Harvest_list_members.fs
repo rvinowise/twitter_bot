@@ -54,7 +54,6 @@ module Harvest_list_members =
     
     let members_sheet = {
         Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
-        page_id=0
         page_name="Members"
     }
     

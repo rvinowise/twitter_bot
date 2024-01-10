@@ -159,7 +159,6 @@ module Googlesheet_writing =
             (Googlesheet.create_googlesheet_service())
             {
                 Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-                page_id=0
                 page_name="Likes"
             }
             100
@@ -222,7 +221,6 @@ module Googlesheet_writing =
         
         let likes_googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=0
             page_name="Likes"
         }
         

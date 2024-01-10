@@ -6,7 +6,7 @@ open Xunit
 
 
 
-module Adjacency_matrix_single =
+module Single_adjacency_matrix =
         
 
     
@@ -34,14 +34,15 @@ module Adjacency_matrix_single =
     
         
     let update_googlesheet
+        sheet_service
         all_sorted_users
         googlesheet
         amplifying_accuracy
         amplification_of_average
-        (interactions: Interaction_type)
+        (interactions: Relative_interaction)
         =
         let interaction_to_intensity_color =
-            Adjacency_matrix.cell_color_for_value
+            Adjacency_matrix_helpers.cell_color_for_value
                 Color.white
                 interactions.color
                 amplifying_accuracy
@@ -49,7 +50,7 @@ module Adjacency_matrix_single =
                 interactions.border_values_with_others 
         
         let self_interaction_to_intensity_color =
-            Adjacency_matrix.cell_color_for_value
+            Adjacency_matrix_helpers.cell_color_for_value
                 Color.white
                 {r=0.5;g=0.5;b=0.5}
                 amplifying_accuracy
@@ -65,7 +66,7 @@ module Adjacency_matrix_single =
         
         let colored_interactions =    
             interactions.values
-            |>Adjacency_matrix.add_zero_interactions all_handles 
+            |>Adjacency_matrix_helpers.add_zero_interactions all_handles 
             |>user_interactions_to_colored_values
                 interaction_to_intensity_color
                 self_interaction_to_intensity_color
@@ -76,15 +77,15 @@ module Adjacency_matrix_single =
             |>List.map (fun user ->
                 colored_interactions
                 |>Map.find user
-                |>Adjacency_matrix.row_of_interactions_for_user
+                |>Adjacency_matrix_helpers.row_of_interactions_for_user
                       all_sorted_handles
             )
         
-        Adjacency_matrix.compose_adjacency_matrix
+        Adjacency_matrix_helpers.compose_adjacency_matrix
             all_sorted_users
             rows_of_interactions
         |>Googlesheet_writing.write_table
-            (Googlesheet.create_googlesheet_service())
+            sheet_service
             googlesheet
     
     

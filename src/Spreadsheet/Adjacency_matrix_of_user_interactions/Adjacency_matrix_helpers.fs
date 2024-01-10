@@ -16,7 +16,7 @@ type Border_values = {
     average:int
 }
 
-type Interaction_type = {
+type Relative_interaction = {
     values: Map<User_handle, Map<User_handle, int>>
     border_values_with_others: Border_values
     border_values_with_oneself: Border_values
@@ -30,9 +30,11 @@ type Interaction_cell = {
 }
 
 
-module Adjacency_matrix =
+module Adjacency_matrix_helpers =
     
-    
+    let likes_color = {r=1;g=0;b=0}
+    let reposts_color = {r=0;g=1;b=0}
+    let replies_color = {r=0.2;g=0.2;b=1}
     
     let interactions_with_others interactions =
         interactions

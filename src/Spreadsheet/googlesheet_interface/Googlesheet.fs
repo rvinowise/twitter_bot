@@ -116,7 +116,6 @@ module Googlesheet =
         input_obj_into_sheet
             {
                 Google_spreadsheet.doc_id="1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
-                page_id=293721268
                 page_name="test"
             }
             ([
@@ -158,3 +157,18 @@ module Googlesheet =
                 StringValue= ""
             )
         )
+        
+    
+    [<Fact>]
+    let sheet_titles_to_ids
+        (service: SheetsService)
+        document
+        =
+        let metadata = service.Spreadsheets.Get(document).Execute()
+        
+        metadata.Sheets
+        |>Seq.map(fun sheet ->
+            sheet.Properties.Title,
+            (int sheet.Properties.SheetId)
+        )
+        |>Map.ofSeq

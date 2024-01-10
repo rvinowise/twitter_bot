@@ -91,12 +91,12 @@
     <Compile Include="src\Spreadsheet\googlesheet_interface\Import_scores_from_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\googlesheet_interface\Export_scores_to_googlesheet.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_single.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_compound.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Matrix_from_db_to_sheet.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Adjacency_matrix_interface.fs" />
-    <Compile Include="src\Spreadsheet\User_interactions_matrix\Color_blending_example.fs" />
+    <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Adjacency_matrix_helpers.fs" />
+    <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Single_adjacency_matrix.fs" />
+    <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Combined_adjacency_matrix.fs" />
+    <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Matrix_from_db_to_sheet.fs" />
+    <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Matrix_from_posts_to_sheet.fs" />
+    <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Color_blending_example.fs" />
     
     
     <Compile Include="src\scraping_with_database\Harvest_user.fs" />

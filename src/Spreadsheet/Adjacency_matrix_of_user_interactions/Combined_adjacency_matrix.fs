@@ -7,21 +7,19 @@ open Xunit
 
 
 
-module Adjacency_matrix_compound =
+module Combined_adjacency_matrix =
         
-    
-    
     
     let compound_interactions_to_intensity_colors_functions
         amplifying_accuracy
         amplifier_of_average
-        (interaction_types: Interaction_type list)
+        (interaction_types: Relative_interaction list)
         =
         
         let interactions_to_color_coefficient =
             interaction_types
             |>List.map(fun {border_values_with_others = key_values} ->
-                Adjacency_matrix.coefficient_between_values
+                Adjacency_matrix_helpers.coefficient_between_values
                     amplifying_accuracy
                     amplifier_of_average
                     key_values
@@ -65,11 +63,12 @@ module Adjacency_matrix_compound =
         )
     
     let update_googlesheet_with_compound_interactions
+        sheet_service
         googlesheet
         all_sorted_users
         values_to_text
         values_to_color
-        (interactions_types: Interaction_type list)
+        (interactions_types: Relative_interaction list)
         =
         let all_sorted_handles =
             all_sorted_users
@@ -98,14 +97,15 @@ module Adjacency_matrix_compound =
                 )
             )
         
-        Adjacency_matrix.compose_adjacency_matrix
+        Adjacency_matrix_helpers.compose_adjacency_matrix
             all_sorted_users
             rows_of_interactions
         |>Googlesheet_writing.write_table
-            (Googlesheet.create_googlesheet_service())
+            sheet_service
             googlesheet
             
     let update_googlesheet_with_total_interactions
+        sheet_service
         googlesheet
         amplifying_accuracy
         amplifier_of_average
@@ -124,6 +124,7 @@ module Adjacency_matrix_compound =
                 all_interaction_types
         
         update_googlesheet_with_compound_interactions
+            sheet_service
             googlesheet
             all_sorted_users
             values_to_text

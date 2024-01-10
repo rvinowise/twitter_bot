@@ -6,13 +6,11 @@ open Microsoft.Extensions.Configuration
 
 type Google_spreadsheet = {
     doc_id: string
-    page_id: int
     page_name: string
 }
 module Google_spreadsheet =
     let default_sheet = {
         Google_spreadsheet.doc_id=""
-        page_id=0
         page_name=""
     }
 
@@ -75,7 +73,6 @@ module Settings =
                             
                         {
                             Google_spreadsheet.doc_id = followers_amount_section["doc_id"]
-                            page_id = int followers_amount_section["page_id"]
                             page_name = followers_amount_section["page_name"]
                         }
                     
@@ -84,7 +81,6 @@ module Settings =
                             google_tables_section.GetSection("posts_amount")
                         {
                             Google_spreadsheet.doc_id = posts_amount_section["doc_id"]
-                            page_id = int posts_amount_section["page_id"]
                             page_name = posts_amount_section["page_name"]
                         }
                     let read_referrals =
@@ -92,7 +88,6 @@ module Settings =
                             google_tables_section.GetSection("read_referrals")
                         {
                             Google_spreadsheet.doc_id = posts_amount_section["doc_id"]
-                            page_id = int posts_amount_section["page_id"]
                             page_name = posts_amount_section["page_name"]
                         }
                     followers_amount,posts_amount,read_referrals

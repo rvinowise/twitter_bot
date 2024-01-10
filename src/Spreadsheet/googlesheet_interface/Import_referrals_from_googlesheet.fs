@@ -130,7 +130,6 @@ module Import_referrals_from_googlesheet =
                 (Twitter_database.open_connection())
                 {
                     Google_spreadsheet.doc_id = "137ExyTBgr-IL0TlxIv-V4EvWee_BDbwyh5U0M06IwsU"
-                    page_id=0
                     page_name="Sheet1"
                 }
         ()

@@ -143,15 +143,14 @@ module Googlesheet_reading =
         )
         |>List.ofSeq
         
-    [<Fact(Skip="Manual")>]
+    [<Fact>]//(Skip="Manual")
     let ``try read_table``()=
         let table =
             read_table
                 Parse_google_cell.urls
                 (Googlesheet.create_googlesheet_service())
                 {
-                    Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
-                    page_id=0
-                    page_name="Members"
+                    Google_spreadsheet.doc_id = "1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
+                    page_name="Followers amount"
                 }
         ()

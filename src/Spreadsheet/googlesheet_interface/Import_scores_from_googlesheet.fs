@@ -112,7 +112,6 @@ module Import_scores_from_googlesheet =
         import_scores_on_days
             {
                 Google_spreadsheet.doc_id = "1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
-                page_id=2000980006
                 page_name="import"
             }
             ['F' .. 'N']

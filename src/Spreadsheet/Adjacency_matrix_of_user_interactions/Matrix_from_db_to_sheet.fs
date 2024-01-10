@@ -45,3 +45,20 @@ module Matrix_from_db_to_sheet =
                 
         ()
    
+   
+    [<Fact>]
+    let ``update googlesheet with all matrices``() =
+        let database = Central_task_database.open_connection()
+        
+        let all_users =
+            Central_task_database.read_last_user_jobs_with_status
+                database
+                (Scraping_user_status.Completed (Success 0))
+            |>List.ofSeq //how to sort?
+            
+//        write_all_interactions_to_googlesheet
+//            (Googlesheet.create_googlesheet_service())
+//            database
+//            "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
+//            all_users
+        ()

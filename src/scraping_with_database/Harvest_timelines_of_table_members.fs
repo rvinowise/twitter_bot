@@ -198,7 +198,6 @@ module Harvest_timelines_of_table_members =
             
         {
             Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
-            page_id=0
             page_name="Members"
         }
         |>users_from_spreadsheet

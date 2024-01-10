@@ -19,12 +19,10 @@ module Color_blending_example =
     let ``fill table with the test of color blending ``() =
         let googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=398318420
             page_name="Color blending example"
         }
         let googlesheet2 = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-            page_id=1806921415
             page_name="Color blending example2"
         }
         
@@ -51,7 +49,7 @@ module Color_blending_example =
                     row%10
                 )|>Map.ofList
             )|>Map.ofList
-            |>Adjacency_matrix.interaction_type_for_colored_interactions
+            |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
                 likes_color
                 
         let reposts_interactions =
@@ -64,7 +62,7 @@ module Color_blending_example =
                     column%10
                 )|>Map.ofList
             )|>Map.ofList
-            |>Adjacency_matrix.interaction_type_for_colored_interactions
+            |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
                 reposts_color
         
         let square_side = 10
@@ -80,10 +78,12 @@ module Color_blending_example =
                     (all_sorted_handles.Length/square_side)
                 )|>Map.ofList
             )|>Map.ofList
-            |>Adjacency_matrix.interaction_type_for_colored_interactions
+            |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
                 replies_color
-                
-        Adjacency_matrix_compound.update_googlesheet_with_total_interactions
+       
+        let sheet_service = Googlesheet.create_googlesheet_service()         
+        Combined_adjacency_matrix.update_googlesheet_with_total_interactions
+            sheet_service
             googlesheet
             3
             0.4
