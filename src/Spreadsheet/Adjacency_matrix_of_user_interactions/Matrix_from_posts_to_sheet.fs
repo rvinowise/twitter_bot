@@ -65,22 +65,22 @@ module Matrix_from_posts_to_sheet =
         sheet_service
         sheet_document
         titles_and_interactions
-        page_names
         all_sorted_users
         =
         titles_and_interactions
         |>List.iter ( fun (title, interaction_type) ->
                 
             match
-                page_names
-                |>Map.tryFind title
+                Googlesheet_id.try_sheet_id_from_title
+                    sheet_service
+                    sheet_document
+                    title
             with
             |Some sheet_id ->
                 write_interaction_type_to_googlesheet
                     sheet_service
                     {
                         Google_spreadsheet.doc_id = sheet_document
-                        page_id=sheet_id
                         page_name=title
                     }
                     interaction_type
@@ -95,12 +95,13 @@ module Matrix_from_posts_to_sheet =
         sheet_service
         sheet_document
         titles_and_interactions
-        page_names
         all_sorted_users
         =
         match
-            page_names
-            |>Map.tryFind "Everything"
+            Googlesheet_id.try_sheet_id_from_title
+                    sheet_service
+                    sheet_document
+                    "Everything"
         with
         |Some page_id ->
             titles_and_interactions
@@ -109,7 +110,6 @@ module Matrix_from_posts_to_sheet =
                 sheet_service
                 {
                     Google_spreadsheet.doc_id = sheet_document
-                    page_id=page_id
                     page_name="Everything"
                 }
                 3
@@ -126,11 +126,6 @@ module Matrix_from_posts_to_sheet =
         sheet_document
         all_sorted_handles
         =
-        let page_names =
-            Googlesheet.sheet_titles_to_ids
-                sheet_service
-                sheet_document
-        
         let all_sorted_users =
             sorted_users_from_handles
                 database
@@ -153,14 +148,12 @@ module Matrix_from_posts_to_sheet =
             sheet_service
             sheet_document
             titles_and_interactions
-            page_names
             all_sorted_users
         
         try_write_combined_interactions_to_sheet
             sheet_service
             sheet_document
             titles_and_interactions
-            page_names
             all_sorted_users
         
     
@@ -173,10 +166,25 @@ module Matrix_from_posts_to_sheet =
            
     [<Fact>]        
     let ``try write_all_interactions_to_googlesheet``()=
+        let service = Googlesheet.create_googlesheet_service()
         
+        let all_handles =
+            Googlesheet_reading.read_range
+                Parse_google_cell.visible_text_from_cell
+                service
+                {
+                    doc_id = "1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
+                    page_name = "Posts amount" 
+                }
+                ((2,3),(2,100))
+            |>Table.trim_table
+                (fun text -> text = "")
+            |>List.collect id
+            |>List.map User_handle
+            
         write_all_interactions_to_googlesheet
-            (Googlesheet.create_googlesheet_service())
+            service
             (Twitter_database.open_connection())
             "1Rb9cGqTb-3OknU_DWuPMBlMpRAV9PHhOvfc1LlN3h6U"
-            
+            all_handles
             

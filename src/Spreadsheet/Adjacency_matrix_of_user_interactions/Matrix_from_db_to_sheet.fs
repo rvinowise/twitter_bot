@@ -22,7 +22,6 @@ module Matrix_from_db_to_sheet =
     let ``try stitched_interactions_to_sheet``()=
         let combined_sheet = {
             doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
-            page_id = 1824018874
             page_name = "All interactions"
         }
         let central_db = Central_task_database.open_connection()

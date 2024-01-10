@@ -258,7 +258,8 @@ module Central_task_database =
                     result
                 true
             with
-            | :? NpgsqlException as exc ->
+            | :? NpgsqlException
+            | :? TimeoutException as exc ->
                 $"""Exception {exc.GetType()} when trying to set a task as complete in the central datbase: {exc.Message}.
                 trying again with reistablishing the connection"""
                 |>Log.error|>ignore

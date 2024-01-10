@@ -158,9 +158,13 @@ module Googlesheet =
             )
         )
         
+
+module Googlesheet_id =
     
-    [<Fact>]
-    let sheet_titles_to_ids
+    let mutable cached_ids = Map.empty<string, Map<string,int>>
+    
+    
+    let map_sheet_titles_to_ids
         (service: SheetsService)
         document
         =
@@ -172,3 +176,46 @@ module Googlesheet =
             (int sheet.Properties.SheetId)
         )
         |>Map.ofSeq
+    
+    let try_sheet_id_from_title
+        (service: SheetsService)
+        document
+        title
+        =
+        match
+            cached_ids
+            |>Map.tryFind document
+        with
+        |Some document_cache ->
+            document_cache
+            |>Map.tryFind title
+        |None->
+            let document_cache =
+                map_sheet_titles_to_ids
+                    service
+                    document
+            
+            cached_ids <-
+                cached_ids
+                |>Map.add
+                    document
+                    document_cache
+            
+            document_cache
+            |>Map.tryFind title
+            
+            
+    let sheet_id_from_title
+        (service: SheetsService)
+        document
+        title
+        =
+        match
+            try_sheet_id_from_title
+                service
+                document
+                title
+        with
+        |Some sheet_id -> sheet_id
+        |None -> raise (KeyNotFoundException())
+            

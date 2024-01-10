@@ -220,6 +220,5 @@ module Export_scores_to_googlesheet =
             Social_activity_amounts.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
-                page_id=1445243022
                 page_name="posts_amount"
             }

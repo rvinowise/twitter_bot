@@ -10,6 +10,12 @@ type Cell_value =
     |Integer of int
     |Float of float
 
+module Cell_value=
+    let is_empty value =
+        match value with
+        |Text value |Formula value -> value = "" 
+        |Integer _ | Float _ -> false 
+
 type Text_orientation =
     |Horizontal
     |Vertical
@@ -54,6 +60,10 @@ module Cell =
         value = Cell_value.Text ""
         style = Text_style.regular
     }
+    
+    let is_empty (cell:Cell) =
+        cell.value
+        |>Cell_value.is_empty
     
     let from_colored_number
         (number,color)
@@ -155,3 +165,19 @@ module Table =
         table
         |>pad padding
         |>List.transpose
+        
+        
+    let trim_table
+        is_empty
+        (rows: 'Item list list)
+        =
+        rows
+        |>List.map(fun cells ->
+            cells
+            |>List.rev
+            |>List.skipWhile is_empty
+            |>List.rev
+        )
+        |>List.rev
+        |>List.skipWhile List.isEmpty
+        |>List.rev

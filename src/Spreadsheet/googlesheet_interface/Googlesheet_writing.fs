@@ -133,14 +133,22 @@ module Googlesheet_writing =
             Requests =([
                 Request(
                     AppendDimension = AppendDimensionRequest(
-                        SheetId=sheet.page_id,
+                        SheetId=
+                            Googlesheet_id.sheet_id_from_title
+                                service
+                                sheet.doc_id
+                                sheet.page_name,
                         Dimension = "COLUMNS",
                         Length = Nullable columns_amount
                     )
                 )
                 Request(
                     AppendDimension = AppendDimensionRequest(
-                        SheetId=sheet.page_id,
+                        SheetId=
+                            Googlesheet_id.sheet_id_from_title
+                                service
+                                sheet.doc_id
+                                sheet.page_name,
                         Dimension = "ROWS",
                         Length = Nullable rows_amount
                     )
@@ -192,7 +200,11 @@ module Googlesheet_writing =
             Request(
                 UpdateCells = UpdateCellsRequest(
                     Range = GridRange(
-                        SheetId = sheet.page_id,
+                        SheetId =
+                            Googlesheet_id.sheet_id_from_title
+                                service
+                                sheet.doc_id
+                                sheet.page_name,
                         StartColumnIndex = 0,
                         StartRowIndex = 0,
                         EndColumnIndex = max_x,
