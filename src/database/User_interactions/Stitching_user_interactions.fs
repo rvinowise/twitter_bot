@@ -48,7 +48,7 @@ module Stitching_user_interactions =
         
         target_db.BulkInsert(
             $"""insert into {user_interaction} (
-                {user_interaction.matrix},
+                {user_interaction.title},
                 {user_interaction.attentive_user},
                 {user_interaction.target},
                 {user_interaction.amount}
@@ -92,12 +92,7 @@ module Stitching_user_interactions =
                 local_attentive_users
                 (Set.ofSeq all_targets)
         )
-        
-    [<Fact>] //(Skip="manual")
-    let ``manually upload_all_local_interactions``() =
-        upload_all_local_interactions ()
-    
-    
+            
     
     let rows_of_user_interactions_to_maps
         rows
@@ -124,7 +119,7 @@ module Stitching_user_interactions =
             from
                 {user_interaction}
             where
-                {user_interaction.matrix} = @matrix",
+                {user_interaction.title} = @matrix",
             {|
                 matrix=matrix
             |}
