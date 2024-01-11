@@ -7,9 +7,10 @@ open Npgsql
 open rvinowise.twitter
 open rvinowise.twitter.database
 
-module Social_user_database =
+module Twitter_user_database =
     
-    let read_user_names_from_handles
+    
+    let read_usernames_map
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<Db_twitter_user>(
@@ -17,6 +18,19 @@ module Social_user_database =
         )
         |>Seq.map(fun user->User_handle user.handle, user.name)
         |>Map.ofSeq
+    
+    
+    let handle_to_username
+        (database: NpgsqlConnection)
+        =
+        let usernames =
+            read_usernames_map
+                database
+        let handle_to_hame handle =
+            usernames
+            |>Map.tryFind handle
+            |>Option.defaultValue (User_handle.value handle)
+        handle_to_hame
         
     let update_user_names_in_db
         (db_connection:NpgsqlConnection)

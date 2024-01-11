@@ -29,12 +29,27 @@ type Interaction_cell = {
     replies: int
 }
 
+type Interaction_design = {
+    color: Color
+    title: string
+}
+    
 
 module Adjacency_matrix_helpers =
     
-    let likes_color = {r=1;g=0;b=0}
-    let reposts_color = {r=0;g=1;b=0}
-    let replies_color = {r=0.2;g=0.2;b=1}
+    let likes_design = {
+        color = {r=1;g=0;b=0}
+        title = "Likes"
+    }
+    let reposts_design = {
+        color = {r=1;g=0;b=0}
+        title = "Reposts"
+    }
+    let replies_design = {
+        color = {r=1;g=0;b=0}
+        title = "Replies"
+    }
+    let combined_interactions_title = "Everything"
     
     let interactions_with_others interactions =
         interactions
@@ -54,34 +69,41 @@ module Adjacency_matrix_helpers =
             |>Option.defaultValue 0
         )
         
-    let key_values_of_interactions interactions =
-        {
-            Border_values.min=
-                Seq.min interactions
-            max =
-                Seq.max interactions
-            average = (
-                interactions
-                |>Seq.map float
-                |>Seq.average|>int
-            )
-        }
+    let border_values_of_interactions interactions =
+        if Seq.isEmpty interactions then
+            {
+                Border_values.min = 0
+                max = 0
+                average = 0
+            }
+        else
+            {
+                Border_values.min=
+                    Seq.min interactions
+                max =
+                    Seq.max interactions
+                average = (
+                    interactions
+                    |>Seq.map float
+                    |>Seq.average|>int
+                )
+            }
      
     let interaction_type_for_colored_interactions
         color
-        interactions
+        interaction_map
         =
         {
-            values=interactions
+            values=interaction_map
             color=color
             border_values_with_oneself=
-                interactions
+                interaction_map
                 |>interactions_with_others
-                |>key_values_of_interactions
+                |>border_values_of_interactions
             border_values_with_others=
-                interactions
+                interaction_map
                 |>interactions_with_others
-                |>key_values_of_interactions
+                |>border_values_of_interactions
         }
      
     let inline clamp minimum maximum value = value |> max minimum |> min maximum
@@ -177,7 +199,7 @@ module Adjacency_matrix_helpers =
             user
             |>read_interactions
             |>Seq.filter (fun (user,_) -> Set.contains user all_users)
-            |>map_from_seq_preferring_last
+            |>Map.ofSeq
         )|>Map.ofSeq
     
     let add_zero_interactions
@@ -235,18 +257,18 @@ module Adjacency_matrix_helpers =
         )
     
     
-    let header_of_users all_sorted_users =
-        all_sorted_users
-        |>List.map (Googlesheet_for_twitter.hyperlink_to_twitter_user)
+    let header_of_users handle_to_hame all_sorted_handles =
+        all_sorted_handles
+        |>List.map (Googlesheet_for_twitter.handle_to_user_hyperlink handle_to_hame)
         |>List.map (fun url -> {
             Cell.value = Cell_value.Formula url
             color = Color.white
             style = Text_style.vertical
         })
         
-    let left_column_of_users all_sorted_users =
-        all_sorted_users
-        |>List.map (Googlesheet_for_twitter.hyperlink_to_twitter_user )
+    let left_column_of_users handle_to_hame all_sorted_handles =
+        all_sorted_handles
+        |>List.map (Googlesheet_for_twitter.handle_to_user_hyperlink handle_to_hame)
         |>List.map (fun url -> {
             Cell.value = Cell_value.Formula url
             color = Color.white
@@ -260,17 +282,20 @@ module Adjacency_matrix_helpers =
 
 
     let compose_adjacency_matrix
-        all_sorted_users
+        handle_to_hame
+        all_sorted_handles
         rows_of_interactions
         =
             
         let header_of_users =
             header_of_users
-                all_sorted_users
+                handle_to_hame
+                all_sorted_handles
         
         let left_column_of_users =
             left_column_of_users
-                all_sorted_users
+                handle_to_hame
+                all_sorted_handles
             
         (header_of_users::rows_of_interactions)
         |>Table.transpose Cell.empty

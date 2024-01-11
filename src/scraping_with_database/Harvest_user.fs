@@ -20,7 +20,7 @@ module Harvest_user =
         try 
             user
             |>Scrape_user_briefing.scrape_user_briefing parsing_context browser 
-            |>Social_user_database.write_user_briefing
+            |>Twitter_user_database.write_user_briefing
                 db_connection
         with
         | :? CanopyElementNotFoundException as exc ->

@@ -35,8 +35,9 @@ module Single_adjacency_matrix =
         
     let update_googlesheet
         sheet_service
-        all_sorted_users
         googlesheet
+        handle_to_hame
+        all_sorted_users
         amplifying_accuracy
         amplification_of_average
         (interactions: Relative_interaction)
@@ -57,31 +58,25 @@ module Single_adjacency_matrix =
                 amplification_of_average
                 interactions.border_values_with_oneself
         
-        let all_sorted_handles =
-            all_sorted_users
-            |>List.map Twitter_user.handle
-        
-        let all_handles =
-            Set.ofList all_sorted_handles
-        
         let colored_interactions =    
             interactions.values
-            |>Adjacency_matrix_helpers.add_zero_interactions all_handles 
+            |>Adjacency_matrix_helpers.add_zero_interactions (Set.ofList all_sorted_users) 
             |>user_interactions_to_colored_values
                 interaction_to_intensity_color
                 self_interaction_to_intensity_color
         
         
         let rows_of_interactions =
-            all_sorted_handles
+            all_sorted_users
             |>List.map (fun user ->
                 colored_interactions
                 |>Map.find user
                 |>Adjacency_matrix_helpers.row_of_interactions_for_user
-                      all_sorted_handles
+                      all_sorted_users
             )
         
         Adjacency_matrix_helpers.compose_adjacency_matrix
+            handle_to_hame
             all_sorted_users
             rows_of_interactions
         |>Googlesheet_writing.write_table

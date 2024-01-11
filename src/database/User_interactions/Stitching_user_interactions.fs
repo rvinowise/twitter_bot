@@ -20,7 +20,7 @@ type User_interaction = {
     amount: int
 }
 
-module Combining_user_interactions =
+module Stitching_user_interactions =
     
     
     let upload_interactions
@@ -64,12 +64,7 @@ module Combining_user_interactions =
             """,
             interactions
         )|> ignore
-    (*on conflict (
-                {tables.user_interaction.matrix},
-                {tables.user_interaction.attentive_user},
-                {tables.user_interaction.target}
-            )
-            do update set ({tables.user_interaction.amount}) = row(@amount)*)
+
     
     let upload_all_local_interactions () =
         let central_db = Central_task_database.open_connection()
@@ -98,7 +93,7 @@ module Combining_user_interactions =
                 (Set.ofSeq all_targets)
         )
         
-    [<Fact>]
+    [<Fact>] //(Skip="manual")
     let ``manually upload_all_local_interactions``() =
         upload_all_local_interactions ()
     
@@ -122,11 +117,10 @@ module Combining_user_interactions =
         matrix
         =
         database.Query<User_interaction>(
-            $"select (
+            $"select
                 {user_interaction.attentive_user},
                 {user_interaction.target},
                 {user_interaction.amount}
-            )
             from
                 {user_interaction}
             where

@@ -78,7 +78,7 @@
     <Compile Include="src\database\Distribuing_tasks\Central_task_database.fs" />
     <Compile Include="src\database\Distribuing_tasks\Assigning_browser_profiles.fs" />
     <Compile Include="src\database\User_interactions\User_interactions_from_posts.fs" />
-    <Compile Include="src\database\User_interactions\Combining_user_interactions.fs" />
+    <Compile Include="src\database\User_interactions\Stitching_user_interactions.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     
     <!-- google spread sheets interface   -->
@@ -94,6 +94,7 @@
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Adjacency_matrix_helpers.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Single_adjacency_matrix.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Combined_adjacency_matrix.fs" />
+    <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Write_matrix_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Matrix_from_db_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Matrix_from_posts_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Color_blending_example.fs" />

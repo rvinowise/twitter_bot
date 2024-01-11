@@ -29,21 +29,16 @@ module Color_blending_example =
         
         let all_sorted_users =
             List.init 30 (fun index ->
-                {
-                    handle= index|>string|>User_handle
-                    name= index|>string
-                }    
+                index|>string|>User_handle
             )
             
-        let all_sorted_handles =
-            all_sorted_users
-            |>List.map (fun user -> user.handle)
+
         
         let likes_interactions =
-            all_sorted_handles
+            all_sorted_users
             |>List.mapi (fun row user ->
                 user,
-                all_sorted_handles
+                all_sorted_users
                 |>List.mapi(fun column other_user ->
                     other_user,
                     row%10
@@ -53,10 +48,10 @@ module Color_blending_example =
                 likes_color
                 
         let reposts_interactions =
-            all_sorted_handles
+            all_sorted_users
             |>List.mapi (fun row user ->
                 user,
-                all_sorted_handles
+                all_sorted_users
                 |>List.mapi(fun column other_user ->
                     other_user,
                     column%10
@@ -67,26 +62,27 @@ module Color_blending_example =
         
         let square_side = 10
         let replies_interactions =
-            all_sorted_handles
+            all_sorted_users
             |>List.mapi (fun row user ->
                 user,
-                all_sorted_handles
+                all_sorted_users
                 |>List.mapi(fun column other_user ->
                     other_user,
                     (column/square_side) +
                     (row/square_side)*
-                    (all_sorted_handles.Length/square_side)
+                    (all_sorted_users.Length/square_side)
                 )|>Map.ofList
             )|>Map.ofList
             |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
                 replies_color
        
-        let sheet_service = Googlesheet.create_googlesheet_service()         
-        Combined_adjacency_matrix.update_googlesheet_with_total_interactions
+        let sheet_service = Googlesheet.create_googlesheet_service()       
+        Combined_adjacency_matrix.write_combined_interactions_to_googlesheet
             sheet_service
             googlesheet
             3
             0.4
+            User_handle.value
             all_sorted_users
             [
                 likes_interactions;

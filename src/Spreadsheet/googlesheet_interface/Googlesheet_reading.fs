@@ -11,12 +11,7 @@ open Xunit
 open rvinowise.twitter
 
 
-type Google_cell = Google.Apis.Sheets.v4.Data.CellData
-module Google_cell =
-    let url
-        (google_cell: Google_cell)
-        =
-        google_cell.Hyperlink
+
         
 
 module Parse_google_cell =
@@ -32,7 +27,10 @@ module Parse_google_cell =
     let visible_text_from_cell
         (google_cell: Google_cell)
         =
-        google_cell.EffectiveValue.StringValue
+        if isNull google_cell.EffectiveValue then
+            ""
+        else
+            google_cell.EffectiveValue.StringValue
        
     
     let url_from_cell
@@ -46,7 +44,7 @@ module Parse_google_cell =
     
     let value_from_google_cell
         parse_url_cell
-        (google_cell: CellData)
+        (google_cell: Google_cell)
         =
         let google_value = google_cell.EffectiveValue
         if isNull google_value then
@@ -59,7 +57,7 @@ module Parse_google_cell =
             parse_url_cell google_cell
     
     let visible_value
-        (google_cell:CellData)
+        (google_cell:Google_cell)
         =
         {
             Cell.color=
@@ -74,7 +72,7 @@ module Parse_google_cell =
         }
     
     let urls
-        (google_cell:CellData)
+        (google_cell:Google_cell)
         =
         {
             Cell.color=

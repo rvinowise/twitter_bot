@@ -36,7 +36,7 @@ module announce_score =
         
         let before_updating_names = DateTime.Now
         competitors
-        |>Social_user_database.update_user_names_in_db
+        |>Twitter_user_database.update_user_names_in_db
             db_connection
         Log.info $"updating names of competitors in DB took {DateTime.Now-before_updating_names}"
         

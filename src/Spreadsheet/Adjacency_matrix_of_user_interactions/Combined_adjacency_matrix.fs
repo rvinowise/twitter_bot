@@ -65,21 +65,17 @@ module Combined_adjacency_matrix =
     let update_googlesheet_with_compound_interactions
         sheet_service
         googlesheet
+        handle_to_hame
         all_sorted_users
         values_to_text
         values_to_color
         (interactions_types: Relative_interaction list)
         =
-        let all_sorted_handles =
-            all_sorted_users
-            |>List.map Twitter_user.handle    
         
-        
-                
         let rows_of_interactions =
-            all_sorted_handles
+            all_sorted_users
             |>List.map (fun user ->
-                all_sorted_handles
+                all_sorted_users
                 |>List.map (fun other_user ->
                     let interactions =
                         interactions_types
@@ -98,17 +94,19 @@ module Combined_adjacency_matrix =
             )
         
         Adjacency_matrix_helpers.compose_adjacency_matrix
+            handle_to_hame
             all_sorted_users
             rows_of_interactions
         |>Googlesheet_writing.write_table
             sheet_service
             googlesheet
             
-    let update_googlesheet_with_total_interactions
+    let write_combined_interactions_to_googlesheet
         sheet_service
         googlesheet
         amplifying_accuracy
         amplifier_of_average
+        handle_to_hame
         all_sorted_users
         all_interaction_types
         =
@@ -126,6 +124,7 @@ module Combined_adjacency_matrix =
         update_googlesheet_with_compound_interactions
             sheet_service
             googlesheet
+            handle_to_hame
             all_sorted_users
             values_to_text
             values_to_color

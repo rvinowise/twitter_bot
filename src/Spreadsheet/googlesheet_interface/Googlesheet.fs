@@ -12,8 +12,14 @@ open Google.Apis.Sheets.v4.Data
 open Xunit
 open rvinowise.twitter
 
+type Google_cell = Google.Apis.Sheets.v4.Data.CellData
 
-
+module Google_cell =
+    let url
+        (google_cell: Google_cell)
+        =
+        google_cell.Hyperlink
+        
 module Googlesheet =
     
     let create_googlesheet_service () =

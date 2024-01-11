@@ -46,7 +46,14 @@ module User_interactions_from_posts =
             {|liker=liker|}
         )|>amounts_for_user_as_tuples
         
-    
+    [<Fact>]
+    let ``try read_likes_by_user``()=
+        let result =
+            read_likes_by_user
+                (Twitter_database.open_connection())
+                (User_handle "ActivistCher")
+        ()
+        
     let read_reposts_by_user
         (database: NpgsqlConnection)
         reposter

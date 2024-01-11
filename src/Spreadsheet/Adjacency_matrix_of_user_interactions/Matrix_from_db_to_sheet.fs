@@ -2,62 +2,72 @@
 
 open Npgsql
 open rvinowise.twitter
-open rvinowise.web_scraping
 open Xunit
-open System
 
 (* user interactions from local databases are combined in the central database.
 this module exports them into the google sheet  *)
 
 module Matrix_from_db_to_sheet =
     
+
     
-    let export_local_interactions
+    let write_matrices_to_sheet
+        sheet_service
         (database: NpgsqlConnection)
-        (sheet: Google_spreadsheet)
+        doc_id
+        handle_to_name
+        all_sorted_users
         =
-        ()
+        let titles_and_interactions =
+            [
+                Adjacency_matrix_helpers.likes_design;
+                //Adjacency_matrix_helpers.reposts_design;
+                //Adjacency_matrix_helpers.replies_design
+            ]
+            |>List.map(fun design ->
+                design.title,
+                Stitching_user_interactions.read_all_interactions
+                    database
+                    design.title
+                |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
+                    design.color
+            )
+        Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
+            sheet_service
+            doc_id
+            titles_and_interactions
+            handle_to_name
+            all_sorted_users
+            
+//        Write_matrix_to_sheet.try_write_combined_interactions_to_sheet
+//            sheet_service
+//            doc_id
+//            titles_and_interactions
+//            handle_to_name
+//            all_sorted_users
         
     [<Fact>]    
     let ``try stitched_interactions_to_sheet``()=
-        let combined_sheet = {
-            doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
-            page_name = "All interactions"
-        }
+        
+        let doc_id = "1Rb9cGqTb-3OknU_DWuPMBlMpRAV9PHhOvfc1LlN3h6U"
+        
         let central_db = Central_task_database.open_connection()
         
         let all_users =
             Central_task_database.read_last_user_jobs_with_status
                 central_db
                 (Scraping_user_status.Completed (Success 0))
-        
-        // let result =
-        //     [
-        //         
-        //     ]
-        //     |>Adjacency_matrix_compound.update_googlesheet_with_total_interactions
-        //         (Central_task_database.open_connection())
-        //         combined_sheet
-        //         _
-        //         _
-        //         all_users
-                
-        ()
-   
-   
-    [<Fact>]
-    let ``update googlesheet with all matrices``() =
-        let database = Central_task_database.open_connection()
-        
-        let all_users =
-            Central_task_database.read_last_user_jobs_with_status
-                database
-                (Scraping_user_status.Completed (Success 0))
             |>List.ofSeq //how to sort?
-            
-//        write_all_interactions_to_googlesheet
-//            (Googlesheet.create_googlesheet_service())
-//            database
-//            "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
-//            all_users
+        
+        let handle_to_name =
+            Twitter_user_database.handle_to_username
+                central_db
+        
+        write_matrices_to_sheet
+            (Googlesheet.create_googlesheet_service())
+            central_db
+            doc_id
+            handle_to_name
+            all_users
         ()
+   

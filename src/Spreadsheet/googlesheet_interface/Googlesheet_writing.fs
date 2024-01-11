@@ -105,11 +105,8 @@ module Googlesheet_writing =
         )
     
     
-    
-    
-    
     let lists_of_google_cells_to_google_table
-        (rows: CellData list list)
+        (rows: Google_cell list list)
         =
         rows
         |>List.map (fun cells_of_row ->
@@ -172,30 +169,25 @@ module Googlesheet_writing =
             100
             100
         
+    
         
-    let write_table
+    let write_chunk
         (service: SheetsService)
         (sheet: Google_spreadsheet)
-        table
+        starting_row
+        rows
         =
-        $"""writing table to googlesheet {sheet.doc_id}, page {sheet.page_name}"""
-        |>Log.important
+        let max_y =    
+            starting_row + List.length rows
+            
+        $"""writing a chunk of rows {starting_row}-{max_y} to googlesheet {sheet.doc_id}, page {sheet.page_name}"""
+        |>Log.info
         
         let max_x = 
-            table
+            rows
             |>List.head
             |>List.length
             
-        let max_y =    
-            List.length table
-        
-//        let adding_dimensions_result =
-//            write_sheet_dimension
-//                service
-//                sheet
-//                max_x
-//                max_y
-        
         let updateCellsRequest =
             Request(
                 UpdateCells = UpdateCellsRequest(
@@ -206,12 +198,12 @@ module Googlesheet_writing =
                                 sheet.doc_id
                                 sheet.page_name,
                         StartColumnIndex = 0,
-                        StartRowIndex = 0,
+                        StartRowIndex = starting_row,
                         EndColumnIndex = max_x,
                         EndRowIndex = max_y
                     ),
                     Rows = (
-                        table
+                        rows
                         |>List.map (List.map cell_to_google_cell)
                         |>lists_of_google_cells_to_google_table
                     ),
@@ -223,10 +215,36 @@ module Googlesheet_writing =
             BatchUpdateSpreadsheetRequest(
                 Requests = List<Request>([updateCellsRequest])
             )
-        let result = service.Spreadsheets.BatchUpdate(batch, sheet.doc_id).Execute()
-        ()
-        //service.Spreadsheets.Values.BatchUpdate(BatchUpdateValuesRequest)
+        service.Spreadsheets.BatchUpdate(batch, sheet.doc_id).Execute()
     
+    let write_table 
+        (service: SheetsService)
+        (sheet: Google_spreadsheet)
+        (all_rows: Cell list list)
+        =
+        $"""writing table to googlesheet {sheet.doc_id}, page {sheet.page_name}"""
+        |>Log.important
+        
+        //assuming 10000 cells per chunk
+        let rows_amount_in_chunk =
+            10000
+            /
+            (all_rows
+            |>List.head
+            |>List.length)
+        
+        all_rows
+        |>List.chunkBySize rows_amount_in_chunk
+        |>List.iteri (fun chunk_index rows ->
+            write_chunk
+                service
+                sheet
+                (chunk_index*rows_amount_in_chunk)
+                rows
+            |>ignore
+        )
+           
+        ()
     
     [<Fact(Skip="manual")>]
     let ``try write table``() =
