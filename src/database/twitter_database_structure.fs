@@ -86,7 +86,7 @@ module tables =
     let browser_profile = Browser_profile()
     
     type User_interaction() =
-        override _.ToString() = "public.matrix_user_interaction"
+        override _.ToString() = "public.user_attention"
         member _.attention_type = "attention_type"
         member _.attentive_user = "attentive_user"
         member _.target = "target"
