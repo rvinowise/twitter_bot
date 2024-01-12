@@ -93,7 +93,7 @@ module Combined_adjacency_matrix =
                 )
             )
         
-        Adjacency_matrix_helpers.compose_adjacency_matrix
+        Adjacency_matrix_helpers.add_headers_to_adjacency_matrix
             handle_to_hame
             all_sorted_users
             rows_of_interactions

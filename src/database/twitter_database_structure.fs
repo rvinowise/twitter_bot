@@ -87,7 +87,7 @@ module tables =
     
     type User_interaction() =
         override _.ToString() = "public.matrix_user_interaction"
-        member _.title = "title"
+        member _.attention_type = "attention_type"
         member _.attentive_user = "attentive_user"
         member _.target = "target"
         member _.amount = "amount"

@@ -20,25 +20,23 @@ type User_interaction = {
     amount: int
 }
 
-module Stitching_user_interactions =
+module Stitching_user_attention =
     
     
-    let upload_interactions
+    let upload_user_attention
         read_interactions
         (target_db:NpgsqlConnection)
-        (matrix_name)
+        (matrix_title)
         (local_attentive_users: User_handle seq)
-        (all_targets: User_handle Set)
         =
             
         let interactions =
             local_attentive_users
             |>Seq.collect(fun attentive_user ->
                 read_interactions attentive_user
-                |>Seq.filter (fun (target,_) -> Set.contains target all_targets)
                 |>Seq.map(fun (target, amount) ->
                     {|
-                        matrix=matrix_name
+                        matrix_title=matrix_title
                         attentive_user=attentive_user
                         target=target
                         amount=amount
@@ -48,13 +46,13 @@ module Stitching_user_interactions =
         
         target_db.BulkInsert(
             $"""insert into {user_interaction} (
-                {user_interaction.title},
+                {user_interaction.attention_type},
                 {user_interaction.attentive_user},
                 {user_interaction.target},
                 {user_interaction.amount}
             )
             values (
-                @matrix,
+                @matrix_title,
                 @attentive_user,
                 @target,
                 @amount
@@ -66,7 +64,7 @@ module Stitching_user_interactions =
         )|> ignore
 
     
-    let upload_all_local_interactions () =
+    let upload_all_local_attentions () =
         let central_db = Central_task_database.open_connection()
         let local_db = Twitter_database.open_connection()
         
@@ -85,16 +83,15 @@ module Stitching_user_interactions =
             User_interactions_from_posts.read_replies_by_user, "Replies"
         ]
         |>List.iter (fun (read,matrix_name) -> 
-            upload_interactions
+            upload_user_attention
                 (read local_db)
                 central_db
                 matrix_name
                 local_attentive_users
-                (Set.ofSeq all_targets)
         )
             
     
-    let rows_of_user_interactions_to_maps
+    let rows_of_user_attention_to_maps
         rows
         =
         rows
@@ -107,9 +104,9 @@ module Stitching_user_interactions =
         )
         |>Map.ofSeq
         
-    let read_all_interactions
+    let read_all_attentions
         (database:NpgsqlConnection)
-        matrix
+        attention_type
         =
         database.Query<User_interaction>(
             $"select
@@ -119,31 +116,11 @@ module Stitching_user_interactions =
             from
                 {user_interaction}
             where
-                {user_interaction.title} = @matrix",
+                {user_interaction.attention_type} = @attention_type",
             {|
-                matrix=matrix
+                attention_type=attention_type
             |}
         )
-        |>rows_of_user_interactions_to_maps
+        |>rows_of_user_attention_to_maps
         
         
-        
-    [<Fact>]    
-    let ``try export interactions of one user ``()=
-        let central_db = Central_task_database.open_connection()
-        let local_db= Twitter_database.open_connection()
-        let this_worker = This_worker.this_worker_id local_db
-        
-        let local_attentive_users =
-            Central_task_database.read_jobs_completed_by_worker
-                central_db
-                this_worker 
-        
-        let result =
-            upload_interactions
-                (User_interactions_from_posts.read_likes_by_user local_db)
-                central_db
-                "User_interactions"
-                local_attentive_users
-                (Set.ofSeq local_attentive_users)
-        ()

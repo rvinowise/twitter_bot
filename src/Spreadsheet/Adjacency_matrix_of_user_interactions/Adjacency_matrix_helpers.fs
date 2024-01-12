@@ -69,8 +69,8 @@ module Adjacency_matrix_helpers =
             |>Option.defaultValue 0
         )
         
-    let border_values_of_interactions interactions =
-        if Seq.isEmpty interactions then
+    let border_values_of_attention attention =
+        if Seq.isEmpty attention then
             {
                 Border_values.min = 0
                 max = 0
@@ -79,11 +79,11 @@ module Adjacency_matrix_helpers =
         else
             {
                 Border_values.min=
-                    Seq.min interactions
+                    Seq.min attention
                 max =
-                    Seq.max interactions
+                    Seq.max attention
                 average = (
-                    interactions
+                    attention
                     |>Seq.map float
                     |>Seq.average|>int
                 )
@@ -99,11 +99,11 @@ module Adjacency_matrix_helpers =
             border_values_with_oneself=
                 interaction_map
                 |>interactions_with_others
-                |>border_values_of_interactions
+                |>border_values_of_attention
             border_values_with_others=
                 interaction_map
                 |>interactions_with_others
-                |>border_values_of_interactions
+                |>border_values_of_attention
         }
      
     let inline clamp minimum maximum value = value |> max minimum |> min maximum
@@ -281,7 +281,7 @@ module Adjacency_matrix_helpers =
         }]
 
 
-    let compose_adjacency_matrix
+    let add_headers_to_adjacency_matrix
         handle_to_hame
         all_sorted_handles
         rows_of_interactions

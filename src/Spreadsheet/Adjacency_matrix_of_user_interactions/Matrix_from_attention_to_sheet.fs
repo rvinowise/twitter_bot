@@ -4,10 +4,10 @@ open Npgsql
 open rvinowise.twitter
 open Xunit
 
-(* user interactions from local databases are combined in the central database.
-this module exports them into the google sheet  *)
+(* user attention from local databases are combined in the central database.
+this module exports them into the google sheet as a matrix *)
 
-module Matrix_from_db_to_sheet =
+module Matrix_from_attention_to_sheet =
     
 
     
@@ -26,7 +26,7 @@ module Matrix_from_db_to_sheet =
             ]
             |>List.map(fun design ->
                 design.title,
-                Stitching_user_interactions.read_all_interactions
+                Stitching_user_attention.read_all_attentions
                     database
                     design.title
                 |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
@@ -45,9 +45,9 @@ module Matrix_from_db_to_sheet =
 //            titles_and_interactions
 //            handle_to_name
 //            all_sorted_users
-        
-    [<Fact>]    
-    let ``try stitched_interactions_to_sheet``()=
+         
+    
+    let ``stitched_interactions_to_sheet``()=
         
         let doc_id = "1Rb9cGqTb-3OknU_DWuPMBlMpRAV9PHhOvfc1LlN3h6U"
         

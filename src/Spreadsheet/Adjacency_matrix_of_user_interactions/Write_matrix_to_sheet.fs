@@ -21,9 +21,9 @@ module Write_matrix_to_sheet =
             sheet
             handle_to_hame
             all_sorted_users
+            relative_interactions
             3
             0.4
-            relative_interactions
     
     
     let try_write_separate_interactions_to_sheet

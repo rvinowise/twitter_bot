@@ -87,7 +87,7 @@ module Program =
         | "competition"::rest ->
             announce_competition_successes()
         | "stitch"::rest ->
-            Stitching_user_interactions.upload_all_local_interactions()
+            Stitching_user_attention.upload_all_local_attentions()
         | unknown_parameters ->
             $"unknown parameters: {unknown_parameters}"
             |>Log.error|>ignore
