@@ -52,21 +52,21 @@ module Central_task_database =
         let free_user =
             central_db.Query<User_handle>(
                 $"
-                update {tables.users_to_scrape} 
+                update {tables.user_to_scrape} 
                 set 
-                    {tables.users_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Taken}',
-                    {tables.users_to_scrape.taken_by} = @worker,
-                    {tables.users_to_scrape.when_taken} = @when_taken
+                    {tables.user_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Taken}',
+                    {tables.user_to_scrape.taken_by} = @worker,
+                    {tables.user_to_scrape.when_taken} = @when_taken
                 where 
-                    {tables.users_to_scrape.handle} = (
-                        select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
+                    {tables.user_to_scrape.handle} = (
+                        select {tables.user_to_scrape.handle} from {tables.user_to_scrape}
                         where 
-                            {tables.users_to_scrape.created_at} = (SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape})
-                            and {tables.users_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Free}'
-                            and {tables.users_to_scrape.taken_by} = ''
+                            {tables.user_to_scrape.created_at} = (SELECT MAX({tables.user_to_scrape.created_at}) FROM {tables.user_to_scrape})
+                            and {tables.user_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Free}'
+                            and {tables.user_to_scrape.taken_by} = ''
                         limit 1
                     )
-                returning {tables.users_to_scrape.handle}    
+                returning {tables.user_to_scrape.handle}    
                 ",
                 {|
                     worker=worker_id
@@ -117,10 +117,10 @@ module Central_task_database =
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<User_handle>(
-            @"select * from users_to_scrape
+            $"select * from {tables.user_to_scrape}
             where 
-                created_at = (SELECT MAX(created_at) FROM users_to_scrape)
-                and status = 'free'
+                created_at = (SELECT MAX({tables.user_to_scrape.created_at}) FROM {tables.user_to_scrape})
+                and status = 'Free'
                 and taken_by = ''
             "
         )
@@ -130,13 +130,13 @@ module Central_task_database =
         (user: User_handle)
         =
         db_connection.Query<string>(
-            $"select {tables.users_to_scrape.taken_by} from {tables.users_to_scrape}
+            $"select {tables.user_to_scrape.taken_by} from {tables.user_to_scrape}
             where 
-                {tables.users_to_scrape.created_at} = (
-                        SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
+                {tables.user_to_scrape.created_at} = (
+                        SELECT MAX({tables.user_to_scrape.created_at}) FROM {tables.user_to_scrape}
                     )
-                and {tables.users_to_scrape.handle} = @user
-                and not {tables.users_to_scrape.taken_by} = ''
+                and {tables.user_to_scrape.handle} = @user
+                and not {tables.user_to_scrape.taken_by} = ''
             ",
             {|
                 user=user
@@ -159,11 +159,11 @@ module Central_task_database =
         Log.info $"writing status {Scraping_user_status.db_value status} for user {User_handle.value user} in the central database"
         
         db_connection.Query<User_handle>(
-            $"update {tables.users_to_scrape} 
+            $"update {tables.user_to_scrape} 
             set 
-                {tables.users_to_scrape.status}  = @status
+                {tables.user_to_scrape.status}  = @status
             where 
-                {tables.users_to_scrape.handle} = @user",
+                {tables.user_to_scrape.handle} = @user",
             {|
                 status = status
                 handle = user
@@ -219,14 +219,14 @@ module Central_task_database =
             user_task
             
         db_connection.Query<User_handle>(
-            $"update {tables.users_to_scrape} 
+            $"update {tables.user_to_scrape} 
             set
-                {tables.users_to_scrape.status}  = @status,
-                {tables.users_to_scrape.posts_amount} = @posts_amount,
-                {tables.users_to_scrape.likes_amount} = @likes_amount,
-                {tables.users_to_scrape.when_completed} = @when_completed
+                {tables.user_to_scrape.status}  = @status,
+                {tables.user_to_scrape.posts_amount} = @posts_amount,
+                {tables.user_to_scrape.likes_amount} = @likes_amount,
+                {tables.user_to_scrape.when_completed} = @when_completed
             where 
-                {tables.users_to_scrape.handle} = @handle",
+                {tables.user_to_scrape.handle} = @handle",
             {|
                 handle = user_task
                 posts_amount = posts_amount
@@ -264,7 +264,6 @@ module Central_task_database =
                 trying again with reistablishing the connection"""
                 |>Log.error|>ignore
                 false
-
                 
         if not is_successful then
             resiliently_write_final_result
@@ -281,12 +280,12 @@ module Central_task_database =
         =
         
         database.Query<User_handle>(
-            $"select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
+            $"select {tables.user_to_scrape.handle} from {tables.user_to_scrape}
             where 
-                {tables.users_to_scrape.created_at} = (
-                        SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
+                {tables.user_to_scrape.created_at} = (
+                        SELECT MAX({tables.user_to_scrape.created_at}) FROM {tables.user_to_scrape}
                     )
-                and {tables.users_to_scrape.status} = @status
+                and {tables.user_to_scrape.status} = @status
             ",
             {|
                 status = status
@@ -303,13 +302,13 @@ module Central_task_database =
             |>Scraping_user_status.db_value
             
         database.Query<User_handle>(
-            $"select {tables.users_to_scrape.handle} from {tables.users_to_scrape}
+            $"select {tables.user_to_scrape.handle} from {tables.user_to_scrape}
             where 
-                {tables.users_to_scrape.created_at} = (
-                        SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
+                {tables.user_to_scrape.created_at} = (
+                        SELECT MAX({tables.user_to_scrape.created_at}) FROM {tables.user_to_scrape}
                     )
-                and {tables.users_to_scrape.status} = '{success_marker}'
-                and {tables.users_to_scrape.taken_by} = @worker
+                and {tables.user_to_scrape.status} = '{success_marker}'
+                and {tables.user_to_scrape.taken_by} = @worker
             ",
             {|
                 worker = worker
@@ -329,17 +328,17 @@ module Central_task_database =
         
         database.Query<string>(
             $"select 
-                {tables.users_to_scrape.handle},
-                {tables.users_to_scrape.posts_amount},
-                {tables.users_to_scrape.likes_amount},
-                {tables.users_to_scrape.taken_by},
+                {tables.user_to_scrape.handle},
+                {tables.user_to_scrape.posts_amount},
+                {tables.user_to_scrape.likes_amount},
+                {tables.user_to_scrape.taken_by},
                 
-            from {tables.users_to_scrape}
+            from {tables.user_to_scrape}
             where 
-                {tables.users_to_scrape.created_at} = (
-                        SELECT MAX({tables.users_to_scrape.created_at}) FROM {tables.users_to_scrape}
+                {tables.user_to_scrape.created_at} = (
+                        SELECT MAX({tables.user_to_scrape.created_at}) FROM {tables.user_to_scrape}
                     )
-                and {tables.users_to_scrape.status} = '{Scraping_user_status.Completed}'
+                and {tables.user_to_scrape.status} = '{Scraping_user_status.Completed}'
             "
         )|>Seq.tryHead
     
@@ -350,10 +349,10 @@ module Central_task_database =
         =
         
         database.Query<User_handle>(
-            $"insert into {tables.users_to_scrape} (
-                {tables.users_to_scrape.created_at},
-                {tables.users_to_scrape.handle},
-                {tables.users_to_scrape.status}
+            $"insert into {tables.user_to_scrape} (
+                {tables.user_to_scrape.created_at},
+                {tables.user_to_scrape.handle},
+                {tables.user_to_scrape.status}
             )
             values (
                 @created_at,

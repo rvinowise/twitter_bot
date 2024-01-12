@@ -57,8 +57,8 @@ module tables =
         
     let post_tables = Post_tables()
     
-    type Users_to_scrape() =
-        override _.ToString() = "users_to_scrape"
+    type User_to_scrape() =
+        override _.ToString() = "user_to_scrape"
         member _.created_at = "created_at"
         member _.handle = "handle"
         member _.taken_by = "taken_by"
@@ -69,7 +69,7 @@ module tables =
         member _.when_completed = "when_completed"
        
         
-    let users_to_scrape = Users_to_scrape()
+    let user_to_scrape = User_to_scrape()
     
     
     type This_node() =
@@ -85,11 +85,12 @@ module tables =
         
     let browser_profile = Browser_profile()
     
-    type User_interaction() =
+    type User_attention() =
         override _.ToString() = "public.user_attention"
         member _.attention_type = "attention_type"
         member _.attentive_user = "attentive_user"
         member _.target = "target"
         member _.amount = "amount"
+        member _.when_scraped = "when_scraped"
         
-    let user_interaction = User_interaction()
+    let user_attention = User_attention()

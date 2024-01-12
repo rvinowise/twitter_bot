@@ -88,6 +88,8 @@ module Program =
             announce_competition_successes()
         | "stitch"::rest ->
             Stitching_user_attention.upload_all_local_attentions()
+        | "test"::rest ->
+            Matrix_from_attention_to_sheet.``stitched_interactions_to_sheet``()
         | unknown_parameters ->
             $"unknown parameters: {unknown_parameters}"
             |>Log.error|>ignore

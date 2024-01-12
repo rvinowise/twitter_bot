@@ -14,7 +14,7 @@ open rvinowise.twitter.database.tables
 
 
 [<CLIMutable>]
-type User_interaction = {
+type User_attention = {
     attentive_user: User_handle
     target: User_handle
     amount: int
@@ -23,36 +23,46 @@ type User_interaction = {
 module Stitching_user_attention =
     
     
-    let upload_user_attention
+    let attention_rows_from_posts
         read_interactions
-        (target_db:NpgsqlConnection)
-        (matrix_title)
+        attention_type
         (local_attentive_users: User_handle seq)
         =
-            
-        let interactions =
-            local_attentive_users
-            |>Seq.collect(fun attentive_user ->
-                read_interactions attentive_user
-                |>Seq.map(fun (target, amount) ->
-                    {|
-                        matrix_title=matrix_title
-                        attentive_user=attentive_user
-                        target=target
-                        amount=amount
-                    |}
-                )
+        local_attentive_users
+        |>Seq.collect(fun attentive_user ->
+            read_interactions attentive_user
+            |>Seq.map(fun (target, amount) ->
+                {|
+                    attention_type=attention_type
+                    attentive_user=attentive_user
+                    target=target
+                    amount=amount
+                |}
             )
+        )
+    
+    let upload_all_users_attention
+        read_interactions
+        (target_db:NpgsqlConnection)
+        attention_type
+        local_attentive_users
+        =
+            
+        let attention_rows =
+            attention_rows_from_posts
+                read_interactions
+                attention_type
+                local_attentive_users
         
         target_db.BulkInsert(
-            $"""insert into {user_interaction} (
-                {user_interaction.attention_type},
-                {user_interaction.attentive_user},
-                {user_interaction.target},
-                {user_interaction.amount}
+            $"""insert into {user_attention} (
+                {user_attention.attention_type},
+                {user_attention.attentive_user},
+                {user_attention.target},
+                {user_attention.amount}
             )
             values (
-                @matrix_title,
+                @attention_type,
                 @attentive_user,
                 @target,
                 @amount
@@ -60,10 +70,51 @@ module Stitching_user_attention =
             ...
             
             """,
-            interactions
+            attention_rows
         )|> ignore
 
     
+    let update_attention_row_in_database //slow
+        (database:NpgsqlConnection)
+        attention
+        =
+        database.Query<unit>(
+            $"""insert into {user_attention} (
+                {user_attention.attention_type},
+                {user_attention.attentive_user},
+                {user_attention.target},
+                {user_attention.amount}
+            )
+            values (
+                @attention_type,
+                @attentive_user,
+                @target,
+                @amount
+            )
+            on conflict (attention_type, attentive_user, target)
+            do update set (amount) = row(@amount)
+            """,
+            attention
+        )|> ignore
+    
+    let update_all_users_attention_in_database //slow
+        read_interactions
+        (database:NpgsqlConnection)
+        (attention_type)
+        (local_attentive_users: User_handle seq)
+        =
+        let attention_rows =
+            attention_rows_from_posts
+                read_interactions
+                attention_type
+                local_attentive_users
+                
+        attention_rows
+        |>Seq.iter (
+            update_attention_row_in_database
+                database
+        )
+            
     let upload_all_local_attentions () =
         let central_db = Central_task_database.open_connection()
         let local_db = Twitter_database.open_connection()
@@ -83,7 +134,8 @@ module Stitching_user_attention =
             User_interactions_from_posts.read_replies_by_user, "Replies"
         ]
         |>List.iter (fun (read,matrix_name) -> 
-            upload_user_attention
+            upload_all_users_attention
+            //update_all_users_attention_in_database
                 (read local_db)
                 central_db
                 matrix_name
@@ -108,17 +160,59 @@ module Stitching_user_attention =
         (database:NpgsqlConnection)
         attention_type
         =
-        database.Query<User_interaction>(
+        database.Query<User_attention>(
             $"select
-                {user_interaction.attentive_user},
-                {user_interaction.target},
-                {user_interaction.amount}
+                {user_attention.attentive_user},
+                {user_attention.target},
+                {user_attention.amount}
             from
-                {user_interaction}
+                {user_attention}
             where
-                {user_interaction.attention_type} = @attention_type",
+                {user_attention.attention_type} = @attention_type",
             {|
                 attention_type=attention_type
+            |}
+        )
+        |>rows_of_user_attention_to_maps
+        
+    let read_attentions_within_matrix
+        (database:NpgsqlConnection)
+        attention_type
+        datetime
+        =
+        database.Query<User_attention>(
+            $"""
+            select * 
+            from {user_attention} as main_attention
+            where 
+                exists ( --the target of attention should be part of the last matrix
+                    select ''
+                    from {user_to_scrape}
+                    where 
+                        {user_to_scrape.created_at} = ( --the matrix will contain the last scraped batch of users
+                            SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
+                        )
+                        and {user_to_scrape.status} = 'Success'
+                        and ( --the target of attention should be part of the matrix
+                            {user_to_scrape.handle} = main_attention.{user_attention.target}
+                        ) 
+                )
+                --take only attentions with the closest scraping datetime 
+                and main_attention.{user_attention.when_scraped} = (
+                    select max({user_attention.when_scraped}) 
+                    from {user_attention} as closest_attention
+                    where
+                        main_attention.{user_attention.attentive_user} = closest_attention.{user_attention.attentive_user}
+                        and main_attention.{user_attention.target} = closest_attention.{user_attention.target}
+                        and main_attention.{user_attention.attention_type} = closest_attention.{user_attention.attention_type}
+                        and closest_attention.{user_attention.when_scraped} < @datetime
+                )
+                and main_attention.{user_attention.attention_type} = @attention_type
+            order by main_attention.{user_attention.attentive_user}, main_attention.{user_attention.target}
+            """,
+            {|
+                attention_type=attention_type
+                datetime=datetime
             |}
         )
         |>rows_of_user_attention_to_maps

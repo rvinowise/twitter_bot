@@ -1,5 +1,6 @@
 ﻿namespace rvinowise.twitter
 
+open System
 open Npgsql
 open rvinowise.twitter
 open Xunit
@@ -26,9 +27,10 @@ module Matrix_from_attention_to_sheet =
             ]
             |>List.map(fun design ->
                 design.title,
-                Stitching_user_attention.read_all_attentions
+                Stitching_user_attention.read_attentions_within_matrix
                     database
                     design.title
+                    DateTime.Now
                 |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
                     design.color
             )
