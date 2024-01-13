@@ -13,12 +13,12 @@ module Combined_adjacency_matrix =
     let compound_interactions_to_intensity_colors_functions
         amplifying_accuracy
         amplifier_of_average
-        (interaction_types: Relative_interaction list)
+        (attention_matrices: Relative_attention_matrix list)
         =
         
         let interactions_to_color_coefficient =
-            interaction_types
-            |>List.map(fun {border_values_with_others = key_values} ->
+            attention_matrices
+            |>List.map(fun {border_attention_to_others = key_values} ->
                 Adjacency_matrix_helpers.coefficient_between_values
                     amplifying_accuracy
                     amplifier_of_average
@@ -39,7 +39,7 @@ module Combined_adjacency_matrix =
                 )
             
             let colors =
-                interaction_types
+                attention_matrices
                 |>List.map (fun interaction_type->interaction_type.color)
             
             color_multipliers
@@ -69,7 +69,7 @@ module Combined_adjacency_matrix =
         all_sorted_users
         values_to_text
         values_to_color
-        (interactions_types: Relative_interaction list)
+        (attention_matrices: Relative_attention_matrix list)
         =
         
         let rows_of_interactions =
@@ -78,8 +78,8 @@ module Combined_adjacency_matrix =
                 all_sorted_users
                 |>List.map (fun other_user ->
                     let interactions =
-                        interactions_types
-                        |>List.map (fun interaction_type -> interaction_type.values)
+                        attention_matrices
+                        |>List.map (fun interaction_type -> interaction_type.attention_to_users)
                         |>interactions_between_users
                             user
                             other_user

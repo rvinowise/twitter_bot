@@ -31,8 +31,13 @@ module Color_blending_example =
             List.init 30 (fun index ->
                 index|>string|>User_handle
             )
-            
-
+        
+        let total_attention =
+            all_sorted_users
+            |>List.map (fun user ->
+                user,
+                10
+            )|>Map.ofList
         
         let likes_interactions =
             all_sorted_users
@@ -44,8 +49,9 @@ module Color_blending_example =
                     row%10
                 )|>Map.ofList
             )|>Map.ofList
-            |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
+            |>Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
                 likes_color
+                total_attention
                 
         let reposts_interactions =
             all_sorted_users
@@ -57,8 +63,9 @@ module Color_blending_example =
                     column%10
                 )|>Map.ofList
             )|>Map.ofList
-            |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
+            |>Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
                 reposts_color
+                total_attention
         
         let square_side = 10
         let replies_interactions =
@@ -73,8 +80,9 @@ module Color_blending_example =
                     (all_sorted_users.Length/square_side)
                 )|>Map.ofList
             )|>Map.ofList
-            |>Adjacency_matrix_helpers.interaction_type_for_colored_interactions
+            |>Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
                 replies_color
+                total_attention
        
         let sheet_service = Googlesheet.create_googlesheet_service()       
         Combined_adjacency_matrix.write_combined_interactions_to_googlesheet

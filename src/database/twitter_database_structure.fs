@@ -37,10 +37,27 @@ module tables =
             |Followees -> "followees_amount"
             |Posts -> "posts_amount"
 
+    
+    type Post_header() =
+        
+        override _.ToString() = "post_header"
+        member _.author = "author"
+        member _.created_at = "created_at"
+        member _.is_quotation = "is_quotation"
 
+    let post_header = Post_header()
+    
+    type Post_like() =
+        
+        override _.ToString() = "post_like"
+        member _.liker = "liker"
+        member _.post = "post"
+
+    let post_like = Post_like()
+    
     type Post_tables() =
         member _.quotable_message_body = "post_quotable_message_body"
-        member _.header = "post_header"
+        member _.header = post_header
         member _.external_url = "post_external_url"
         member _.twitter_space = "post_twitter_space"
         member _.twitter_event = "post_twitter_event"
@@ -53,9 +70,9 @@ module tables =
         member _.poll_summary= "poll_summary"
         member _.quotable_part_of_poll= "post_quotable_poll"
         member _.repost= "post_repost"
-        member _.like= "post_like"
+        member _.like= post_like
         
-    let post_tables = Post_tables()
+    let post = Post_tables()
     
     type User_to_scrape() =
         override _.ToString() = "user_to_scrape"
@@ -71,6 +88,14 @@ module tables =
         
     let user_to_scrape = User_to_scrape()
     
+    
+    type Account_of_matrix() =
+        override _.ToString() = "account_of_matrix"
+        
+        member _.account = "account"
+        member _.title = "title"
+        
+    let account_of_matrix = Account_of_matrix()
     
     type This_node() =
         override _.ToString() = "this_node"

@@ -16,10 +16,11 @@ type Border_values = {
     average:int
 }
 
-type Relative_interaction = {
-    values: Map<User_handle, Map<User_handle, int>>
-    border_values_with_others: Border_values
-    border_values_with_oneself: Border_values
+type Relative_attention_matrix = {
+    attention_to_users: Map<User_handle, Map<User_handle, int>>
+    total_attention_of_user: Map<User_handle, int>
+    border_attention_to_others: Border_values
+    border_attention_to_oneself: Border_values
     color: Color
 }
 
@@ -31,7 +32,7 @@ type Interaction_cell = {
 
 type Interaction_design = {
     color: Color
-    title: string
+    attention_type: string
 }
     
 
@@ -39,15 +40,15 @@ module Adjacency_matrix_helpers =
     
     let likes_design = {
         color = {r=1;g=0;b=0}
-        title = "Likes"
+        attention_type = "Likes"
     }
     let reposts_design = {
         color = {r=1;g=0;b=0}
-        title = "Reposts"
+        attention_type = "Reposts"
     }
     let replies_design = {
         color = {r=1;g=0;b=0}
-        title = "Replies"
+        attention_type = "Replies"
     }
     let combined_interactions_title = "Everything"
     
@@ -89,19 +90,21 @@ module Adjacency_matrix_helpers =
                 )
             }
      
-    let interaction_type_for_colored_interactions
+    let attention_matrix_for_colored_interactions
         color
-        interaction_map
+        total_attention_map
+        attention_map
         =
         {
-            values=interaction_map
+            attention_to_users=attention_map
+            total_attention_of_user = total_attention_map 
             color=color
-            border_values_with_oneself=
-                interaction_map
+            border_attention_to_oneself=
+                attention_map
                 |>interactions_with_others
                 |>border_values_of_attention
-            border_values_with_others=
-                interaction_map
+            border_attention_to_others=
+                attention_map
                 |>interactions_with_others
                 |>border_values_of_attention
         }
@@ -190,20 +193,20 @@ module Adjacency_matrix_helpers =
            
     
     let maps_of_user_interactions 
-        (read_interactions: User_handle->seq<User_handle*int>)
+        (read_attentions_from_user: User_handle->seq<User_handle*int>)
         (all_users: User_handle Set)
         =
         all_users
         |>Seq.map(fun user ->
             user,
             user
-            |>read_interactions
+            |>read_attentions_from_user
             |>Seq.filter (fun (user,_) -> Set.contains user all_users)
             |>Map.ofSeq
         )|>Map.ofSeq
     
     let add_zero_interactions
-        (all_users: User_handle Set)
+        (all_users: User_handle seq)
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
         =
         let zero_interactions =
@@ -247,13 +250,14 @@ module Adjacency_matrix_helpers =
     
     let row_of_interactions_for_user
         all_sorted_users
-        (colored_interactions:Map<User_handle, int*Color>)
+        (all_interactions:Map<User_handle, int>)
         =
         all_sorted_users
         |>List.map(fun other_user ->
-            colored_interactions
+            all_interactions
             |>Map.find other_user
-            |>Cell.from_colored_number
+            //|>Cell.from_colored_number
+            Cell.empty //test
         )
     
     

@@ -38,17 +38,17 @@ module Single_adjacency_matrix =
         googlesheet
         handle_to_hame
         all_sorted_users
-        (interactions: Relative_interaction)
+        (attention_matrix: Relative_attention_matrix)
         amplifying_accuracy
         amplification_of_average
         =
         let interaction_to_intensity_color =
             Adjacency_matrix_helpers.cell_color_for_value
                 Color.white
-                interactions.color
+                attention_matrix.color
                 amplifying_accuracy
                 amplification_of_average
-                interactions.border_values_with_others 
+                attention_matrix.border_attention_to_others 
         
         let self_interaction_to_intensity_color =
             Adjacency_matrix_helpers.cell_color_for_value
@@ -56,11 +56,11 @@ module Single_adjacency_matrix =
                 {r=0.5;g=0.5;b=0.5}
                 amplifying_accuracy
                 amplification_of_average
-                interactions.border_values_with_oneself
+                attention_matrix.border_attention_to_oneself
         
         let colored_attention_values =    
-            interactions.values
-            |>Adjacency_matrix_helpers.add_zero_interactions (Set.ofList all_sorted_users) 
+            attention_matrix.attention_to_users
+            |>Adjacency_matrix_helpers.add_zero_interactions all_sorted_users 
             |>users_attention_to_colored_values
                 interaction_to_intensity_color
                 self_interaction_to_intensity_color
@@ -69,7 +69,8 @@ module Single_adjacency_matrix =
         let rows_of_attention =
             all_sorted_users
             |>List.map (fun user ->
-                colored_attention_values
+                attention_matrix.attention_to_users
+                |>Adjacency_matrix_helpers.add_zero_interactions all_sorted_users
                 |>Map.find user
                 |>Adjacency_matrix_helpers.row_of_interactions_for_user
                       all_sorted_users

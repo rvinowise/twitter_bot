@@ -7,31 +7,32 @@ open Dapper
 open Xunit
 
 open rvinowise.twitter.database.tables
+open rvinowise.twitter.database
 
 
 
 module User_interactions_from_posts =
         
     [<CLIMutable>]
-    type Amount_for_user = {
-        user: User_handle
+    type Amount_for_account = {
+        account: User_handle
         amount: int
     }
     
     let amounts_for_user_as_tuples
-        (amount_for_users: Amount_for_user seq)
+        (amount_for_users: Amount_for_account seq)
         =
         amount_for_users
         |>Seq.map (fun amount ->
-            amount.user,amount.amount    
+            amount.account,amount.amount    
         )
     
     let read_likes_by_user
         (database: NpgsqlConnection)
         liker
         =
-        database.Query<Amount_for_user>($"""
-            SELECT post_header.author as user, count(*) as amount FROM post_like
+        database.Query<Amount_for_account>($"""
+            SELECT {post.header.author} as account, count(*) as amount FROM post_like
 
             inner join post_header on 
 	            post_like.post = post_header.main_post_id
@@ -58,7 +59,7 @@ module User_interactions_from_posts =
         (database: NpgsqlConnection)
         reposter
         =
-        database.Query<Amount_for_user>($"""
+        database.Query<Amount_for_account>($"""
             SELECT post_header.author as user, count(*) as amount FROM post_repost
 
             inner join post_header on 
@@ -78,7 +79,7 @@ module User_interactions_from_posts =
         (database: NpgsqlConnection)
         replier
         =
-        database.Query<Amount_for_user>($"""
+        database.Query<Amount_for_account>($"""
             SELECT post_reply.previous_user as user, count(*) as amount FROM post_reply
 
             inner join post_header as replying_header on
