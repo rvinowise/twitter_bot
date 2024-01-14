@@ -39,7 +39,7 @@ module Adjacency_matrix =
     let ``try inner_sql_reading_closest_scraped_date``()=
         let test =
             read_sorted_members_of_matrix
-                (Central_task_database.open_connection())
+                (Central_database.open_connection())
                 "Longevity members"
                 
         ()

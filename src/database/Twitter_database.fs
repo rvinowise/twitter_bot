@@ -188,7 +188,7 @@ module Twitter_database =
         SqlMapper.AddTypeHandler(Scraping_user_status_mapper())
         
     let open_connection () =
-        let db_connection = Database.open_connection Settings.db_connection_string
+        let db_connection = Database.open_connection Settings.local_database
         
         set_twitter_type_handlers()
         

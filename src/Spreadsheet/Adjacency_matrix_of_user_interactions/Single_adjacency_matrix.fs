@@ -31,7 +31,30 @@ module Single_adjacency_matrix =
             )
         )
     
+   
+        
     
+    let cell_of_attention
+        color
+        (matrix_border_values: Border_values)
+        (account_total_value)
+        value
+        =
+        {
+            value =
+                if value = 0 then
+                    0.0
+                else
+                    (float account_total_value)/(float value) * 100.0
+                |>Cell_value.Float
+            color =
+                Adjacency_matrix_helpers.cell_color_for_value
+                    Color.white
+                    color
+                    
+                
+            Cell.style = Text_style.regular
+        }
         
     let update_googlesheet
         sheet_service
@@ -60,7 +83,7 @@ module Single_adjacency_matrix =
         
         let colored_attention_values =    
             attention_matrix.attention_to_users
-            |>Adjacency_matrix_helpers.add_zero_interactions all_sorted_users 
+            |>Adjacency_matrix_helpers.add_zero_attention all_sorted_users 
             |>users_attention_to_colored_values
                 interaction_to_intensity_color
                 self_interaction_to_intensity_color
@@ -70,9 +93,9 @@ module Single_adjacency_matrix =
             all_sorted_users
             |>List.map (fun user ->
                 attention_matrix.attention_to_users
-                |>Adjacency_matrix_helpers.add_zero_interactions all_sorted_users
+                |>Adjacency_matrix_helpers.add_zero_attention all_sorted_users
                 |>Map.find user
-                |>Adjacency_matrix_helpers.row_of_interactions_for_user
+                |>Adjacency_matrix_helpers.row_of_attention_for_user
                       all_sorted_users
             )
         

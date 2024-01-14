@@ -20,11 +20,11 @@ type Completed_job = {
 }
 
 
-module Central_task_database =
+module Central_database =
     
     
     let open_connection () =
-        let db_connection = Database.open_connection Settings.central_db
+        let db_connection = Database.open_connection Settings.central_database
         
         Twitter_database.set_twitter_type_handlers()
         
@@ -110,7 +110,7 @@ module Central_task_database =
         else
             resiliently_take_next_free_job worker_id
        
-    [<Fact(Skip="manual")>]
+
     let ``try take_next_free_user``()=
         let result =
             take_next_free_job
@@ -148,7 +148,7 @@ module Central_task_database =
             |}
         )|>Seq.tryHead
     
-    [<Fact(Skip="manual")>]
+
     let ``try read_worker_of_job``()=
         let result =
             read_worker_of_job

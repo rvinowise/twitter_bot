@@ -124,12 +124,12 @@ module Stitching_user_attention =
         )
             
     let upload_all_local_attentions () =
-        let central_db = Central_task_database.open_connection()
+        let central_db = Central_database.open_connection()
         let local_db = Twitter_database.open_connection()
         
         let local_attentive_users = 
             This_worker.this_worker_id local_db
-            |>Central_task_database.read_jobs_completed_by_worker central_db
+            |>Central_database.read_jobs_completed_by_worker central_db
         
         [
             User_attention_from_posts.read_likes_by_user, "Likes"
@@ -273,7 +273,7 @@ module Stitching_user_attention =
     let ``try read_attentions_within_matrix``()=
         let result =
             read_attentions_within_matrix
-                (Central_task_database.open_connection())
+                (Central_database.open_connection())
                 "Longevity members"
                 "Likes"
                 (Html_parsing.parse_datetime "yyyy-MM-dd HH:mm:ss" "2024-01-06 00:35:00")
@@ -282,7 +282,7 @@ module Stitching_user_attention =
     let ``try read_total_attention_from_users``()=
         let result =
             read_total_attention_from_users
-                (Central_task_database.open_connection())
+                (Central_database.open_connection())
                 "Likes"
                 (Html_parsing.parse_datetime "yyyy-MM-dd HH:mm:ss" "2024-01-06 00:35:00")
         ()

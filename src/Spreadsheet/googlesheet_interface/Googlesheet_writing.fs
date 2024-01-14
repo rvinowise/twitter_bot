@@ -158,7 +158,6 @@ module Googlesheet_writing =
         
         response
     
-    [<Fact(Skip="manual")>]
     let ``try write_sheet_dimension``()=
         write_sheet_dimension
             (Googlesheet.create_googlesheet_service())
@@ -246,7 +245,6 @@ module Googlesheet_writing =
            
         ()
     
-    [<Fact(Skip="manual")>]
     let ``try write table``() =
         
         let likes_googlesheet = {

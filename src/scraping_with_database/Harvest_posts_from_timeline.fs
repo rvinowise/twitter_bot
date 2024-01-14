@@ -334,7 +334,7 @@ module Harvest_posts_from_timeline =
             Switching browser profiles"""
             let new_browser = 
                 Assigning_browser_profiles.switch_profile
-                    (Central_task_database.resiliently_open_connection())
+                    (Central_database.resiliently_open_connection())
                     (This_worker.this_worker_id database)
                     browser
             resiliently_harvest_user_timeline
@@ -410,7 +410,7 @@ module Harvest_posts_from_timeline =
             database
     
     
-    [<Fact(Skip="manual")>]//
+
     let ``try harvest_all_last_actions_of_users (specific tabs)``()=
         
         resilient_step_of_harvesting_timelines
@@ -421,7 +421,7 @@ module Harvest_posts_from_timeline =
                 User_handle "davidasinclair", Timeline_tab.Posts_and_replies
             ]
         
-    [<Fact(Skip="manual")>]//
+
     let ``try harvest_all_last_actions_of_users (both tabs)``()=
         let user_timelines =
             [

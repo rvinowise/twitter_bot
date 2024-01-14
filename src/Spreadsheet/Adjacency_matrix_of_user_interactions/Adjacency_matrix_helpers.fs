@@ -117,9 +117,6 @@ module Adjacency_matrix_helpers =
         (key_values: Border_values)
         (value_between: int)
         =
-        if value_between = 254 then
-            ()
-        
         if value_between <= key_values.min then
             0.0
         elif value_between >= key_values.max then
@@ -205,7 +202,7 @@ module Adjacency_matrix_helpers =
             |>Map.ofSeq
         )|>Map.ofSeq
     
-    let add_zero_interactions
+    let add_zero_attention
         (all_users: User_handle seq)
         (user_interactions: Map<User_handle, Map<User_handle, int>>)
         =
@@ -248,16 +245,28 @@ module Adjacency_matrix_helpers =
             )
         )
     
-    let row_of_interactions_for_user
+    let row_of_attention_for_user
         all_sorted_users
-        (all_interactions:Map<User_handle, int>)
+        (all_attention:Map<User_handle, int>)
+        (total_user_attention: int)
         =
         all_sorted_users
         |>List.map(fun other_user ->
-            all_interactions
-            |>Map.find other_user
-            //|>Cell.from_colored_number
-            Cell.empty //test
+            let absolute_attention =
+                all_attention
+                |>Map.find other_user
+            let attention_percent =
+                if absolute_attention = 0 then
+                    0.0
+                else
+                    (float total_user_attention)/(float absolute_attention) * 100.0
+            {
+                Cell.value =
+                    attention_percent
+                    |>Cell_value.Float
+                color = Color
+                style = Text_style.regular
+            }
         )
     
     

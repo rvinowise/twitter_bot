@@ -33,7 +33,7 @@ module This_worker =
         )|>ignore
     
     
-    [<Fact(Skip="manual")>]
+
     let ``try write_this_worker_id``() =
         let result =
             write_this_worker_id

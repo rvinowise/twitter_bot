@@ -40,10 +40,10 @@ module Harvest_timelines_of_table_members =
   
     let jobs_from_central_database worker_id =
         seq {
-            let mutable free_user = Central_task_database.resiliently_take_next_free_job worker_id
+            let mutable free_user = Central_database.resiliently_take_next_free_job worker_id
             while free_user.IsSome do
                 yield free_user.Value
-                free_user <- Central_task_database.resiliently_take_next_free_job worker_id
+                free_user <- Central_database.resiliently_take_next_free_job worker_id
         }    
     
     
@@ -131,7 +131,7 @@ module Harvest_timelines_of_table_members =
         =
         let browser =
             Assigning_browser_profiles.open_browser_with_free_profile
-                (Central_task_database.resiliently_open_connection())
+                (Central_database.resiliently_open_connection())
                 (This_worker.this_worker_id local_db)
                 
         let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
@@ -176,11 +176,11 @@ module Harvest_timelines_of_table_members =
         let worker_id = This_worker.this_worker_id local_db
         harvest_timelines_from_jobs
             local_db
-            (Central_task_database.resiliently_write_final_result)
+            (Central_database.resiliently_write_final_result)
             article_amount
             (jobs_from_central_database worker_id)
     
-    [<Fact>]//(Skip="manual")
+
     let ``try harvest_timelines``()=
         [
             User_handle "AD74593974"
@@ -191,10 +191,10 @@ module Harvest_timelines_of_table_members =
               100
         
 
-    [<Fact(Skip="manual")>]
+
     let ``prepare tasks for scraping``() =
         let central_db =
-            Central_task_database.open_connection()
+            Central_database.open_connection()
             
         {
             Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
@@ -202,5 +202,5 @@ module Harvest_timelines_of_table_members =
         }
         |>users_from_spreadsheet
             (Googlesheet.create_googlesheet_service())
-        |>Central_task_database.write_users_for_scraping central_db
+        |>Central_database.write_users_for_scraping central_db
         

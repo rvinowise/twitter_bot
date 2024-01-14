@@ -256,7 +256,7 @@ module Social_activity_database =
     let ``try read_last_competitors``()=
         let test =
             read_last_competitors
-                (Central_task_database.open_connection())
+                (Central_database.open_connection())
                 (DateTime.Now-TimeSpan.FromDays(5))
         ()
      

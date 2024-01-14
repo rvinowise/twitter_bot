@@ -147,7 +147,6 @@ module Googlesheet_reading =
             sheet.page_name
     
     
-    [<Fact>]//(Skip="Manual")
     let ``try read_table``()=
         let table =
             read_range

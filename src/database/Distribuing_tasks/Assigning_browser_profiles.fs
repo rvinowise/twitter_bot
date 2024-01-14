@@ -36,11 +36,11 @@ module Assigning_browser_profiles =
             |}
         )|>Seq.tryHead
     
-    [<Fact(Skip="manual")>]
+
     let ``try release_browser_profile``()=
         let result =
             release_browser_profile
-                (Central_task_database.open_connection())
+                (Central_database.open_connection())
                 "Black_box"
         ()        
      
@@ -85,13 +85,13 @@ module Assigning_browser_profiles =
             
         free_profile
     
-    [<Fact(Skip="manual")>]
+
     let ``try take_next_free_profile``()=
         let result =
             Twitter_database.open_connection()
             |>This_worker.this_worker_id
             |>take_next_free_profile
-                (Central_task_database.open_connection())
+                (Central_database.open_connection())
                 [
                     Email "victortwitter@yandex.com"
                     Email "nonexistent@yandex.com"

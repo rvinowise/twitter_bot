@@ -15,7 +15,6 @@ module Color_blending_example =
     
     
     
-    [<Fact(Skip="manual")>]//
     let ``fill table with the test of color blending ``() =
         let googlesheet = {
             Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"

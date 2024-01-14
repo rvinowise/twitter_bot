@@ -37,7 +37,8 @@ module Program =
         try
             let browser = Browser.open_browser()
             let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
-            announce_score.scrape_and_announce_user_state
+            Announce_competition_score.scrape_and_announce_user_state
+                (Central_database.open_connection())
                 browser
                 html_context
             Browser.close browser
@@ -50,7 +51,7 @@ module Program =
         try
             Import_referrals_from_googlesheet.import_referrals
                 (Googlesheet.create_googlesheet_service())
-                (Twitter_database.open_connection())
+                (Central_database.open_connection())
                 Settings.Influencer_competition.Google_sheets.read_referrals
         with
         | :? TaskCanceledException as exc ->

@@ -117,7 +117,6 @@ module Googlesheet =
         )
         |>List :> IList<_>
     
-    [<Fact(Skip="manual")>]
     let ``try input_into_sheet``()=
         input_obj_into_sheet
             {
@@ -143,7 +142,6 @@ module Googlesheet =
         input_obj_into_sheet sheet clean_sheet
 
         
-    [<Fact(Skip="manual")>]//
     let ``try clean_sheet``() =  
         clean_sheet
             Settings.Influencer_competition.Google_sheets.followers_amount

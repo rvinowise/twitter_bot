@@ -144,7 +144,7 @@ module Harvest_list_members =
         =
         ()
     
-    [<Fact(Skip="manual")>]
+
     let ``try import_users_from_spreadsheet``()=
         let googlesheet_service = Googlesheet.create_googlesheet_service()
         let users =
@@ -153,7 +153,7 @@ module Harvest_list_members =
                 members_sheet
         ()
         
-    [<Fact(Skip="manual")>]//
+
     let ``try export members``()=
         let database = Twitter_database.open_connection() 
         let googlesheet_service = Googlesheet.create_googlesheet_service()
@@ -177,7 +177,7 @@ module Harvest_list_members =
             googlesheet_service
             members_sheet
     
-    [<Fact(Skip="manual")>] //
+
     let ``harvest lists``() =
         let browser = Browser.open_browser()
         let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default

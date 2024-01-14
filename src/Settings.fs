@@ -109,8 +109,8 @@ module Settings =
             TimeSpan.MaxValue
     
     //module Databases
-    let db_connection_string = configuration_root.GetValue<string>("db_connection_string","")
-    let central_db = configuration_root.GetValue<string>("central_db","")
+    let local_database = configuration_root.GetValue<string>("local_database","")
+    let central_database = configuration_root.GetValue<string>("central_database","")
     
     
     //module Scraping

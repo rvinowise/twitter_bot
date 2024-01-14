@@ -73,7 +73,7 @@
 
     <Compile Include="src\database\Twitter_database_structure\twitter_activity.fs" />
     <Compile Include="src\database\Distribuing_tasks\This_worker.fs" />
-    <Compile Include="src\database\Distribuing_tasks\Central_task_database.fs" />
+    <Compile Include="src\database\Distribuing_tasks\Central_database.fs" />
     <Compile Include="src\database\Distribuing_tasks\Assigning_browser_profiles.fs" />
     
     <Compile Include="src\database\Twitter_user_database.fs" />
@@ -117,7 +117,7 @@
     
     <Compile Include="src\scraping_with_database\Harvest_timelines_of_table_members.fs" />
     
-    <Compile Include="src\scraping_with_database\announce_score.fs" />
+    <Compile Include="src\scraping_with_database\Announce_competition_score.fs" />
     <Compile Include="src\scraping_with_database\announce_user_interactions.fs" />
     
     <Folder Include="src\web_interface" />
