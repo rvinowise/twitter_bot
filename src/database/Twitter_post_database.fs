@@ -21,13 +21,13 @@ module Twitter_post_database =
         =
         db_connection.Query( 
             $"insert into {tables.post.stats} (
-                post_id,
-                datetime,
-                replies,
-                likes,
-                reposts,
-                views,
-                bookmarks
+                {tables.post.stats.post_id},
+                {tables.post.stats.datetime},
+                {tables.post.stats.replies},
+                {tables.post.stats.likes},
+                {tables.post.stats.reposts},
+                {tables.post.stats.views},
+                {tables.post.stats.bookmarks}
             )
             values (
                 @post_id,
@@ -38,8 +38,17 @@ module Twitter_post_database =
                 @views,
                 @bookmarks
             )
-            on conflict (post_id, datetime)
-            do update set (replies, likes, reposts, views, bookmarks)
+            on conflict (
+                {tables.post.stats.post_id},
+                {tables.post.stats.datetime}
+            )
+            do update set (
+                {tables.post.stats.replies},
+                {tables.post.stats.likes},
+                {tables.post.stats.reposts},
+                {tables.post.stats.views},
+                {tables.post.stats.bookmarks}
+            )
             = (@replies, @likes, @reposts, @views, @bookmarks)",
             {|
                 post_id=post_id
@@ -62,11 +71,11 @@ module Twitter_post_database =
         =
         db_connection.Query( 
             $"insert into {tables.post.image} (
-                post_id,
-                url,
-                description,
-                sorting_index,
-                is_quotation
+                {tables.post.image.post_id},
+                {tables.post.image.url},
+                {tables.post.image.description},
+                {tables.post.image.sorting_index},
+                {tables.post.image.is_quotation}
             )
             values (
                 @post_id,
@@ -75,8 +84,15 @@ module Twitter_post_database =
                 @sorting_index,
                 @is_quotation
             )
-            on conflict (post_id, sorting_index, is_quotation)
-            do update set (url, description) = (@url, @description)",
+            on conflict (
+                {tables.post.image.post_id},
+                {tables.post.image.sorting_index},
+                {tables.post.image.is_quotation}
+            )
+            do update set (
+                {tables.post.image.url},
+                {tables.post.image.description}
+            ) = (@url, @description)",
             {|
                 post_id=main_post
                 url=image.url
@@ -95,10 +111,10 @@ module Twitter_post_database =
         =
         db_connection.Query( 
             $"insert into {tables.post.video} (
-                post_id,
-                url,
-                sorting_index,
-                is_quotation
+                {tables.post.video.post_id},
+                {tables.post.video.url},
+                {tables.post.video.sorting_index},
+                {tables.post.video.is_quotation}
             )
             values (
                 @post_id,
@@ -106,8 +122,14 @@ module Twitter_post_database =
                 @sorting_index,
                 @is_quotation
             )
-            on conflict (post_id, sorting_index, is_quotation)
-            do update set (url)
+            on conflict (
+                {tables.post.video.post_id},
+                {tables.post.video.sorting_index},
+                {tables.post.video.is_quotation}
+            )
+            do update set (
+                {tables.post.video.url}
+            )
             = row(@url)",
             {|
                 post_id=main_post
@@ -165,10 +187,10 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.reply} (
-                previous_post,
-                previous_user,
-                next_post,
-                is_direct
+                {tables.post.reply.previous_post},
+                {tables.post.reply.previous_user},
+                {tables.post.reply.next_post},
+                {tables.post.reply.is_direct}
             )
             values (
                 @previous_post,
@@ -176,8 +198,14 @@ module Twitter_post_database =
                 @next_post,
                 @is_direct
             )
-            on conflict (next_post, is_direct)
-            do update set (previous_post, previous_user)
+            on conflict (
+                {tables.post.reply.next_post}, 
+                {tables.post.reply.is_direct}
+            )
+            do update set (
+                {tables.post.reply.previous_post},
+                {tables.post.reply.previous_user}
+            )
             = row(@previous_post, @previous_user)",
             {|
                 previous_post=reply.to_post
@@ -196,10 +224,10 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.header} (
-                main_post_id,
-                author,
-                created_at,
-                is_quotation
+                {tables.post.header.main_post_id},
+                {tables.post.header.author},
+                {tables.post.header.created_at},
+                {tables.post.header.is_quotation}
             )
             values (
                 @main_post_id,
@@ -207,8 +235,14 @@ module Twitter_post_database =
                 @created_at,
                 @is_quotation
             )
-            on conflict (main_post_id, is_quotation)
-            do update set (author, created_at)
+            on conflict (
+                {tables.post.header.main_post_id},
+                {tables.post.header.is_quotation}
+            )
+            do update set (
+                {tables.post.header.author},
+                {tables.post.header.created_at}
+            )
             = (@author, @created_at)
             ",
             {|
@@ -235,11 +269,11 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.twitter_space} (
-                main_post_id,
-                is_quotation,
-                host,
-                title,
-                audience_amount
+                {tables.post.twitter_space.main_post_id},
+                {tables.post.twitter_space.is_quotation},
+                {tables.post.twitter_space.host},
+                {tables.post.twitter_space.title},
+                {tables.post.twitter_space.audience_amount}
             )
             values (
                 @main_post_id,
@@ -248,8 +282,15 @@ module Twitter_post_database =
                 @title,
                 @audience_amount
             )
-            on conflict (main_post_id, is_quotation)
-            do update set (message, show_more_url, is_abbreviated)
+            on conflict (
+                {tables.post.twitter_space.main_post_id},
+                {tables.post.twitter_space.is_quotation}
+            )
+            do update set (
+                {tables.post.twitter_space.host},
+                {tables.post.twitter_space.title},
+                {tables.post.twitter_space.audience_amount}
+            )
             = (@message, @show_more_url, @is_abbreviated)
             ",
             {|
@@ -275,10 +316,10 @@ module Twitter_post_database =
             
         db_connection.Query(
             $"insert into {tables.post.twitter_event} (
-                id,
-                presenter_handle,
-                presenter_name,
-                title
+                {tables.post.twitter_event.id},
+                {tables.post.twitter_event.presenter_handle},
+                {tables.post.twitter_event.presenter_name},
+                {tables.post.twitter_event.title}
             )
             values (
                 @id,
@@ -286,8 +327,12 @@ module Twitter_post_database =
                 @presenter_name,
                 @title
             )
-            on conflict (id)
-            do update set (presenter_handle, presenter_name, title)
+            on conflict ({tables.post.twitter_event.id})
+            do update set (
+                {tables.post.twitter_event.presenter_handle},
+                {tables.post.twitter_event.presenter_name},
+                {tables.post.twitter_event.title}
+            )
             = (@presenter_handle, @presenter_name, @title)
             ",
             {|
@@ -305,14 +350,17 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.twitter_event_in_post} (
-                main_post_id,
-                event_id
+                {tables.post.twitter_event_in_post.main_post_id},
+                {tables.post.twitter_event_in_post.event_id}
             )
             values (
                 @main_post_id,
                 @event_id
             )
-            on conflict (main_post_id, event_id)
+            on conflict (
+                {tables.post.twitter_event_in_post.main_post_id},
+                {tables.post.twitter_event_in_post.event_id}
+            )
             do nothing
             ",
             {|
@@ -340,11 +388,11 @@ module Twitter_post_database =
 
         db_connection.Query(
             $"insert into {tables.post.quotable_message_body} (
-                main_post_id,
-                message,
-                show_more_url,
-                is_abbreviated,
-                is_quotation
+                {tables.post.quotable_message_body.main_post_id},
+                {tables.post.quotable_message_body.message},
+                {tables.post.quotable_message_body.show_more_url},
+                {tables.post.quotable_message_body.is_abbreviated},
+                {tables.post.quotable_message_body.is_quotation}
             )
             values (
                 @main_post_id,
@@ -353,8 +401,15 @@ module Twitter_post_database =
                 @is_abbreviated,
                 @is_quotation
             )
-            on conflict (main_post_id, is_quotation)
-            do update set (message, show_more_url, is_abbreviated)
+            on conflict (
+                {tables.post.quotable_message_body.main_post_id},
+                {tables.post.quotable_message_body.is_quotation}
+            )
+            do update set (
+                {tables.post.quotable_message_body.message},
+                {tables.post.quotable_message_body.show_more_url},
+                {tables.post.quotable_message_body.is_abbreviated}
+            )
             = (@message, @show_more_url, @is_abbreviated)
             ",
             {|
@@ -405,11 +460,11 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.external_url} (
-                post_id,
-                base_url,
-                page,
-                message,
-                obfuscated_url
+                {tables.post.external_url.post_id},
+                {tables.post.external_url.base_url},
+                {tables.post.external_url.page},
+                {tables.post.external_url.message},
+                {tables.post.external_url.obfuscated_url}
             )
             values (
                 @post_id,
@@ -418,8 +473,15 @@ module Twitter_post_database =
                 @message,
                 @obfuscated_url
             )
-            on conflict (post_id)
-            do update set (base_url, page, message, obfuscated_url)
+            on conflict (
+                {tables.post.external_url.post_id}
+            )
+            do update set (
+                {tables.post.external_url.base_url},
+                {tables.post.external_url.page},
+                {tables.post.external_url.message},
+                {tables.post.external_url.obfuscated_url}
+            )
             = (@base_url, @page, @message, @obfuscated_url)",
             {|
                 post_id=post_id
@@ -438,17 +500,22 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.poll_choice} (
-                post_id,
-                text,
-                votes_percent
+                {tables.post.poll_choice.post_id},
+                {tables.post.poll_choice.text},
+                {tables.post.poll_choice.votes_percent}
             )
             values (
                 @post_id,
                 @text,
                 @votes_percent
             )
-            on conflict (post_id)
-            do update set (text, votes_percent)
+            on conflict (
+                {tables.post.poll_choice.post_id}
+            )
+            do update set (
+                {tables.post.poll_choice.text},
+                {tables.post.poll_choice.votes_percent}
+            )
             = (@text, @votes_percent)",
             {|
                 post_id=post_id
@@ -466,17 +533,22 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.quotable_part_of_poll} (
-                post_id,
-                question,
-                is_quotation
+                {tables.post.quotable_part_of_poll.post_id},
+                {tables.post.quotable_part_of_poll.is_quotation},
+                {tables.post.quotable_part_of_poll.question}
             )
             values (
                 @post_id,
-                @question,
-                @is_quotation
+                @is_quotation,
+                @question
             )
-            on conflict (post_id, is_quotation)
-            do update set (question)
+            on conflict (
+                {tables.post.quotable_part_of_poll.post_id},
+                {tables.post.quotable_part_of_poll.is_quotation}
+            )
+            do update set (
+                {tables.post.quotable_part_of_poll.question}
+            )
             = row(@question)",
             {|
                 post_id=post_id
@@ -492,15 +564,19 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.poll_summary} (
-                post_id,
-                votes_amount
+                {tables.post.poll_summary.post_id},
+                {tables.post.poll_summary.votes_amount}
             )
             values (
                 @post_id,
                 @votes_amount
             )
-            on conflict (post_id)
-            do update set (votes_amount)
+            on conflict (
+                {tables.post.poll_summary.post_id}
+            )
+            do update set (
+                {tables.post.poll_summary.votes_amount}
+            )
             = row(@votes_amount)",
             {|
                 post_id=post_id
@@ -580,14 +656,17 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.repost} (
-                post,
-                reposter
+                {tables.post.repost.post},
+                {tables.post.repost.reposter}
             )
             values (
                 @post,
                 @reposter
             )
-            on conflict (post,reposter)
+            on conflict (
+                {tables.post.repost.post},
+                {tables.post.repost.reposter}
+            )
             do nothing",
             {|
                 post=post_id
@@ -603,14 +682,17 @@ module Twitter_post_database =
         =
         db_connection.Query(
             $"insert into {tables.post.like} (
-                post,
-                liker
+                {tables.post.like.post},
+                {tables.post.like.liker}
             )
             values (
                 @post,
                 @liker
             )
-            on conflict (post,liker)
+            on conflict (
+                {tables.post.like.post},
+                {tables.post.like.liker}
+            )
             do nothing",
             {|
                 post=post_id
@@ -651,37 +733,37 @@ module Twitter_post_database =
             main_post.stats
             
     
-    let db_table_for_last_visited_post
-        (timeline_tab: Timeline_tab) =
-        match timeline_tab with
-        | Posts -> "last_visited_post_in_timeline"
-        | Posts_and_replies -> "last_visited_reply_in_timeline"
-        | Media -> raise (NotSupportedException "this timeline tab can not be scraped")
-        | Likes -> "last_visited_like_in_timeline"
-    
     let write_newest_last_visited_post
         (db_connection:NpgsqlConnection)
         (timeline_tab: Timeline_tab)
-        user
+        account
         (post: Post_id)
         =
-        let table=db_table_for_last_visited_post timeline_tab
         db_connection.Query(
-            $"insert into {table} (
-                twitter_user,
-                post,
-                visited_at
+            $"insert into {tables.last_visited_post_in_timeline} (
+                {tables.last_visited_post_in_timeline.account},
+                {tables.last_visited_post_in_timeline.timeline},
+                {tables.last_visited_post_in_timeline.post},
+                {tables.last_visited_post_in_timeline.visited_at}
             )
             values (
-                @twitter_user,
+                @account,
+                @timeline,
                 @post,
                 @visited_at
             )
-            on conflict (twitter_user)
-            do update set (post, visited_at)
+            on conflict (
+                {tables.last_visited_post_in_timeline.account},
+                {tables.last_visited_post_in_timeline.timeline}
+            )
+            do update set (
+                {tables.last_visited_post_in_timeline.post}, 
+                {tables.last_visited_post_in_timeline.visited_at}
+            )
             = (@post, @visited_at)",
             {|
-                twitter_user=user
+                account=account
+                timeline=Timeline_tab.human_name timeline_tab
                 post=post
                 visited_at=DateTime.Now
             |}
@@ -690,18 +772,22 @@ module Twitter_post_database =
     let read_newest_last_visited_post
         (db_connection:NpgsqlConnection)
         (timeline_tab: Timeline_tab)
-        user
+        account
         =
-        let table = db_table_for_last_visited_post timeline_tab
         db_connection.Query<Post_id>(
-            $"select post from {table}
-            where twitter_user=@user",
+            $"
+            select {tables.last_visited_post_in_timeline.post} 
+            from {tables.last_visited_post_in_timeline}
+            where 
+                {tables.last_visited_post_in_timeline.account}=@account
+                and {tables.last_visited_post_in_timeline.timeline}=@timeline
+            ",
             {|
-                user =user
+                account = account
+                timeline = Timeline_tab.human_name timeline_tab
             |}
         )|>Seq.tryHead
         
-    [<Fact(Skip="manual")>]
     let ``try read_last_visited_post``() =
         let result =
             read_newest_last_visited_post
@@ -711,7 +797,6 @@ module Twitter_post_database =
         ()
         
         
-    [<Fact(Skip="manual")>]
     let ``delete all posts from a user's timeline``()=
         let user = User_handle "TheHarrisSultan"
         let result =

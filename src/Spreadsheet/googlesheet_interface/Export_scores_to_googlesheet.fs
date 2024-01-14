@@ -80,7 +80,7 @@ module Export_scores_to_googlesheet =
         days_from_today
         =
         let last_datetime =
-            Social_activity_database.read_last_followers_amount_time db_connection
+            Social_activity_database.read_last_activity_amount_time db_connection
         let competitors =
             Social_activity_database.read_last_competitors db_connection
                 (last_datetime - TimeSpan.FromHours(Settings.Influencer_competition.Competitors.include_from_past))
@@ -118,7 +118,7 @@ module Export_scores_to_googlesheet =
             
             let user_to_score_on_that_day =
                 scores_on_day
-                |>Seq.map(fun row -> row.user_handle, row.amount)
+                |>Seq.map(fun row -> row.account, row.amount)
                 |>Map.ofSeq
             
             map_user_to_full_score_history

@@ -4,6 +4,7 @@ open System
 open Dapper
 open Npgsql
 
+open rvinowise.twitter.database
 
 
 module Social_following_database =
@@ -15,15 +16,21 @@ module Social_following_database =
         followee
         =
         db_connection.Query<User_handle>(
-            @"insert into followers (follower, followee)
-            values (@follower, @followee)",
+            $"
+            insert into {tables.followers} 
+            (
+                {tables.followers.follower},
+                {tables.followers.followee}
+            )
+            values (@follower, @followee)
+            ",
             {|
-                follower = User_handle.value follower
-                followee = User_handle.value followee
+                follower = follower
+                followee = followee
             |}
         ) |> ignore
     
-    let write_followees_of_user
+    let write_followees_of_user //todo use bulk insert
         (db_connection:NpgsqlConnection)
         user
         followees
@@ -50,7 +57,11 @@ module Social_following_database =
         user
         =
         db_connection.Query<User_handle>(
-            @"insert into user_visited_by_following_scraper (handle)
+            $"
+            insert into {tables.user_visited_by_following_scraper} 
+            (
+                {tables.user_visited_by_following_scraper.handle}
+            )
             values (@handle)",
             {|
                 handle = user
@@ -65,10 +76,17 @@ module Social_following_database =
         =
         let was_visited =
             db_connection.Query<string>(
-                @"select handle from user_visited_by_following_scraper
-                where handle = @handle and
-                visited_at >= @since_when",
-                {|handle=user; since_when=since_when|}
+                $"
+                select {tables.user_visited_by_following_scraper.handle} 
+                from {tables.user_visited_by_following_scraper}
+                where 
+                    {tables.user_visited_by_following_scraper.handle} = @handle 
+                    and {tables.user_visited_by_following_scraper.visited_at} >= @since_when
+                ",
+                {|
+                    handle=user
+                    since_when=since_when
+                |}
             )|>Seq.length > 0
         if was_visited then
             Log.info $"user {User_handle.value user} was already harvested after {since_when}"

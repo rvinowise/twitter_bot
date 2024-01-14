@@ -11,7 +11,7 @@ open rvinowise.twitter.database
 
 
 
-module User_interactions_from_posts =
+module User_attention_from_posts =
         
     [<CLIMutable>]
     type Amount_for_account = {
@@ -32,22 +32,24 @@ module User_interactions_from_posts =
         liker
         =
         database.Query<Amount_for_account>($"""
-            SELECT {post.header.author} as account, count(*) as amount FROM post_like
+            select 
+                {post.header.author} as account, 
+                count(*) as amount 
+            from {post.like}
 
-            inner join post_header on 
-	            post_like.post = post_header.main_post_id
+            inner join {post.header} on 
+	            {post.like.post} = {post.header.main_post_id}
 
             where
-	            post_like.liker = @liker
+	            {post.like.liker} = @liker
 
-            group by post_header.author
+            group by {post.header.author}
 
             ORDER BY amount DESC
             """,
             {|liker=liker|}
         )|>amounts_for_user_as_tuples
         
-    [<Fact>]
     let ``try read_likes_by_user``()=
         let result =
             read_likes_by_user
@@ -60,17 +62,20 @@ module User_interactions_from_posts =
         reposter
         =
         database.Query<Amount_for_account>($"""
-            SELECT post_header.author as user, count(*) as amount FROM post_repost
+            select 
+                {post.header.author} as account,
+                count(*) as amount 
+            from {post.repost}
 
-            inner join post_header on 
-	            post_repost.post = post_header.main_post_id
+            inner join {post.header} on 
+	            {post.repost.post} = {post.header.main_post_id}
 
             where
-	            post_repost.reposter = @reposter
+	            {post.repost.reposter} = @reposter
 
-            group by post_header.author
+            group by {post.header.author}
 
-            ORDER BY amount DESC
+            order by amount DESC
             """,
             {|reposter=reposter|}
         )|>amounts_for_user_as_tuples
@@ -80,22 +85,26 @@ module User_interactions_from_posts =
         replier
         =
         database.Query<Amount_for_account>($"""
-            SELECT post_reply.previous_user as user, count(*) as amount FROM post_reply
+            select 
+                {post.reply.previous_user} as account, 
+                count(*) as amount 
+            from {post.reply}
 
-            inner join post_header as replying_header on
-	            replying_header.main_post_id = post_reply.next_post
+            inner join {post.header} as replying_header on
+	            replying_header.{post.header.main_post_id} = {post.reply.next_post}
 
-            where replying_header.author = @replier
+            where 
+                replying_header.{post.header.author} = @replier
 
-            group by post_reply.previous_user
-            ORDER BY amount DESC
+            group by 
+                {post.reply.previous_user}
+            order by amount DESC
             """,
             {|replier=replier|}
         )|>amounts_for_user_as_tuples
         
         
-    [<Fact(Skip="manual")>]
-    let ``try read_likes_from_user``()=
+    let ``try read_attention_from_user``()=
         let result = 
             read_replies_by_user
                 (Twitter_database.open_connection())
@@ -106,14 +115,14 @@ module User_interactions_from_posts =
         (database: NpgsqlConnection)
         =
         database.Query<User_handle>($"""
-            SELECT post_header.author FROM post_header
+            select 
+                {post.header.author} 
+            from {post.header}
 
-            group by post_header.author
-
+            group by {post.header.author}
             """
         )
    
-    [<Fact(Skip="manual")>]
     let ``try read_all_users``()=
         let result = 
             read_all_users

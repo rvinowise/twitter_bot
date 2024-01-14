@@ -60,7 +60,8 @@ module User_handle =
         | :? FormatException as exc ->
             Log.error $"can't get user handle from url {user_url}: {exc}"|>ignore
             None
-            
+
+[<CLIMutable>]            
 type Twitter_user = {
     handle: User_handle
     name: string

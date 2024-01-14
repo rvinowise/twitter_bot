@@ -16,16 +16,30 @@ module Social_activity_database =
         (db_connection: NpgsqlConnection)
         (amount_of_what:Social_activity_amounts)
         (datetime:DateTime)
-        user
+        account
         (amount:int)
         =
         db_connection.Query<User_handle>(
-            $"insert into {amount_of_what} (datetime, user_handle, amount)
-            values (@datetime, @user_handle, @amount)
-            on conflict (datetime, user_handle) do update set amount = @amount",
+            $"
+            insert into {tables.activity_amount} 
+            (
+                {tables.activity_amount.account},
+                {tables.activity_amount.datetime}, 
+                {tables.activity_amount.activity}, 
+                {tables.activity_amount.amount}
+            )
+            values (@datetime, @account, @amount)
+            on conflict (
+                {tables.activity_amount.account},
+                {tables.activity_amount.datetime},
+                {tables.activity_amount.activity},
+            ) 
+            do update set {tables.activity_amount.amount} = @amount
+            ",
             {|
                 datetime = datetime
-                user_handle = User_handle.db_value user
+                account = User_handle.db_value account
+                activity = amount_of_what
                 amount = amount
             |}
         ) |> ignore
@@ -147,11 +161,14 @@ module Social_activity_database =
             ) |> ignore
         )
     
-    let read_last_followers_amount_time
+    let read_last_activity_amount_time
         (db_connection: NpgsqlConnection)
         =   
         db_connection.Query<DateTime>(
-            @"select COALESCE(max(datetime),make_date(1000,1,1)) from followers_amount"
+            $"
+            select COALESCE(max({tables.activity_amount.datetime}),make_date(1000,1,1)) 
+            from {tables.activity_amount}
+            "
         )|>Seq.head
     
     
@@ -159,43 +176,54 @@ module Social_activity_database =
     
     let read_last_amounts_closest_to_moment
         (db_connection: NpgsqlConnection)
-        (record_with_amounts: Social_activity_amounts)
+        (amount_of_what: Social_activity_amounts)
         (moment:DateTime)
         =
-        db_connection.Query<Amount_for_user>(
-            $"""select *
+        db_connection.Query<Amount_for_account>(
+            $"""
+            select 
+                {tables.activity_amount.datetime},
+                {tables.activity_amount.account},
+                {tables.activity_amount.amount}
             from
                 (
                     select
-                        row_number() over(partition by user_handle order by datetime DESC) as my_row_number,
+                        row_number() over(partition by {tables.activity_amount.account} order by {tables.activity_amount.datetime} DESC) as my_row_number,
                         *
-                    from {record_with_amounts}
-                    where datetime <= @last_moment
+                    from {tables.activity_amount}
+                    where 
+                        {tables.activity_amount.activity} = {amount_of_what}
+                        and {tables.activity_amount.datetime} <= @last_moment
                 ) as amounts_by_time
-            where my_row_number = 1""",
+            where my_row_number = 1
+            """,
             {|
-                record_with_amounts=record_with_amounts;
                 last_moment=moment
             |}
         )
     
     let read_last_amount_for_user
         (db_connection: NpgsqlConnection)
-        (record_with_amounts: Social_activity_amounts)
-        (user: User_handle)
+        (amount_of_what: Social_activity_amounts)
+        (account: User_handle)
         =
-        db_connection.Query<Amount_for_user>(
-            $"""select *
-                from {record_with_amounts}
-                where user_handle = @user_handle
-                order by datetime DESC limit 1
+        db_connection.Query<Amount_for_account>(
+            $"""select 
+                    {tables.activity_amount.account},
+                    {tables.activity_amount.datetime},
+                    {tables.activity_amount.amount}
+                from 
+                    {tables.activity_amount}
+                where 
+                    {tables.activity_amount.account} = @account
+                    and {tables.activity_amount.activity} = {amount_of_what}
+                order by {tables.activity_amount.datetime} DESC limit 1
              """,
             {|
-                record_with_amounts=record_with_amounts
-                user_handle = user
+                account = account
             |}
         )|>Seq.tryHead
-        |>Option.defaultValue (Amount_for_user.empty user)
+        |>Option.defaultValue (Amount_for_account.empty account)
             
             
     let read_amounts_closest_to_the_end_of_day
@@ -208,29 +236,27 @@ module Social_activity_database =
               amounts_table
     
     
-    
-        
-    
-    
-    
         
     let read_last_competitors
         (db_connection: NpgsqlConnection)
         (since_datetime:DateTime)
         =
         db_connection.Query<User_handle>(
-            @"select user_handle from followers_amount
-            where datetime >= @since_datetime
-            group by user_handle",
-            {|since_datetime=since_datetime|}
+            $"
+            select {tables.activity_amount.account} from {tables.activity_amount}
+            where {tables.activity_amount.datetime} >= @since_datetime
+            group by {tables.activity_amount.account}
+            ",
+            {|
+                since_datetime=since_datetime
+            |}
         )
    
     
-    [<Fact(Skip="manual")>] //
     let ``try read_last_competitors``()=
         let test =
             read_last_competitors
-                (Twitter_database.open_connection())
+                (Central_task_database.open_connection())
                 (DateTime.Now-TimeSpan.FromDays(5))
         ()
      
@@ -247,9 +273,9 @@ module Social_activity_database =
         last_amounts
         |>Seq.filter(fun amount_row ->
             users
-            |>Set.contains amount_row.user_handle 
+            |>Set.contains amount_row.account 
         )|>Seq.map(fun amount_row->
-            amount_row.user_handle,
+            amount_row.account,
             amount_row.amount
         )|>Map.ofSeq
             
@@ -258,7 +284,7 @@ module Social_activity_database =
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<DateTime>(
-            @"select COALESCE(max(submitted_at),make_date(1000,1,1)) from referral"
+            $"select COALESCE(max(submitted_at),make_date(1000,1,1)) from referral"
         )|>Seq.head
         
     

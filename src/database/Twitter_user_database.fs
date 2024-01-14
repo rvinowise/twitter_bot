@@ -13,10 +13,10 @@ module Twitter_user_database =
     let read_usernames_map
         (db_connection: NpgsqlConnection)
         =
-        db_connection.Query<Db_twitter_user>(
-            @"select * from user_name"
+        db_connection.Query<Twitter_user>(
+            @"select * from {tables.user_name}"
         )
-        |>Seq.map(fun user->User_handle user.handle, user.name)
+        |>Seq.map(fun user->user.handle, user.name)
         |>Map.ofSeq
     
     
@@ -39,10 +39,16 @@ module Twitter_user_database =
         Log.info $"writing {Seq.length users} user names to DB"
         users
         |>Seq.iter(fun user ->
-            db_connection.Query<Db_twitter_user>(
-                @"insert into user_name (handle, name)
+            db_connection.Query<Twitter_user>(
+                $"""
+                insert into {tables.user_name} (
+                   {tables.user_name.handle}, 
+                   {tables.user_name.name}
+                )
                 values (@handle, @name)
-                on conflict (handle) do update set name = @name",
+                on conflict ({tables.user_name.handle}) 
+                do update set {tables.user_name.name} = @name
+                """,
                 {|
                     handle = User_handle.db_value user.handle
                     name = user.name
@@ -57,15 +63,15 @@ module Twitter_user_database =
         =
         Log.info $"writing briefing of {User_handle.value user.handle} to DB"
         
-        db_connection.Query<Db_twitter_user>(
-            @"insert into user_briefing (
-                handle,
-                name,
-                bio,
-                location,
-                date_joined,
-                web_site,
-                profession
+        db_connection.Query<Twitter_user>(
+            $"insert into {tables.user_briefing} (
+                {tables.user_briefing.handle},
+                {tables.user_briefing.name},
+                {tables.user_briefing.bio},
+                {tables.user_briefing.location},
+                {tables.user_briefing.date_joined},
+                {tables.user_briefing.web_site},
+                {tables.user_briefing.profession}
             )
             values (
                 @handle,
@@ -76,9 +82,27 @@ module Twitter_user_database =
                 @web_site,
                 @profession
             )
-            on conflict (created_at, handle) do update set 
-            (name, bio, location, date_joined, web_site, profession) = 
-            (@name, @bio, @location, @date_joined, @web_site, @profession)",
+            on conflict (
+                {tables.user_briefing.created_at}, 
+                {tables.user_briefing.handle}
+            ) 
+            do update set 
+            (
+                {tables.user_briefing.name}, 
+                {tables.user_briefing.bio}, 
+                {tables.user_briefing.location},
+                {tables.user_briefing.date_joined},
+                {tables.user_briefing.web_site},
+                {tables.user_briefing.profession}
+            ) = 
+            (
+                @name,
+                @bio,
+                @location,
+                @date_joined,
+                @web_site,
+                @profession
+            )",
             {|
                 handle = User_handle.db_value user.handle
                 name = user.name

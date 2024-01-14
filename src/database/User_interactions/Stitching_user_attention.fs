@@ -95,8 +95,12 @@ module Stitching_user_attention =
                 @target,
                 @amount
             )
-            on conflict (attention_type, attentive_user, target)
-            do update set (amount) = row(@amount)
+            on conflict (
+                {user_attention.attention_type},
+                {user_attention.attentive_user}, 
+                {user_attention.target}
+            )
+            do update set ({user_attention.amount}) = row(@amount)
             """,
             attention
         )|> ignore
@@ -128,9 +132,9 @@ module Stitching_user_attention =
             |>Central_task_database.read_jobs_completed_by_worker central_db
         
         [
-            User_interactions_from_posts.read_likes_by_user, "Likes"
-            User_interactions_from_posts.read_reposts_by_user, "Reposts"
-            User_interactions_from_posts.read_replies_by_user, "Replies"
+            User_attention_from_posts.read_likes_by_user, "Likes"
+            User_attention_from_posts.read_reposts_by_user, "Reposts"
+            User_attention_from_posts.read_replies_by_user, "Replies"
         ]
         |>List.iter (fun (read,matrix_name) -> 
             upload_all_users_attention
@@ -238,13 +242,15 @@ module Stitching_user_attention =
         =
         
         database.Query<User_total_attention>(
-            $"""
-            /* select total attention values for all users of the matrix,
+            (* select total attention values for all users of the matrix,
             to calculate the percentage of their attention to the targets from the matrix
-            */
-
-            select {user_attention.attentive_user}, sum({user_attention.amount}) as total_amount
-            from {user_attention} as main_attention
+            *)
+            $"""
+            select 
+                {user_attention.attentive_user}, 
+                sum({user_attention.amount}) as total_amount
+            from 
+                {user_attention} as main_attention
             where 
                 --take only attentions with the closest scraping datetime 
                 main_attention.{user_attention.when_scraped} = {inner_sql_reading_closest_scraped_date datetime}

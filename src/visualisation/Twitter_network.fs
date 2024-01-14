@@ -41,7 +41,7 @@ module Twitter_network =
         let db_connection = Twitter_database.open_connection()
         
         let last_datetime =
-            Social_activity_database.read_last_followers_amount_time db_connection
+            Social_activity_database.read_last_activity_amount_time db_connection
         
         let days_amount = 500
         
