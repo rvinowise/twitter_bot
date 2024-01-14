@@ -150,7 +150,7 @@ module Stitching_user_attention =
         rows
         =
         rows
-        |>Seq.groupBy (_.attentive_user)//_.attentive_user
+        |>Seq.groupBy (fun attention -> attention.attentive_user)//_.attentive_user
         |>Seq.map (fun (attentive_user, attentions) ->
             attentive_user,
             attentions

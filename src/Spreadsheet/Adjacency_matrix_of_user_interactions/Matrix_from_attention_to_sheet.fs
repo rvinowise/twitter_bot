@@ -28,14 +28,28 @@ module Matrix_from_attention_to_sheet =
             ]
             |>List.map(fun design ->
                 design.attention_type,
-                Stitching_user_attention.read_attentions_within_matrix
-                    database
-                    matrix_title
-                    design.attention_type
-                    matrix_datetime
-                |>Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
+                
+                let users_attention =
+                    Stitching_user_attention.read_attentions_within_matrix
+                        database
+                        matrix_title
+                        design.attention_type
+                        matrix_datetime        
+                
+                let users_total_attention =
+                    Stitching_user_attention.read_total_attention_from_users
+                        database 
+                        design.attention_type
+                        matrix_datetime
+                
+                let users_relative_attention =
+                    Adjacency_matrix_helpers.absolute_attention_to_percents
+                        users_attention
+                        users_total_attention
+                
+                Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
                     design.color
-                    (Stitching_user_attention.read_total_attention_from_users database design.attention_type matrix_datetime)
+                    users_relative_attention
             )
         
         Adjacency_matrix.read_sorted_members_of_matrix

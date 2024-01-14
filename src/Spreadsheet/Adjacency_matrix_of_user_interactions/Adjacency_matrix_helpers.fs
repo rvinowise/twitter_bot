@@ -11,14 +11,13 @@ type Interaction_colorscheme = {
 }
 
 type Border_values = {
-    min:int
-    max:int
-    average:int
+    min:float
+    max:float
+    average:float
 }
 
 type Relative_attention_matrix = {
-    attention_to_users: Map<User_handle, Map<User_handle, int>>
-    total_attention_of_user: Map<User_handle, int>
+    attention_to_users: Map<User_handle, Map<User_handle, float>>
     border_attention_to_others: Border_values
     border_attention_to_oneself: Border_values
     color: Color
@@ -67,7 +66,7 @@ module Adjacency_matrix_helpers =
         |>Seq.map(fun (user,interactions) ->
             interactions
             |>Map.tryFind user
-            |>Option.defaultValue 0
+            |>Option.defaultValue 0.0
         )
         
     let border_values_of_attention attention =
@@ -86,22 +85,35 @@ module Adjacency_matrix_helpers =
                 average = (
                     attention
                     |>Seq.map float
-                    |>Seq.average|>int
+                    |>Seq.average
                 )
             }
+    
+    let absolute_attention_to_percents
+        (absolute_attention: Map<User_handle, Map<User_handle, int>>)
+        (total_attention: Map<User_handle, int>)
+        =
+        absolute_attention
+        |>Map.map(fun attentor attention ->
+            attention
+            |>Map.map (fun target absolute_attention ->
+                let user_total_attention = //there are no zero values of attention at this point
+                    total_attention
+                    |>Map.find attentor
+                (float user_total_attention) / (float absolute_attention)
+            )
+        )
      
     let attention_matrix_for_colored_interactions
         color
-        total_attention_map
         attention_map
         =
         {
-            attention_to_users=attention_map
-            total_attention_of_user = total_attention_map 
-            color=color
+            attention_to_users = attention_map
+            color = color
             border_attention_to_oneself=
                 attention_map
-                |>interactions_with_others
+                |>interactions_with_oneself
                 |>border_values_of_attention
             border_attention_to_others=
                 attention_map
@@ -111,11 +123,42 @@ module Adjacency_matrix_helpers =
      
     let inline clamp minimum maximum value = value |> max minimum |> min maximum
     
-    let coefficient_between_values
+    
+    let enhance_average_coeffitient
         enhancing_accuracy
         amplifier_of_average
         (key_values: Border_values)
-        (value_between: int)
+        (pure_value_coefficient:float)
+        =
+        let max_from_zero = key_values.max-key_values.min
+        
+        let average_value_coefficient =
+            float(key_values.average-key_values.min)
+            /
+            float(max_from_zero)
+            
+        let maximal_difference =
+            if average_value_coefficient <= 0.5 then
+                Math.Pow(-average_value_coefficient+2.0, enhancing_accuracy)
+            else
+                Math.Pow(average_value_coefficient+1.0, enhancing_accuracy)
+            
+        let difference_with_average =
+            Math.Pow(
+                abs(average_value_coefficient-pure_value_coefficient)+1.0,
+                enhancing_accuracy
+            ) /
+            maximal_difference
+        
+        let enhancing_because_average =
+            amplifier_of_average*difference_with_average
+        
+        pure_value_coefficient + enhancing_because_average
+        |>clamp 0 1
+    
+    let coefficient_between_values
+        (key_values: Border_values)
+        value_between
         =
         if value_between <= key_values.min then
             0.0
@@ -124,51 +167,30 @@ module Adjacency_matrix_helpers =
         else
             let our_value_from_zero = value_between-key_values.min
             let max_from_zero = key_values.max-key_values.min
-            
-            let average_value_coefficient =
-                float(key_values.average-key_values.min)
-                /
-                float(max_from_zero)
                 
-            let pure_value_coefficient =
-                float(our_value_from_zero)
-                /
-                float(max_from_zero)
+            float(our_value_from_zero)/float(max_from_zero)
             
-            let maximal_difference =
-                if average_value_coefficient <= 0.5 then
-                    Math.Pow(-average_value_coefficient+2.0, enhancing_accuracy)
-                else
-                    Math.Pow(average_value_coefficient+1.0, enhancing_accuracy)
-                
-            let difference_with_average =
-                Math.Pow(
-                    abs(average_value_coefficient-pure_value_coefficient)+1.0,
-                    enhancing_accuracy
-                ) /
-                maximal_difference
+    
+    let coefficient_between_values_enhanced
+        key_values
+        value_between
+        =
+        coefficient_between_values
+            key_values
+            value_between
+        |>enhance_average_coeffitient
+            3
+            0.4
+            key_values
             
-            let enhancing_because_average =
-                if value_between <= key_values.min then
-                    0.0
-                else
-                    amplifier_of_average*difference_with_average
-            
-            pure_value_coefficient + enhancing_because_average
-            |>clamp 0 1
-        
     let cell_color_for_value
         (min_color:Color)
         (max_color:Color)
-        amplifying_accuracy
-        amplification_of_average
         (key_values: Border_values)
-        (value_between: int)
+        value_between
         =
         let multiplier_to =
             coefficient_between_values
-                amplifying_accuracy
-                amplification_of_average
                 key_values
                 value_between
         
@@ -202,9 +224,9 @@ module Adjacency_matrix_helpers =
             |>Map.ofSeq
         )|>Map.ofSeq
     
-    let add_zero_attention
+    let add_zero_values
         (all_users: User_handle seq)
-        (user_interactions: Map<User_handle, Map<User_handle, int>>)
+        (user_interactions: Map<User_handle, Map<User_handle, float>>)
         =
         let zero_interactions =
             all_users
@@ -247,24 +269,22 @@ module Adjacency_matrix_helpers =
     
     let row_of_attention_for_user
         all_sorted_users
-        (all_attention:Map<User_handle, int>)
-        (total_user_attention: int)
+        (all_attention:Map<User_handle, float>)
         =
         all_sorted_users
         |>List.map(fun other_user ->
-            let absolute_attention =
+            let relative_value =
                 all_attention
-                |>Map.find other_user
-            let attention_percent =
-                if absolute_attention = 0 then
-                    0.0
-                else
-                    (float total_user_attention)/(float absolute_attention) * 100.0
+                |>Map.tryFind other_user
+                |>Option.defaultValue 0.0
             {
                 Cell.value =
-                    attention_percent
+                    relative_value
                     |>Cell_value.Float
-                color = Color
+                color =
+                    cell_color_for_value
+                        Color.white
+                        
                 style = Text_style.regular
             }
         )
