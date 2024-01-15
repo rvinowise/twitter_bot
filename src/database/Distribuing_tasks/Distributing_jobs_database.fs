@@ -19,36 +19,21 @@ type Completed_job = {
     when_completed: DateTime
 }
 
+[<CLIMutable>]
+type User_scraping_job = {
+    account: User_handle
+    taken_by: string
+    status: string
+    posts_amount: int
+    likes_amount: int
+    when_taken: DateTime
+    when_completed: DateTime
+}
 
-module Central_database =
+module Distributing_jobs_database =
     
-    
-    let open_connection () =
-        let db_connection = Database.open_connection Settings.central_database
-        
-        Twitter_database.set_twitter_type_handlers()
-        
-        db_connection    
-    
-    
-    let rec resiliently_open_connection () =
-        let db_connection =
-            try
-                open_connection ()
-                |>Some
-            with
-            | :? NpgsqlException as exc ->
-                $"""failed opening the connection with the central database: {exc.Message}, trying again."""
-                |>Log.error|>ignore
-                None
-       
-        match db_connection with
-        |Some db_connection ->
-            db_connection
-        |None ->
-            resiliently_open_connection ()
-        
-    
+      
+
     let take_next_free_job
         (central_db: NpgsqlConnection)
         worker_id
@@ -63,15 +48,15 @@ module Central_database =
                     {user_to_scrape.taken_by} = @worker,
                     {user_to_scrape.when_taken} = @when_taken
                 where 
-                    {user_to_scrape.handle} = (
-                        select {user_to_scrape.handle} from {user_to_scrape}
+                    {user_to_scrape.account} = (
+                        select {user_to_scrape.account} from {user_to_scrape}
                         where 
                             {user_to_scrape.created_at} = (SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape})
                             and {user_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Free}'
                             and {user_to_scrape.taken_by} = ''
                         limit 1
                     )
-                returning {user_to_scrape.handle}    
+                returning {user_to_scrape.account}    
                 ",
                 {|
                     worker=worker_id
@@ -92,7 +77,7 @@ module Central_database =
         
         let taken_job,is_successful =
             try
-                use central_db = open_connection()    
+                use central_db = Central_database.open_connection()    
                 let taken_job =
                     take_next_free_job
                         central_db
@@ -114,7 +99,7 @@ module Central_database =
     let ``try take_next_free_user``()=
         let result =
             take_next_free_job
-                (open_connection())
+                (Central_database.open_connection())
             
         ()
         
@@ -140,7 +125,7 @@ module Central_database =
                 {user_to_scrape.created_at} = (
                         SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
                     )
-                and {user_to_scrape.handle} = @user
+                and {user_to_scrape.account} = @user
                 and not {user_to_scrape.taken_by} = ''
             ",
             {|
@@ -152,7 +137,7 @@ module Central_database =
     let ``try read_worker_of_job``()=
         let result =
             read_worker_of_job
-                (open_connection())
+                (Central_database.open_connection())
                 (User_handle "LapierreLab")
         ()
         
@@ -168,7 +153,7 @@ module Central_database =
             set 
                 {user_to_scrape.status}  = @status
             where 
-                {user_to_scrape.handle} = @user",
+                {user_to_scrape.account} = @user",
             {|
                 status = status
                 handle = user
@@ -231,7 +216,7 @@ module Central_database =
                 {user_to_scrape.likes_amount} = @likes_amount,
                 {user_to_scrape.when_completed} = @when_completed
             where 
-                {user_to_scrape.handle} = @handle",
+                {user_to_scrape.account} = @handle",
             {|
                 handle = user_task
                 posts_amount = posts_amount
@@ -252,7 +237,7 @@ module Central_database =
         =
         let is_successful =
             try
-                use central_db = open_connection()
+                use central_db = Central_database.open_connection()
                 
                 write_final_result
                     central_db
@@ -285,7 +270,7 @@ module Central_database =
         =
         
         database.Query<User_handle>(
-            $"select {user_to_scrape.handle} from {user_to_scrape}
+            $"select {user_to_scrape.account} from {user_to_scrape}
             where 
                 {user_to_scrape.created_at} = (
                         SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
@@ -308,7 +293,7 @@ module Central_database =
             
         database.Query<Completed_job>(
             $"select 
-                {user_to_scrape.handle} as scraped_user,
+                {user_to_scrape.account} as scraped_user,
                 {user_to_scrape.when_completed}
             from {user_to_scrape}
             where 
@@ -324,32 +309,31 @@ module Central_database =
         )
     
         
-    type User_to_scrape = {
-        handle: User_handle
-        posts_amount: int
-        likes_amount: int
-        taken_by: string
-    }
     
-    let read_results_of_last_jobs
+    
+    let read_last_completed_jobs
         (database:NpgsqlConnection)
         =
         
-        database.Query<string>(
+        database.Query<User_scraping_job>(
             $"select 
-                {user_to_scrape.handle},
+                {user_to_scrape.account},
+                {user_to_scrape.taken_by},
+                {user_to_scrape.status},
                 {user_to_scrape.posts_amount},
                 {user_to_scrape.likes_amount},
-                {user_to_scrape.taken_by},
+                {user_to_scrape.when_taken},
+                {user_to_scrape.when_completed}
                 
             from {user_to_scrape}
             where 
                 {user_to_scrape.created_at} = (
                         SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
                     )
-                and {user_to_scrape.status} = '{Scraping_user_status.Completed}'
+                and {user_to_scrape.status} = 'Success'
             "
-        )|>Seq.tryHead
+        )
+    
     
     let write_user_for_scraping
         (database:NpgsqlConnection)
@@ -360,7 +344,7 @@ module Central_database =
         database.Query<User_handle>(
             $"insert into {user_to_scrape} (
                 {user_to_scrape.created_at},
-                {user_to_scrape.handle},
+                {user_to_scrape.account},
                 {user_to_scrape.status}
             )
             values (

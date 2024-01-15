@@ -174,7 +174,7 @@ type Option_string_mapper() =
 
 
 
-module Twitter_database =
+module Twitter_database_types =
     
     let set_twitter_type_handlers () =
         SqlMapper.AddTypeHandler(Timestamp_mapper()) //sometimes it's needed, sometimes not
@@ -187,9 +187,3 @@ module Twitter_database =
         SqlMapper.AddTypeHandler(Option_string_mapper())
         SqlMapper.AddTypeHandler(Scraping_user_status_mapper())
         
-    let open_connection () =
-        let db_connection = Database.open_connection Settings.local_database
-        
-        set_twitter_type_handlers()
-        
-        db_connection

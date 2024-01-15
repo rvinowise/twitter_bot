@@ -18,7 +18,7 @@ module Program =
         //     |>Seq.zip Settings.auth_tokens
         //     |>Array.ofSeq
         //     |>Array.Parallel.iter(fun (bot_token, user_to_harvest)->
-        //         use db_connection = Twitter_database.open_connection() 
+        //         use db_connection = Local_database.open_connection() 
         //         use browser = Browser.prepare_authentified_browser bot_token
         //         use parsing_context = Html_parsing.parsing_context()
         //         Harvest_followers_network.harvest_following_network_around_user
@@ -84,7 +84,7 @@ module Program =
             posts_amount
             |>int
             |>Harvest_timelines_of_table_members.harvest_timelines_from_central_database
-                (Twitter_database.open_connection())
+                (Local_database.open_connection())
         | "competition"::rest ->
             announce_competition_successes()
         | "stitch"::rest ->

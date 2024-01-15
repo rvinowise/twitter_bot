@@ -16,7 +16,7 @@ module Announce_competition_score =
         let before_scraping_competitors = DateTime.Now
         let competitors =
             Settings.Influencer_competition.Competitors.list
-            |>Scrape_list_members.scrape_twitter_list_members
+            |>Scrape_list_members.scrape_twitter_list_members_and_amount
                   browser
                   html_context
             |>Seq.map Twitter_profile_from_catalog.user

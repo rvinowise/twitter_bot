@@ -37,7 +37,7 @@ module This_worker =
     let ``try write_this_worker_id``() =
         let result =
             write_this_worker_id
-                (Twitter_database.open_connection())
+                (Local_database.open_connection())
                 "Main_supermicro"
         ()
         
@@ -58,7 +58,7 @@ module This_worker =
     let ``try read_this_worker_id``() =
         let result =
             read_this_worker_id
-                (Twitter_database.open_connection())
+                (Local_database.open_connection())
         ()
     
     let mutable memoised_id = None

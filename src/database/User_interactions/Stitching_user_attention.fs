@@ -43,18 +43,36 @@ module Stitching_user_attention =
             )
         )
     
+    let delete_user_attention
+        (database:NpgsqlConnection)
+        accounts
+        =
+        accounts
+        |>Seq.iter(fun account ->
+            database.Query<unit>(
+                $"""
+                delete from {user_attention}
+                where
+                    {user_attention.attentive_user} = @account
+                """,
+                {|
+                    account=account 
+                |}
+            )|>ignore
+        )
+    
     let upload_all_users_attention
         read_interactions
         (target_db:NpgsqlConnection)
         attention_type
-        local_attentive_users
+        completed_user_jobs
         =
             
         let attention_rows =
             attention_rows_from_posts
                 read_interactions
                 attention_type
-                local_attentive_users
+                completed_user_jobs
         
         target_db.BulkInsert(
             $"""insert into {user_attention} (
@@ -125,12 +143,35 @@ module Stitching_user_attention =
             
     let upload_all_local_attentions () =
         let central_db = Central_database.open_connection()
-        let local_db = Twitter_database.open_connection()
+        let local_db = Local_database.open_connection()
         
-        let local_attentive_users = 
-            This_worker.this_worker_id local_db
-            |>Central_database.read_jobs_completed_by_worker central_db
+        // let completed_user_jobs = 
+        //     This_worker.this_worker_id local_db
+        //     |>Distributing_jobs_database.read_jobs_completed_by_worker central_db
         
+        let user_when_scraped =
+            Distributing_jobs_database.read_last_completed_jobs
+                central_db
+            |>Seq.map(fun job ->
+                job.account,
+                job.when_completed
+            )|>Map.ofSeq
+            
+            
+        let completed_user_jobs =
+            Adjacency_matrix.read_sorted_members_of_matrix
+                central_db
+                "Twitter network"
+            |>List.map (fun account ->
+                {
+                    Completed_job.scraped_user = account
+                    when_completed=
+                        user_when_scraped
+                        |>Map.tryFind account
+                        |>Option.defaultValue DateTime.MinValue
+                }    
+            )
+            
         [
             User_attention_from_posts.read_likes_by_user, "Likes"
             User_attention_from_posts.read_reposts_by_user, "Reposts"
@@ -142,7 +183,7 @@ module Stitching_user_attention =
                 (read local_db)
                 central_db
                 matrix_name
-                local_attentive_users
+                completed_user_jobs
         )
             
     

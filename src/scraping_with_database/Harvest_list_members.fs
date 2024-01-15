@@ -155,7 +155,7 @@ module Harvest_list_members =
         
 
     let ``try export members``()=
-        let database = Twitter_database.open_connection() 
+        let database = Local_database.open_connection() 
         let googlesheet_service = Googlesheet.create_googlesheet_service()
         
         [
@@ -181,7 +181,7 @@ module Harvest_list_members =
     let ``harvest lists``() =
         let browser = Browser.open_browser()
         let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
-        let database = Twitter_database.open_connection() 
+        let database = Local_database.open_connection() 
         let googlesheet_service = Googlesheet.create_googlesheet_service()
         
         let members_with_amount = 

@@ -126,7 +126,7 @@ module Import_referrals_from_googlesheet =
         let test =
             import_referrals
                 (Googlesheet.create_googlesheet_service())
-                (Twitter_database.open_connection())
+                (Local_database.open_connection())
                 {
                     Google_spreadsheet.doc_id = "137ExyTBgr-IL0TlxIv-V4EvWee_BDbwyh5U0M06IwsU"
                     page_name="Sheet1"

@@ -91,7 +91,7 @@ module Import_scores_from_googlesheet =
         (sheet:Google_spreadsheet)
         columns_of_days
         =
-        use db_connection = Twitter_database.open_connection()
+        use db_connection = Local_database.open_connection()
         let sorted_users = row_to_user_correspondence sheet
         columns_of_days
         |>List.iter (

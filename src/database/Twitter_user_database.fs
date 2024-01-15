@@ -14,7 +14,7 @@ module Twitter_user_database =
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<Twitter_user>(
-            @"select * from {tables.user_name}"
+            $"select * from {tables.user_name}"
         )
         |>Seq.map(fun user->user.handle, user.name)
         |>Map.ofSeq

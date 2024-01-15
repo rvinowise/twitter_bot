@@ -88,7 +88,7 @@ module Assigning_browser_profiles =
 
     let ``try take_next_free_profile``()=
         let result =
-            Twitter_database.open_connection()
+            Local_database.open_connection()
             |>This_worker.this_worker_id
             |>take_next_free_profile
                 (Central_database.open_connection())

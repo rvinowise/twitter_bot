@@ -10,12 +10,14 @@ module Announce_user_interactions =
         browser
         html_context
         =
-        let database = Twitter_database.open_connection()
+        let database = Local_database.open_connection()
         
         let before_scraping_users = DateTime.Now
         let all_users =
             Settings.Influencer_competition.Competitors.list
-            |>Scrape_list_members.scrape_twitter_list_members browser html_context
+            |>Scrape_list_members.scrape_twitter_list_members_and_amount
+                  browser 
+                  html_context
             |>List.ofSeq
             |>List.map (Twitter_profile_from_catalog.user >> Twitter_user.handle)
             

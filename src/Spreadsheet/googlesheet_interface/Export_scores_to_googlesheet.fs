@@ -208,13 +208,13 @@ module Export_scores_to_googlesheet =
             Settings.Influencer_competition.Google_sheets.posts_amount
     
     let ``try update_googlesheets``() =
-        Twitter_database.open_connection()
+        Local_database.open_connection()
         |>update_googlesheets
     
    
     let ``try input_posts_amount_to_sheet``() =
         update_googlesheet
-            (Twitter_database.open_connection())
+            (Local_database.open_connection())
             Social_activity_amounts.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"

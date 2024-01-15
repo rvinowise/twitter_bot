@@ -38,17 +38,9 @@ module Single_adjacency_matrix =
         color
         (matrix_border_percents: Border_values)
         relative_attention
-//        (account_total_attention)
-//        attention
         =
-//        let relative_attention =
-//            if attention = 0 then
-//                0.0
-//            else
-//                (float account_total_attention)/(float attention) * 100.0
-//            |>Cell_value.Float
         {
-            value = Cell_value.Float relative_attention
+            value = Cell_value.Float (relative_attention * 100.0)
                 
             color =
                 Adjacency_matrix_helpers.cell_color_for_value
@@ -79,17 +71,6 @@ module Single_adjacency_matrix =
                 {r=0.5;g=0.5;b=0.5}
                 attention_matrix.border_attention_to_oneself
         
-//        let colored_attention_values =    
-//            attention_matrix.attention_to_users
-//            |>Adjacency_matrix_helpers.add_zero_attention all_sorted_users 
-//            |>users_attention_to_colored_values
-//                interaction_to_intensity_color
-//                self_interaction_to_intensity_color
-        
-//        let attention_with_zeros =
-//            attention_matrix.attention_to_users
-//            |>Adjacency_matrix_helpers.add_zero_values all_sorted_users
-        
         let rows_of_attention =
             all_sorted_users
             |>List.map (fun user ->
@@ -97,7 +78,10 @@ module Single_adjacency_matrix =
                 |>Map.tryFind user
                 |>Option.defaultValue Map.empty
                 |>Adjacency_matrix_helpers.row_of_attention_for_user
+                      attention_to_intensity_color
+                      self_attention_to_intensity_color
                       all_sorted_users
+                      user
             )
         
         Adjacency_matrix_helpers.add_headers_to_adjacency_matrix

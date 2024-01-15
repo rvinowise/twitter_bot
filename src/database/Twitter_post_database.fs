@@ -791,7 +791,7 @@ module Twitter_post_database =
     let ``try read_last_visited_post``() =
         let result =
             read_newest_last_visited_post
-                (Twitter_database.open_connection())
+                (Local_database.open_connection())
                 Timeline_tab.Posts
                 (User_handle "MikhailBatin")
         ()
@@ -800,7 +800,7 @@ module Twitter_post_database =
     let ``delete all posts from a user's timeline``()=
         let user = User_handle "TheHarrisSultan"
         let result =
-            Twitter_database.open_connection().Query<Post_id>(
+            Local_database.open_connection().Query<Post_id>(
                 $"""
 delete from post_quotable_message_body
 using post_header

@@ -64,16 +64,25 @@
     <Compile Include="src\web_interface\twitter_interface\writing\post_on_twitter.fs" />
 
 
+    <!-- google spread sheets interface   -->
+    <Compile Include="src\Spreadsheet\Color.fs" />
+    <Compile Include="src\Spreadsheet\Table.fs" />
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet.fs" />
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_writing.fs" />
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_reading.fs" />
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_for_twitter.fs" />
+    
+    
+    <!-- Databases -->
     <Compile Include="src\database\Database.fs" />
-    <Compile Include="src\database\Twitter_database.fs" />
-
-
+    <Compile Include="src\database\Twitter_database_types.fs" />
     <Compile Include="src\database\Twitter_database_structure\twitter_database_structure.fs" />
-
-
     <Compile Include="src\database\Twitter_database_structure\twitter_activity.fs" />
+    <Compile Include="src\database\Database_connections\Local_database.fs" />
+    <Compile Include="src\database\Database_connections\Central_database.fs" />
+
     <Compile Include="src\database\Distribuing_tasks\This_worker.fs" />
-    <Compile Include="src\database\Distribuing_tasks\Central_database.fs" />
+    <Compile Include="src\database\Distribuing_tasks\Distributing_jobs_database.fs" />
     <Compile Include="src\database\Distribuing_tasks\Assigning_browser_profiles.fs" />
     
     <Compile Include="src\database\Twitter_user_database.fs" />
@@ -83,36 +92,28 @@
     <Compile Include="src\database\Twitter_following_database.fs" />
     
     <Compile Include="src\database\User_interactions\User_attention_from_posts.fs" />
-    <Compile Include="src\database\User_interactions\Stitching_user_attention.fs" />
     <Compile Include="src\database\User_interactions\Adjacency_matrix.fs" />
+    <Compile Include="src\database\User_interactions\Stitching_user_attention.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
-    
-    <!-- google spread sheets interface   -->
-    <Compile Include="src\Spreadsheet\Color.fs" />
-    <Compile Include="src\Spreadsheet\Table.fs" />
-    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet.fs" />
-    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_writing.fs" />
-    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_reading.fs" />
-    <Compile Include="src\Spreadsheet\googlesheet_interface\Googlesheet_for_twitter.fs" />
-    <Compile Include="src\Spreadsheet\googlesheet_interface\Import_scores_from_googlesheet.fs" />
-    <Compile Include="src\Spreadsheet\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
-    <Compile Include="src\Spreadsheet\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Adjacency_matrix_helpers.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Single_adjacency_matrix.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Combined_adjacency_matrix.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Write_matrix_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Matrix_from_attention_to_sheet.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Color_blending_example.fs" />
+
+
+    <!-- import-export to Googlesheet, by using databases -->
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Import_scores_from_googlesheet.fs" />
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
+    <Compile Include="src\Spreadsheet\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     
     
     <Compile Include="src\scraping_with_database\Harvest_user.fs" />
     <Compile Include="src\scraping_with_database\Harvest_list_members.fs" />
     <Compile Include="src\scraping_with_database\Harvest_followers_network.fs" />
-    
-    
     <Compile Include="src\scraping_with_database\Finish_harvesting_timeline.fs" />
     <Compile Include="src\scraping_with_database\Harvest_posts_from_timeline.fs" />
-    
     
     
     <Compile Include="src\scraping_with_database\Harvest_timelines_of_table_members.fs" />

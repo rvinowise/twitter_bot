@@ -38,7 +38,7 @@ module Twitter_network =
 
     let ``try draw_chart (focus on days)``() =
         
-        let db_connection = Twitter_database.open_connection()
+        let db_connection = Local_database.open_connection()
         
         let last_datetime =
             Social_activity_database.read_last_activity_amount_time db_connection
@@ -77,7 +77,7 @@ module Twitter_network =
     
     let ``try draw_chart (focus on datapoints)``() =
         
-        let db_connection = Twitter_database.open_connection()
+        let db_connection = Local_database.open_connection()
         
         
         ()    

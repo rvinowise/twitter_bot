@@ -42,11 +42,11 @@ module Adjacency_matrix_helpers =
         attention_type = "Likes"
     }
     let reposts_design = {
-        color = {r=1;g=0;b=0}
+        color = {r=0;g=1;b=0}
         attention_type = "Reposts"
     }
     let replies_design = {
-        color = {r=1;g=0;b=0}
+        color = {r=0;g=0;b=1}
         attention_type = "Replies"
     }
     let combined_interactions_title = "Everything"
@@ -100,7 +100,7 @@ module Adjacency_matrix_helpers =
                 let user_total_attention = //there are no zero values of attention at this point
                     total_attention
                     |>Map.find attentor
-                (float user_total_attention) / (float absolute_attention)
+                (float absolute_attention) / (float user_total_attention)
             )
         )
      
@@ -224,26 +224,6 @@ module Adjacency_matrix_helpers =
             |>Map.ofSeq
         )|>Map.ofSeq
     
-    let add_zero_values
-        (all_users: User_handle seq)
-        (user_interactions: Map<User_handle, Map<User_handle, float>>)
-        =
-        let zero_interactions =
-            all_users
-            |>Seq.map (fun user -> user,0)
-            
-        all_users
-        |>Seq.map(fun user ->
-            user
-            ,
-            user_interactions
-            |>Map.tryFind user
-            |>Option.defaultValue Map.empty
-            |>Map.toSeq
-            |>Seq.append zero_interactions
-            |>map_from_seq_preferring_last
-        )|>Map.ofSeq
-            
     
     
         
@@ -268,7 +248,10 @@ module Adjacency_matrix_helpers =
         )
     
     let row_of_attention_for_user
+        interaction_color
+        self_interaction_color
         all_sorted_users
+        attentive_user
         (all_attention:Map<User_handle, float>)
         =
         all_sorted_users
@@ -279,11 +262,15 @@ module Adjacency_matrix_helpers =
                 |>Option.defaultValue 0.0
             {
                 Cell.value =
-                    relative_value
+                    (relative_value * 100.0)
                     |>Cell_value.Float
                 color =
-                    cell_color_for_value
-                        Color.white
+                    if attentive_user = other_user then
+                        self_interaction_color
+                            relative_value
+                    else
+                        interaction_color
+                            relative_value
                         
                 style = Text_style.regular
             }

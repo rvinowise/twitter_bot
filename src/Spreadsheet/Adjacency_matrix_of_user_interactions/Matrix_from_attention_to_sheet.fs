@@ -23,8 +23,8 @@ module Matrix_from_attention_to_sheet =
         let titles_and_interactions =
             [
                 Adjacency_matrix_helpers.likes_design;
-                //Adjacency_matrix_helpers.reposts_design;
-                //Adjacency_matrix_helpers.replies_design
+                Adjacency_matrix_helpers.reposts_design;
+                Adjacency_matrix_helpers.replies_design
             ]
             |>List.map(fun design ->
                 design.attention_type,
@@ -52,22 +52,24 @@ module Matrix_from_attention_to_sheet =
                     users_relative_attention
             )
         
-        Adjacency_matrix.read_sorted_members_of_matrix
-            database
-            matrix_title
-        |>Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
+        let sorted_members_of_matrix =
+            Adjacency_matrix.read_sorted_members_of_matrix
+                database
+                matrix_title
+        
+        // Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
+        //     sheet_service
+        //     doc_id
+        //     titles_and_interactions
+        //     handle_to_name
+        //     sorted_members_of_matrix
+            
+        Write_matrix_to_sheet.try_write_combined_interactions_to_sheet
             sheet_service
             doc_id
             titles_and_interactions
             handle_to_name
-            
-            
-//        Write_matrix_to_sheet.try_write_combined_interactions_to_sheet
-//            sheet_service
-//            doc_id
-//            titles_and_interactions
-//            handle_to_name
-//            all_sorted_users
+            sorted_members_of_matrix
          
     
     let ``stitched_interactions_to_sheet``()=

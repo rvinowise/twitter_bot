@@ -416,7 +416,7 @@ module Harvest_posts_from_timeline =
         resilient_step_of_harvesting_timelines
             Finish_harvesting_timeline.only_finish_when_no_posts_left
             (Browser.open_browser())
-            (Twitter_database.open_connection())
+            (Local_database.open_connection())
             [
                 User_handle "davidasinclair", Timeline_tab.Posts_and_replies
             ]
@@ -438,5 +438,5 @@ module Harvest_posts_from_timeline =
         resilient_step_of_harvesting_timelines
             Finish_harvesting_timeline.only_finish_when_no_posts_left
             (Browser.open_browser())
-            (Twitter_database.open_connection())
+            (Local_database.open_connection())
             user_timelines

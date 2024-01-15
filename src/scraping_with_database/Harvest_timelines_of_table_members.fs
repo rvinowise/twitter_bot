@@ -40,10 +40,10 @@ module Harvest_timelines_of_table_members =
   
     let jobs_from_central_database worker_id =
         seq {
-            let mutable free_user = Central_database.resiliently_take_next_free_job worker_id
+            let mutable free_user = Distributing_jobs_database.resiliently_take_next_free_job worker_id
             while free_user.IsSome do
                 yield free_user.Value
-                free_user <- Central_database.resiliently_take_next_free_job worker_id
+                free_user <- Distributing_jobs_database.resiliently_take_next_free_job worker_id
         }    
     
     
@@ -176,7 +176,7 @@ module Harvest_timelines_of_table_members =
         let worker_id = This_worker.this_worker_id local_db
         harvest_timelines_from_jobs
             local_db
-            (Central_database.resiliently_write_final_result)
+            (Distributing_jobs_database.resiliently_write_final_result)
             article_amount
             (jobs_from_central_database worker_id)
     
@@ -186,7 +186,7 @@ module Harvest_timelines_of_table_members =
             User_handle "AD74593974"
         ]
         |>harvest_timelines_from_jobs
-              (Twitter_database.open_connection())
+              (Local_database.open_connection())
               (fun _ _ _ _ _-> ())
               100
         
@@ -202,5 +202,5 @@ module Harvest_timelines_of_table_members =
         }
         |>users_from_spreadsheet
             (Googlesheet.create_googlesheet_service())
-        |>Central_database.write_users_for_scraping central_db
+        |>Distributing_jobs_database.write_users_for_scraping central_db
         

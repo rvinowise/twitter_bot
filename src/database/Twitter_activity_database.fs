@@ -28,18 +28,18 @@ module Social_activity_database =
                 {tables.activity_amount.activity}, 
                 {tables.activity_amount.amount}
             )
-            values (@datetime, @account, @amount)
+            values (@account, @datetime, @activity, @amount)
             on conflict (
                 {tables.activity_amount.account},
                 {tables.activity_amount.datetime},
-                {tables.activity_amount.activity},
+                {tables.activity_amount.activity}
             ) 
             do update set {tables.activity_amount.amount} = @amount
             ",
             {|
                 datetime = datetime
                 account = User_handle.db_value account
-                activity = amount_of_what
+                activity = string amount_of_what
                 amount = amount
             |}
         ) |> ignore
@@ -145,13 +145,15 @@ module Social_activity_database =
         recruitings
         |>Seq.iter(fun (submitted_at,link_referral,recruit,claimed_referral) ->
             db_connection.Query<unit>(
-                @"insert into referral (submitted_at, recruit, link_referral, claimed_referral)
+                $"
+                insert into referral (submitted_at, recruit, link_referral, claimed_referral)
                 values (@submitted_at, @recruit, @link_referral, @claimed_referral)
                 on conflict (recruit) do
                 update set
                     submitted_at=@submitted_at,
                     link_referral = @link_referral,
-                    claimed_referral = @claimed_referral",
+                    claimed_referral = @claimed_referral
+                ",
                 {|
                     submitted_at = submitted_at
                     link_referral = link_referral
@@ -192,7 +194,7 @@ module Social_activity_database =
                         *
                     from {tables.activity_amount}
                     where 
-                        {tables.activity_amount.activity} = {amount_of_what}
+                        {tables.activity_amount.activity} = '{amount_of_what}'
                         and {tables.activity_amount.datetime} <= @last_moment
                 ) as amounts_by_time
             where my_row_number = 1

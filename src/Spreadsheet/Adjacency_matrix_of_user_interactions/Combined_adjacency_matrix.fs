@@ -11,23 +11,18 @@ module Combined_adjacency_matrix =
         
     
     let compound_interactions_to_intensity_colors_functions
-        amplifying_accuracy
-        amplifier_of_average
         (attention_matrices: Relative_attention_matrix list)
         =
         
         let interactions_to_color_coefficient =
             attention_matrices
-            |>List.map(fun {border_attention_to_others = key_values} ->
+            |>List.map(fun {border_attention_to_others = border_values} ->
                 Adjacency_matrix_helpers.coefficient_between_values
-                    amplifying_accuracy
-                    amplifier_of_average
-                    key_values
+                    border_values
             )
         
-        
         let interaction_to_intensity_color
-            (values: int list)
+            values
             =             
             let color_multipliers =
                 values
@@ -49,17 +44,18 @@ module Combined_adjacency_matrix =
                 
         interaction_to_intensity_color
         
-    let interactions_between_users
+    let attention_from_user_to_user
         user
         other_user
-        interactions
+        attention_maps
         =
-        interactions
-        |>List.map (fun interaction_type ->
-            interaction_type
-            |>Map.find user
+        attention_maps
+        |>List.map (fun attention_type ->
+            attention_type
+            |>Map.tryFind user
+            |>Option.defaultValue Map.empty
             |>Map.tryFind other_user
-            |>Option.defaultValue 0
+            |>Option.defaultValue 0.0
         )
     
     let update_googlesheet_with_compound_interactions
@@ -77,16 +73,19 @@ module Combined_adjacency_matrix =
             |>List.map (fun user ->
                 all_sorted_users
                 |>List.map (fun other_user ->
+                    if
+                        user = User_handle "JamesRstrole"
+                        && other_user = User_handle "JamesRstrole"
+                    then
+                        Log.debug "test"
+                        
                     let interactions =
                         attention_matrices
-                        |>List.map (fun interaction_type -> interaction_type.attention_to_users)
-                        |>interactions_between_users
+                        |>List.map (fun matrix_data -> matrix_data.attention_to_users)
+                        |>attention_from_user_to_user
                             user
                             other_user
-                    if interactions = [0;0;8] then
-                        ()//test
-                    if interactions = [0;1;5] then
-                        ()//test
+
                     Cell.from_colored_text
                         (values_to_text interactions)
                         (values_to_color interactions)
@@ -104,21 +103,17 @@ module Combined_adjacency_matrix =
     let write_combined_interactions_to_googlesheet
         sheet_service
         googlesheet
-        amplifying_accuracy
-        amplifier_of_average
         handle_to_hame
         all_sorted_users
         all_interaction_types
         =
         let values_to_text
-            (interactions: int list)
+            (interactions: float list)
             =
-            $"{interactions[0]}\n{interactions[1]},{interactions[2]}"
+            sprintf "%.3g\n%.3g,%.3g" (interactions[0]*100.0) (interactions[1]*100.0) (interactions[2]*100.0)
         
         let values_to_color =
             compound_interactions_to_intensity_colors_functions
-                amplifying_accuracy
-                amplifier_of_average
                 all_interaction_types
         
         update_googlesheet_with_compound_interactions

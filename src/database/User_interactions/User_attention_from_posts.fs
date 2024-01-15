@@ -37,8 +37,9 @@ module User_attention_from_posts =
                 count(*) as amount 
             from {post.like}
 
-            inner join {post.header} on 
+            join {post.header} on 
 	            {post.like.post} = {post.header.main_post_id}
+                and {post.header.is_quotation} = false
 
             where
 	            {post.like.liker} = @liker
@@ -53,8 +54,8 @@ module User_attention_from_posts =
     let ``try read_likes_by_user``()=
         let result =
             read_likes_by_user
-                (Twitter_database.open_connection())
-                (User_handle "ActivistCher")
+                (Local_database.open_connection())
+                (User_handle "kristenvbrown")
         ()
         
     let read_reposts_by_user
@@ -67,8 +68,9 @@ module User_attention_from_posts =
                 count(*) as amount 
             from {post.repost}
 
-            inner join {post.header} on 
+            join {post.header} on 
 	            {post.repost.post} = {post.header.main_post_id}
+                and {post.header.is_quotation} = false
 
             where
 	            {post.repost.reposter} = @reposter
@@ -80,6 +82,13 @@ module User_attention_from_posts =
             {|reposter=reposter|}
         )|>amounts_for_user_as_tuples
     
+    let ``try read_reposts_by_user``()=
+        let result =
+            read_reposts_by_user
+                (Local_database.open_connection())
+                (User_handle "kristenvbrown")
+        ()
+    
     let read_replies_by_user
         (database: NpgsqlConnection)
         replier
@@ -90,9 +99,10 @@ module User_attention_from_posts =
                 count(*) as amount 
             from {post.reply}
 
-            inner join {post.header} as replying_header on
+            join {post.header} as replying_header on
 	            replying_header.{post.header.main_post_id} = {post.reply.next_post}
-
+                and replying_header.{post.header.is_quotation} = false
+            
             where 
                 replying_header.{post.header.author} = @replier
 
@@ -107,8 +117,8 @@ module User_attention_from_posts =
     let ``try read_attention_from_user``()=
         let result = 
             read_replies_by_user
-                (Twitter_database.open_connection())
-                "yangranat"
+                (Local_database.open_connection())
+                "kristenvbrown"
         ()
         
     let read_all_users
@@ -126,5 +136,5 @@ module User_attention_from_posts =
     let ``try read_all_users``()=
         let result = 
             read_all_users
-                (Twitter_database.open_connection())
+                (Local_database.open_connection())
         ()

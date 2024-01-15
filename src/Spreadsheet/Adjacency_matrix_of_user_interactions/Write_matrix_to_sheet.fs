@@ -78,8 +78,6 @@ module Write_matrix_to_sheet =
                     Google_spreadsheet.doc_id = sheet_document
                     page_name="Everything"
                 }
-                3
-                0.4
                 handle_to_hame
                 all_sorted_users
         |None ->

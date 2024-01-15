@@ -30,14 +30,7 @@ module Color_blending_example =
             List.init 30 (fun index ->
                 index|>string|>User_handle
             )
-        
-        let total_attention =
-            all_sorted_users
-            |>List.map (fun user ->
-                user,
-                10
-            )|>Map.ofList
-        
+
         let likes_interactions =
             all_sorted_users
             |>List.mapi (fun row user ->
@@ -45,12 +38,11 @@ module Color_blending_example =
                 all_sorted_users
                 |>List.mapi(fun column other_user ->
                     other_user,
-                    row%10
+                    row%10 |>float
                 )|>Map.ofList
             )|>Map.ofList
             |>Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
                 likes_color
-                total_attention
                 
         let reposts_interactions =
             all_sorted_users
@@ -59,12 +51,11 @@ module Color_blending_example =
                 all_sorted_users
                 |>List.mapi(fun column other_user ->
                     other_user,
-                    column%10
+                    column%10 |>float
                 )|>Map.ofList
             )|>Map.ofList
             |>Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
                 reposts_color
-                total_attention
         
         let square_side = 10
         let replies_interactions =
@@ -77,18 +68,16 @@ module Color_blending_example =
                     (column/square_side) +
                     (row/square_side)*
                     (all_sorted_users.Length/square_side)
+                    |>float
                 )|>Map.ofList
             )|>Map.ofList
             |>Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
                 replies_color
-                total_attention
        
         let sheet_service = Googlesheet.create_googlesheet_service()       
         Combined_adjacency_matrix.write_combined_interactions_to_googlesheet
             sheet_service
             googlesheet
-            3
-            0.4
             User_handle.value
             all_sorted_users
             [
