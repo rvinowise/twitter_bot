@@ -7,7 +7,7 @@ open DeviceId.Formatters
 open Npgsql
 open Xunit
 open rvinowise.twitter
-open rvinowise.twitter.database
+open rvinowise.twitter.database_schema
 
 open DeviceId
    

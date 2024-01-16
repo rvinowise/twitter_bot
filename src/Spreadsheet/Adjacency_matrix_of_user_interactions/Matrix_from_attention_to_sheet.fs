@@ -30,14 +30,14 @@ module Matrix_from_attention_to_sheet =
                 design.attention_type,
                 
                 let users_attention =
-                    Stitching_user_attention.read_attentions_within_matrix
+                    User_attention_database.read_attentions_within_matrix
                         database
                         matrix_title
                         design.attention_type
                         matrix_datetime        
                 
                 let users_total_attention =
-                    Stitching_user_attention.read_total_attention_from_users
+                    User_attention_database.read_total_attention_from_users
                         database 
                         design.attention_type
                         matrix_datetime
@@ -57,12 +57,12 @@ module Matrix_from_attention_to_sheet =
                 database
                 matrix_title
         
-        // Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
-        //     sheet_service
-        //     doc_id
-        //     titles_and_interactions
-        //     handle_to_name
-        //     sorted_members_of_matrix
+        Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
+            sheet_service
+            doc_id
+            titles_and_interactions
+            handle_to_name
+            sorted_members_of_matrix
             
         Write_matrix_to_sheet.try_write_combined_interactions_to_sheet
             sheet_service
@@ -72,16 +72,17 @@ module Matrix_from_attention_to_sheet =
             sorted_members_of_matrix
          
     
-    let ``stitched_interactions_to_sheet``()=
+    let ``interactions_to_sheet``()=
         
         let doc_id = "1Rb9cGqTb-3OknU_DWuPMBlMpRAV9PHhOvfc1LlN3h6U"
         let matrix_title = "Longevity members"
         
         let central_db = Central_database.open_connection()
+        let local_db = Local_database.open_connection()
         
         let handle_to_name =
             Twitter_user_database.handle_to_username
-                central_db
+                local_db
         
         write_matrices_to_sheet
             (Googlesheet.create_googlesheet_service())

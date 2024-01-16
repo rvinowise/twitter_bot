@@ -5,7 +5,8 @@ open OpenQA.Selenium
 open SeleniumExtras.WaitHelpers
 open canopy.types
 open rvinowise.html_parsing
-open rvinowise.twitter.database.tables
+open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 open rvinowise.web_scraping
 
 open FsUnit

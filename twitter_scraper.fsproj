@@ -76,13 +76,15 @@
     <!-- Databases -->
     <Compile Include="src\database\Database.fs" />
     <Compile Include="src\database\Twitter_database_types.fs" />
-    <Compile Include="src\database\Twitter_database_structure\twitter_database_structure.fs" />
+    <Compile Include="src\database\Twitter_database_structure\post_tables.fs" />
     <Compile Include="src\database\Twitter_database_structure\twitter_activity.fs" />
+    <Compile Include="src\database\Twitter_database_structure\twitter_database_structure.fs" />
     <Compile Include="src\database\Database_connections\Local_database.fs" />
     <Compile Include="src\database\Database_connections\Central_database.fs" />
 
     <Compile Include="src\database\Distribuing_tasks\This_worker.fs" />
     <Compile Include="src\database\Distribuing_tasks\Distributing_jobs_database.fs" />
+    <Compile Include="src\database\Distribuing_tasks\Merging_different_databases.fs" />
     <Compile Include="src\database\Distribuing_tasks\Assigning_browser_profiles.fs" />
     
     <Compile Include="src\database\Twitter_user_database.fs" />
@@ -93,7 +95,7 @@
     
     <Compile Include="src\database\User_interactions\User_attention_from_posts.fs" />
     <Compile Include="src\database\User_interactions\Adjacency_matrix.fs" />
-    <Compile Include="src\database\User_interactions\Stitching_user_attention.fs" />
+    <Compile Include="src\database\User_interactions\User_attention_database.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Adjacency_matrix_helpers.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Single_adjacency_matrix.fs" />

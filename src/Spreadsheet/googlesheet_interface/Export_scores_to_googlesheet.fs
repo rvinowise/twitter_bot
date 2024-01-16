@@ -4,7 +4,8 @@ open System
 open System.Collections.Generic
 open Xunit
 
-open rvinowise.twitter.database.tables
+open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 
 
 

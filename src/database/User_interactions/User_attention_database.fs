@@ -9,8 +9,8 @@ open Npgsql
 open Xunit
 open rvinowise.html_parsing
 open rvinowise.twitter
-open rvinowise.twitter.database
-open rvinowise.twitter.database.tables
+open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 
 
 
@@ -21,24 +21,24 @@ type User_attention = {
     amount: int
 }
 
-module Stitching_user_attention =
+module User_attention_database =
     
     
     let attention_rows_from_posts
         read_interactions
         attention_type
-        (local_attentive_users: Completed_job seq)
+        (scraping_jobs: (User_handle*DateTime) seq)
         =
-        local_attentive_users
-        |>Seq.collect(fun completed_job ->
-            read_interactions completed_job.scraped_user
+        scraping_jobs
+        |>Seq.collect(fun (scraped_user,when_scraped) ->
+            read_interactions scraped_user
             |>Seq.map(fun (target, amount) ->
                 {|
                     attention_type=attention_type
-                    attentive_user=completed_job.scraped_user
+                    attentive_user=scraped_user
                     target=target
                     amount=amount
-                    when_scraped=completed_job.when_completed
+                    when_scraped=when_scraped
                 |}
             )
         )
@@ -65,14 +65,14 @@ module Stitching_user_attention =
         read_interactions
         (target_db:NpgsqlConnection)
         attention_type
-        completed_user_jobs
+        scraping_jobs
         =
             
         let attention_rows =
             attention_rows_from_posts
                 read_interactions
                 attention_type
-                completed_user_jobs
+                scraping_jobs
         
         target_db.BulkInsert(
             $"""insert into {user_attention} (
@@ -127,65 +127,62 @@ module Stitching_user_attention =
         read_interactions
         (database:NpgsqlConnection)
         (attention_type)
-        (local_attentive_users)
+        (scraping_jobs)
         =
         let attention_rows =
             attention_rows_from_posts
                 read_interactions
                 attention_type
-                local_attentive_users
+                scraping_jobs
                 
         attention_rows
         |>Seq.iter (
             update_attention_row_in_database
                 database
         )
-            
-    let upload_all_local_attentions () =
-        let central_db = Central_database.open_connection()
-        let local_db = Local_database.open_connection()
-        
-        // let completed_user_jobs = 
-        //     This_worker.this_worker_id local_db
-        //     |>Distributing_jobs_database.read_jobs_completed_by_worker central_db
-        
-        let user_when_scraped =
-            Distributing_jobs_database.read_last_completed_jobs
-                central_db
-            |>Seq.map(fun job ->
-                job.account,
-                job.when_completed
-            )|>Map.ofSeq
-            
-            
-        let completed_user_jobs =
-            Adjacency_matrix.read_sorted_members_of_matrix
-                central_db
-                "Twitter network"
-            |>List.map (fun account ->
-                {
-                    Completed_job.scraped_user = account
-                    when_completed=
-                        user_when_scraped
-                        |>Map.tryFind account
-                        |>Option.defaultValue DateTime.MinValue
-                }    
-            )
-            
+    
+
+    let upload_attention_of_scraped_users
+        local_db
+        central_db
+        accounts_when_scraped
+        =
         [
             User_attention_from_posts.read_likes_by_user, "Likes"
             User_attention_from_posts.read_reposts_by_user, "Reposts"
             User_attention_from_posts.read_replies_by_user, "Replies"
         ]
-        |>List.iter (fun (read,matrix_name) -> 
+        |>List.iter (fun (read_attention_type,matrix_name) -> 
             upload_all_users_attention
             //update_all_users_attention_in_database
-                (read local_db)
+                (read_attention_type local_db)
                 central_db
                 matrix_name
-                completed_user_jobs
+                accounts_when_scraped
         )
+    
+    let upload_last_scraped_attentions () =
+        let central_db = Central_database.open_connection()
+        let local_db = Local_database.open_connection()
+        
+        Distributing_jobs_database.read_last_completed_jobs
+            central_db
+        |>upload_attention_of_scraped_users
+            local_db
+            central_db
             
+    let upload_all_local_attentions () =
+        let central_db = Central_database.open_connection()
+        let local_db = Local_database.open_connection()
+        
+        This_worker.this_worker_id local_db
+        |>Distributing_jobs_database.read_jobs_completed_by_worker central_db
+        |>upload_attention_of_scraped_users
+            local_db
+            central_db
+        
+            
+        
     
     let rows_of_user_attention_to_maps
         rows

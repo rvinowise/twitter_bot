@@ -6,8 +6,8 @@ open System
 open Dapper
 open Npgsql
 open Xunit
-open rvinowise.twitter.database
-open rvinowise.twitter.database.tables
+open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 
 module Social_activity_database =
     

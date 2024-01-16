@@ -5,7 +5,7 @@ namespace rvinowise.twitter
 open Dapper
 open Npgsql
 open rvinowise.twitter
-open rvinowise.twitter.database
+open rvinowise.twitter.database_schema
 
 module Twitter_user_database =
     
@@ -19,12 +19,20 @@ module Twitter_user_database =
         |>Seq.map(fun user->user.handle, user.name)
         |>Map.ofSeq
     
+    let read_usernames_map_from_briefing
+        (db_connection: NpgsqlConnection)
+        =
+        db_connection.Query<Twitter_user>(
+            $"select * from {tables.user_briefing}"
+        )
+        |>Seq.map(fun user->user.handle, user.name)
+        |>Map.ofSeq
     
     let handle_to_username
         (database: NpgsqlConnection)
         =
         let usernames =
-            read_usernames_map
+            read_usernames_map_from_briefing
                 database
         let handle_to_hame handle =
             usernames
@@ -63,7 +71,7 @@ module Twitter_user_database =
         =
         Log.info $"writing briefing of {User_handle.value user.handle} to DB"
         
-        db_connection.Query<Twitter_user>(
+        db_connection.Query<unit>(
             $"insert into {tables.user_briefing} (
                 {tables.user_briefing.handle},
                 {tables.user_briefing.name},

@@ -4,7 +4,7 @@ open System
 open Dapper
 open Npgsql
 
-open rvinowise.twitter.database
+open rvinowise.twitter.database_schema
 
 
 module Social_following_database =

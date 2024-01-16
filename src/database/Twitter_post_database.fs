@@ -5,7 +5,7 @@ open Dapper
 open Npgsql
 open Xunit
 open rvinowise.twitter
-open rvinowise.twitter.database
+open rvinowise.twitter.database_schema
 open rvinowise.web_scraping
 
 
@@ -496,21 +496,25 @@ module Twitter_post_database =
     let write_poll_choice
         (db_connection: NpgsqlConnection)
         (choice: Poll_choice)
+        index
         (post_id: Post_id)
         =
         db_connection.Query(
             $"insert into {tables.post.poll_choice} (
                 {tables.post.poll_choice.post_id},
+                {tables.post.poll_choice.index},
                 {tables.post.poll_choice.text},
                 {tables.post.poll_choice.votes_percent}
             )
             values (
                 @post_id,
+                @index,
                 @text,
                 @votes_percent
             )
             on conflict (
-                {tables.post.poll_choice.post_id}
+                {tables.post.poll_choice.post_id},
+                {tables.post.poll_choice.index}
             )
             do update set (
                 {tables.post.poll_choice.text},
@@ -519,6 +523,7 @@ module Twitter_post_database =
             = (@text, @votes_percent)",
             {|
                 post_id=post_id
+                index=index
                 text=choice.text
                 votes_percent=choice.votes_percent
             |}
@@ -631,10 +636,11 @@ module Twitter_post_database =
         (poll: Poll)
         =
         poll.choices
-        |>List.iter (fun choice ->
+        |>List.iteri (fun index choice ->
             write_poll_choice
                 db_connection
                 choice
+                index
                 post_id
         )
         write_poll_summary    

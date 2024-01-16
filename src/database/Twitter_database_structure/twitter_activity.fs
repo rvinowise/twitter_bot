@@ -1,4 +1,4 @@
-﻿namespace rvinowise.twitter.database
+﻿namespace rvinowise.twitter.database_schema
 
 open System
 open rvinowise.twitter

@@ -6,8 +6,8 @@ open Npgsql
 open Dapper
 open Xunit
 
-open rvinowise.twitter.database.tables
-open rvinowise.twitter.database
+open rvinowise.twitter.database_schema.tables
+open rvinowise.twitter.database_schema
 
 
 

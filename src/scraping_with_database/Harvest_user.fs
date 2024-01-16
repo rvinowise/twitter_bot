@@ -38,4 +38,21 @@ module Harvest_user =
     
     
     
-   
+    let harvest_members_of_matrix()=
+        let browser = Browser.open_browser()
+        let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
+        let central_database = Central_database.open_connection()
+        let local_database = Local_database.open_connection()
+        
+        let matrix_members =
+            Adjacency_matrix.read_sorted_members_of_matrix
+                central_database
+                "Longevity members"
+                
+        matrix_members
+        |>List.iter (
+            harvest_top_of_user_page
+                browser
+                html_context
+                local_database
+        )

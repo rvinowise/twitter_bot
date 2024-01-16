@@ -7,8 +7,8 @@ open DeviceId.Formatters
 open Npgsql
 open Xunit
 open rvinowise.twitter
-open rvinowise.twitter.database
-open rvinowise.twitter.database.tables
+open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 
 open DeviceId
    
@@ -306,6 +306,8 @@ module Distributing_jobs_database =
             {|
                 worker = worker
             |}
+        )|>Seq.map(fun job ->
+            job.scraped_user,job.when_completed    
         )
     
         
@@ -332,6 +334,8 @@ module Distributing_jobs_database =
                     )
                 and {user_to_scrape.status} = 'Success'
             "
+        )|>Seq.map(fun job ->
+            job.account,job.when_completed    
         )
     
     

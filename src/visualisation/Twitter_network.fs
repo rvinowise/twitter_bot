@@ -5,7 +5,8 @@ open Xunit
 open FsUnit
 
 open Plotly.NET
-open rvinowise.twitter.database.tables
+open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 
 module Twitter_network =
     

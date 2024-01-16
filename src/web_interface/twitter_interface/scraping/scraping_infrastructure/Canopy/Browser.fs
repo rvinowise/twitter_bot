@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.web_scraping
 
 open System
+open System.IO
 open OpenQA.Selenium
 open OpenQA.Selenium.Chrome
 open OpenQA.Selenium.Interactions
@@ -27,9 +28,13 @@ module Browser =
     let ensure_webdriver_is_downloaded version =
         let webdriver_download_path =
             $"""https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{version}/win64/chromedriver-win64.zip"""
-            //$"""chrome-win64.zip"""
         let local_webdriver_path =
-            $"""{AppDomain.CurrentDomain.BaseDirectory}webdriver\{version}\X64\"""
+            //$"""{AppDomain.CurrentDomain.BaseDirectory}webdriver\{version}\X64\"""
+            Path.Combine [|
+                Settings.browser.profiles_root
+                $"""webdriver\{version}\X64\"""    
+            |]
+            
         WebDriverManager.DriverManager().SetUpDriver(
             webdriver_download_path,
             local_webdriver_path+"chromedriver.exe"

@@ -10,8 +10,8 @@ open Xunit
 open rvinowise.html_parsing
 open rvinowise.twitter
 open rvinowise.twitter.Settings.Influencer_competition
-open rvinowise.twitter.database
-open rvinowise.twitter.database.tables
+open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 
 
 
