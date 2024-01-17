@@ -15,7 +15,13 @@ module Harvest_user =
         user
         =
         Log.info $"harvesting bio of user {User_handle.value user}"
-        Reveal_user_page.reveal_user_page browser user
+        
+        try
+            Reveal_user_page.reveal_user_page browser user
+        with
+        | :? WebDriverException as exc ->
+            $"can't reveal the page of user {User_handle.value user}: {exc.Message}"
+            |>Log.error|>ignore
         
         try 
             user
@@ -45,11 +51,15 @@ module Harvest_user =
         let local_database = Local_database.open_connection()
         
         let matrix_members =
-            Adjacency_matrix.read_sorted_members_of_matrix
+            Adjacency_matrix.read_members_of_matrix
                 central_database
                 "Longevity members"
-                
+        
+        let known_names =
+            Twitter_user_database.read_usernames_map_from_briefing local_database
+        
         matrix_members
+        |>List.filter (fun account -> Map.containsKey account known_names |> not)
         |>List.iter (
             harvest_top_of_user_page
                 browser

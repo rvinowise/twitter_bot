@@ -19,6 +19,7 @@ type User_attention = {
     attentive_user: User_handle
     target: User_handle
     amount: int
+    attention_type: string
 }
 
 module User_attention_database =
@@ -232,7 +233,7 @@ module User_attention_database =
         let test = inner_sql_reading_closest_scraped_date DateTime.Now
         ()
     
-    let read_attentions_within_matrix
+    let read_attention_within_matrix
         (database:NpgsqlConnection)
         matrix_title
         attention_type
@@ -267,6 +268,38 @@ module User_attention_database =
         )
         |>rows_of_user_attention_to_maps
         
+    
+    let read_combined_attention_within_matrix
+        (database:NpgsqlConnection)
+        matrix_title
+        datetime
+        =
+        database.Query<User_attention>(
+            $"""
+            select * 
+            from {user_attention} as main_attention
+            where 
+                --the target of attention should be part of the desired matrix
+                exists ( 
+                    select ''
+                    from {account_of_matrix}
+                    where 
+                        --find the matrix by title
+                        {account_of_matrix.title} = @matrix_title
+                        
+                        --the target of attention should be part of the matrix
+                        and {account_of_matrix.account} = main_attention.{user_attention.target}
+                )
+                --take only attentions with the closest scraping datetime 
+                and main_attention.{user_attention.when_scraped} = {inner_sql_reading_closest_scraped_date datetime}
+                
+            order by main_attention.{user_attention.attentive_user}, main_attention.{user_attention.target}
+            """,
+            {|
+                matrix_title = matrix_title
+            |}
+        )
+        |>rows_of_user_attention_to_maps
     
     [<CLIMutable>]
     type User_total_attention = {
@@ -307,10 +340,39 @@ module User_attention_database =
         |>Seq.map (fun attention -> attention.attentive_user, attention.total_amount)
         |>Map.ofSeq
     
+    let read_total_combined_attention_from_users
+        (database:NpgsqlConnection)
+        datetime
+        =
+        
+        database.Query<User_total_attention>(
+            (* select total attention values for all users of the matrix,
+            to calculate the percentage of their attention to the targets from the matrix
+            *)
+            $"""
+            select 
+                {user_attention.attentive_user}, 
+                sum({user_attention.amount}) as total_amount
+            from 
+                {user_attention} as main_attention
+            where 
+                --take only attentions with the closest scraping datetime 
+                main_attention.{user_attention.when_scraped} = {inner_sql_reading_closest_scraped_date datetime}
+
+            group by {user_attention.attentive_user}
+
+            order by main_attention.{user_attention.attentive_user}
+            """,
+            {|
+                datetime=datetime
+            |}
+        )
+        |>Seq.map (fun attention -> attention.attentive_user, attention.total_amount)
+        |>Map.ofSeq
    
     let ``try read_attentions_within_matrix``()=
         let result =
-            read_attentions_within_matrix
+            read_attention_within_matrix
                 (Central_database.open_connection())
                 "Longevity members"
                 "Likes"

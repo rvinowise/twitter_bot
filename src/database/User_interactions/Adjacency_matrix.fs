@@ -18,9 +18,38 @@ open rvinowise.twitter.database_schema.tables
 
 module Adjacency_matrix =
     
+    let read_members_of_matrix_sorted_by_received_attention
+        (database:NpgsqlConnection)
+        matrix_title
+        =
+        database.Query<User_handle>(
+            $"""
+            select *
+            from 
+                {account_of_matrix} as account_of_matrix
+            inner join (
+                    select 
+                        {user_attention.target},
+                        sum({user_attention.amount}) as total_received_attention
+                    from 
+                        {user_attention}
+                    group by 
+                        {user_attention.target}
+                ) as received_attention
+                on 
+                    received_attention.{user_attention.target} = account_of_matrix.{account_of_matrix.account}
+            where 
+                account_of_matrix.{account_of_matrix.title} = @matrix_title
+            order by 
+                received_attention.total_received_attention desc
+            """,
+            {|
+                matrix_title=matrix_title
+            |}
+        )
+        |>List.ofSeq
     
-    
-    let read_sorted_members_of_matrix
+    let read_members_of_matrix
         (database:NpgsqlConnection)
         matrix_title
         =
@@ -39,7 +68,7 @@ module Adjacency_matrix =
     
     let ``try inner_sql_reading_closest_scraped_date``()=
         let test =
-            read_sorted_members_of_matrix
+            read_members_of_matrix
                 (Central_database.open_connection())
                 "Longevity members"
                 

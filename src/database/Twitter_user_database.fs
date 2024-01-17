@@ -6,6 +6,7 @@ open Dapper
 open Npgsql
 open rvinowise.twitter
 open rvinowise.twitter.database_schema
+open rvinowise.twitter.database_schema.tables
 
 module Twitter_user_database =
     
@@ -14,7 +15,7 @@ module Twitter_user_database =
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<Twitter_user>(
-            $"select * from {tables.user_name}"
+            $"select * from {user_name}"
         )
         |>Seq.map(fun user->user.handle, user.name)
         |>Map.ofSeq
@@ -23,7 +24,14 @@ module Twitter_user_database =
         (db_connection: NpgsqlConnection)
         =
         db_connection.Query<Twitter_user>(
-            $"select * from {tables.user_briefing}"
+            $"""
+            select distinct on ({user_briefing.handle}) 
+                {user_briefing.handle}, {user_briefing.name}
+            from {user_briefing}
+            group by {user_briefing.handle}, {user_briefing.name}, {user_briefing.created_at}
+            order by {user_briefing.handle}, {user_briefing.created_at} desc
+            
+            """
         )
         |>Seq.map(fun user->user.handle, user.name)
         |>Map.ofSeq
@@ -49,13 +57,13 @@ module Twitter_user_database =
         |>Seq.iter(fun user ->
             db_connection.Query<Twitter_user>(
                 $"""
-                insert into {tables.user_name} (
-                   {tables.user_name.handle}, 
-                   {tables.user_name.name}
+                insert into {user_name} (
+                   {user_name.handle}, 
+                   {user_name.name}
                 )
                 values (@handle, @name)
-                on conflict ({tables.user_name.handle}) 
-                do update set {tables.user_name.name} = @name
+                on conflict ({user_name.handle}) 
+                do update set {user_name.name} = @name
                 """,
                 {|
                     handle = User_handle.db_value user.handle
@@ -72,14 +80,14 @@ module Twitter_user_database =
         Log.info $"writing briefing of {User_handle.value user.handle} to DB"
         
         db_connection.Query<unit>(
-            $"insert into {tables.user_briefing} (
-                {tables.user_briefing.handle},
-                {tables.user_briefing.name},
-                {tables.user_briefing.bio},
-                {tables.user_briefing.location},
-                {tables.user_briefing.date_joined},
-                {tables.user_briefing.web_site},
-                {tables.user_briefing.profession}
+            $"insert into {user_briefing} (
+                {user_briefing.handle},
+                {user_briefing.name},
+                {user_briefing.bio},
+                {user_briefing.location},
+                {user_briefing.date_joined},
+                {user_briefing.web_site},
+                {user_briefing.profession}
             )
             values (
                 @handle,
@@ -91,17 +99,17 @@ module Twitter_user_database =
                 @profession
             )
             on conflict (
-                {tables.user_briefing.created_at}, 
-                {tables.user_briefing.handle}
+                {user_briefing.created_at}, 
+                {user_briefing.handle}
             ) 
             do update set 
             (
-                {tables.user_briefing.name}, 
-                {tables.user_briefing.bio}, 
-                {tables.user_briefing.location},
-                {tables.user_briefing.date_joined},
-                {tables.user_briefing.web_site},
-                {tables.user_briefing.profession}
+                {user_briefing.name}, 
+                {user_briefing.bio}, 
+                {user_briefing.location},
+                {user_briefing.date_joined},
+                {user_briefing.web_site},
+                {user_briefing.profession}
             ) = 
             (
                 @name,

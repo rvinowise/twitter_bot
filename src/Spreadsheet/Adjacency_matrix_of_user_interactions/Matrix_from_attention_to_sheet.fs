@@ -11,7 +11,56 @@ this module exports them into the google sheet as a matrix *)
 module Matrix_from_attention_to_sheet =
     
 
+    let accounts_to_received_attention_map
+        (users_attention: Map<User_handle, Map<User_handle, float>>)
+        =
+        users_attention
+        |>Map.toSeq
+        |>Seq.fold(fun received_attention (attentive_user, attention_from_user) ->
+            attention_from_user
+            |>Map.fold(fun received_attention attention_target attention_amount ->
+                let old_received_attention =
+                    received_attention
+                    |>Map.tryFind attention_target
+                    |>Option.defaultValue 0.0
+                
+                received_attention
+                |>Map.add attention_target (old_received_attention+attention_amount)
+            )
+                received_attention
+        )
+            Map.empty
     
+    let accounts_sorted_by_received_attention
+        (users_attention: Map<User_handle, Map<User_handle, float>>)
+        =
+        users_attention
+        |>accounts_to_received_attention_map
+        |>Map.toList
+        |>List.sortByDescending snd
+        |>List.map fst
+    
+    let accounts_sorted_by_received_combined_attention
+        database
+        matrix_title
+        matrix_datetime
+        =
+        let users_attention =
+            User_attention_database.read_combined_attention_within_matrix
+                database
+                matrix_title
+                matrix_datetime
+        
+        let users_total_attention =
+            User_attention_database.read_total_combined_attention_from_users
+                database 
+                matrix_datetime
+        
+        Adjacency_matrix_helpers.absolute_attention_to_percents
+            users_attention
+            users_total_attention
+        |>accounts_sorted_by_received_attention
+        
     let write_matrices_to_sheet
         sheet_service
         (database: NpgsqlConnection)
@@ -30,11 +79,11 @@ module Matrix_from_attention_to_sheet =
                 design.attention_type,
                 
                 let users_attention =
-                    User_attention_database.read_attentions_within_matrix
+                    User_attention_database.read_attention_within_matrix
                         database
                         matrix_title
                         design.attention_type
-                        matrix_datetime        
+                        matrix_datetime
                 
                 let users_total_attention =
                     User_attention_database.read_total_attention_from_users
@@ -53,9 +102,10 @@ module Matrix_from_attention_to_sheet =
             )
         
         let sorted_members_of_matrix =
-            Adjacency_matrix.read_sorted_members_of_matrix
+            accounts_sorted_by_received_combined_attention
                 database
                 matrix_title
+                matrix_datetime  
         
         Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
             sheet_service
