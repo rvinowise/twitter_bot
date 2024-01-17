@@ -89,7 +89,7 @@ module Adjacency_matrix_helpers =
                 )
             }
     
-    let absolute_attention_to_percents
+    let absolute_to_relative_attention
         (absolute_attention: Map<User_handle, Map<User_handle, int>>)
         (total_attention: Map<User_handle, int>)
         =

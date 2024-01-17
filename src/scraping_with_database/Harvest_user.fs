@@ -51,7 +51,7 @@ module Harvest_user =
         let local_database = Local_database.open_connection()
         
         let matrix_members =
-            Adjacency_matrix.read_members_of_matrix
+            Adjacency_matrix_database.read_members_of_matrix
                 central_database
                 "Longevity members"
         

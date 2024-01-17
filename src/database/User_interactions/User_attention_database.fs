@@ -276,8 +276,12 @@ module User_attention_database =
         =
         database.Query<User_attention>(
             $"""
-            select * 
-            from {user_attention} as main_attention
+            select
+                {user_attention.attentive_user},
+                {user_attention.target},
+                sum({user_attention.amount}) as amount
+            from
+                {user_attention} as main_attention
             where 
                 --the target of attention should be part of the desired matrix
                 exists ( 
@@ -292,6 +296,10 @@ module User_attention_database =
                 )
                 --take only attentions with the closest scraping datetime 
                 and main_attention.{user_attention.when_scraped} = {inner_sql_reading_closest_scraped_date datetime}
+            
+            group by 
+                {user_attention.attentive_user},
+                {user_attention.target}
                 
             order by main_attention.{user_attention.attentive_user}, main_attention.{user_attention.target}
             """,

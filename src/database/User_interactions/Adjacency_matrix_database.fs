@@ -16,7 +16,7 @@ open rvinowise.twitter.database_schema.tables
 
 
 
-module Adjacency_matrix =
+module Adjacency_matrix_database =
     
     let read_members_of_matrix_sorted_by_received_attention
         (database:NpgsqlConnection)

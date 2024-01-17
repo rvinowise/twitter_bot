@@ -11,7 +11,7 @@ this module exports them into the google sheet as a matrix *)
 module Matrix_from_attention_to_sheet =
     
 
-    let accounts_to_received_attention_map
+    let accounts_to_their_received_attention
         (users_attention: Map<User_handle, Map<User_handle, float>>)
         =
         users_attention
@@ -31,20 +31,40 @@ module Matrix_from_attention_to_sheet =
         )
             Map.empty
     
+    let accounts_to_their_paid_attention
+        (users_attention: Map<User_handle, Map<User_handle, float>>)
+        =
+        users_attention
+        |>Map.toSeq
+        |>Seq.map(fun (attentive_user,paid_attention) ->
+            attentive_user,
+            paid_attention
+            |>Map.toSeq
+            |>Seq.map snd
+            |>Seq.reduce (+)
+        )|>Map.ofSeq
+    
     let accounts_sorted_by_received_attention
         (users_attention: Map<User_handle, Map<User_handle, float>>)
         =
         users_attention
-        |>accounts_to_received_attention_map
+        |>accounts_to_their_received_attention
         |>Map.toList
         |>List.sortByDescending snd
         |>List.map fst
     
-    let accounts_sorted_by_received_combined_attention
+    let accounts_sorted_by_integration_into_network
         database
         matrix_title
         matrix_datetime
         =
+        let all_matrix_members =
+            Adjacency_matrix_database.read_members_of_matrix
+                database
+                matrix_title
+            |>List.map (fun account -> account,0.0)
+            
+            
         let users_attention =
             User_attention_database.read_combined_attention_within_matrix
                 database
@@ -56,11 +76,36 @@ module Matrix_from_attention_to_sheet =
                 database 
                 matrix_datetime
         
-        Adjacency_matrix_helpers.absolute_attention_to_percents
-            users_attention
-            users_total_attention
-        |>accounts_sorted_by_received_attention
+        let relative_attention =
+            Adjacency_matrix_helpers.absolute_to_relative_attention
+                users_attention
+                users_total_attention
         
+        let paid_attention =
+            relative_attention
+            |>accounts_to_their_paid_attention
+        
+        let received_attention =
+            relative_attention
+            |>accounts_to_their_received_attention
+        
+        all_matrix_members
+        |>List.append (Map.toList paid_attention)
+        |>List.append (Map.toList received_attention)
+        |>List.fold(fun network_integrations (user,value) ->
+            let old_network_integration =
+                network_integrations
+                |>Map.tryFind user
+                |>Option.defaultValue 0.0
+            
+            network_integrations
+            |>Map.add user (value+old_network_integration)
+        )
+            Map.empty
+        
+        |>Map.toList
+        |>List.sortByDescending snd
+
     let write_matrices_to_sheet
         sheet_service
         (database: NpgsqlConnection)
@@ -92,7 +137,7 @@ module Matrix_from_attention_to_sheet =
                         matrix_datetime
                 
                 let users_relative_attention =
-                    Adjacency_matrix_helpers.absolute_attention_to_percents
+                    Adjacency_matrix_helpers.absolute_to_relative_attention
                         users_attention
                         users_total_attention
                 
@@ -102,11 +147,12 @@ module Matrix_from_attention_to_sheet =
             )
         
         let sorted_members_of_matrix =
-            accounts_sorted_by_received_combined_attention
+            accounts_sorted_by_integration_into_network
                 database
                 matrix_title
                 matrix_datetime  
-        
+            |>List.map fst
+            
         Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
             sheet_service
             doc_id

@@ -94,7 +94,7 @@
     <Compile Include="src\database\Twitter_following_database.fs" />
     
     <Compile Include="src\database\User_interactions\User_attention_from_posts.fs" />
-    <Compile Include="src\database\User_interactions\Adjacency_matrix.fs" />
+    <Compile Include="src\database\User_interactions\Adjacency_matrix_database.fs" />
     <Compile Include="src\database\User_interactions\User_attention_database.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
     <Compile Include="src\Spreadsheet\Adjacency_matrix_of_user_interactions\Adjacency_matrix_helpers.fs" />
