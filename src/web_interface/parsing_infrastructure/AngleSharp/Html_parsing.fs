@@ -95,8 +95,9 @@ module Html_node =
             |>ArgumentException
             |>raise
         else
-            Log.error $"expected one element, but there's {Seq.length seq}"|>ignore
-            Seq.head seq
+            $"expected one element, but there's {Seq.length seq}"
+            |>ArgumentException
+            |>raise
     
     let descendant css (node:Html_node) =
         node

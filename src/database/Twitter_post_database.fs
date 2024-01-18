@@ -291,7 +291,7 @@ module Twitter_post_database =
                 {tables.post.twitter_space.title},
                 {tables.post.twitter_space.audience_amount}
             )
-            = (@message, @show_more_url, @is_abbreviated)
+            = (@host, @title, @audience_amount)
             ",
             {|
                 main_post_id=main_post_id

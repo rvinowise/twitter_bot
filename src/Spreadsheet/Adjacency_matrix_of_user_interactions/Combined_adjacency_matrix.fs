@@ -1,5 +1,6 @@
 ﻿namespace rvinowise.twitter
 
+open System.Globalization
 open rvinowise.twitter
 open rvinowise.web_scraping
 open Xunit
@@ -110,7 +111,14 @@ module Combined_adjacency_matrix =
         let values_to_text
             (interactions: float list)
             =
-            sprintf "%.3g\n%.3g,%.3g" (interactions[0]*100.0) (interactions[1]*100.0) (interactions[2]*100.0)
+            //sprintf "%.3g\n%.3g,%.3g" (interactions[0]*100.0) (interactions[1]*100.0) (interactions[2]*100.0)
+            System.String.Format(
+                NumberFormatInfo.InvariantInfo,
+                "{0:0.##}\n{1:0.##},{2:0.##}",
+                interactions[0]*100.0,
+                interactions[1]*100.0,
+                interactions[2]*100.0
+            )
         
         let values_to_color =
             compound_interactions_to_intensity_colors_functions

@@ -51,15 +51,16 @@ module Parse_twitter_audio_space =
         match placement_tracking_node with
         |Some placement_tracking_node ->
             placement_tracking_node
-            |>Html_node.try_descendant "div[role='button'] span > span"
+            |>Html_node.descendants "div[role='button'] span > span"
+            |>List.exists(fun button_node ->
+                Html_node.inner_text button_node = "Follow host"
+                ||
+                Html_node.inner_text button_node = "Play recording"
+            )
             |>function
-            |Some potential_follow_button ->
-                if
-                    (potential_follow_button|>Html_node.inner_text = "Follow host")
-                then
-                    Some placement_tracking_node
-                else None
-            |None -> None
+            |false -> None
+            |true ->
+                Some placement_tracking_node
         |None -> None
         
     let try_parse_twitter_audio_space

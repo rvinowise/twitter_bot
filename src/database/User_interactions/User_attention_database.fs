@@ -233,6 +233,35 @@ module User_attention_database =
         let test = inner_sql_reading_closest_scraped_date DateTime.Now
         ()
     
+    
+    let sql_condition_filtering_only_matrix_members
+        =
+        $"""
+        --the attentive user should be part of the desired matrix
+        exists ( 
+            select ''
+            from {account_of_matrix}
+            where 
+                --find the matrix by title
+                {account_of_matrix.title} = @matrix_title
+                
+                --the target of attention should be part of the matrix
+                and {account_of_matrix.account} = main_attention.{user_attention.attentive_user}
+        )
+        
+        --the target of attention should be part of the desired matrix
+        and exists ( 
+            select ''
+            from {account_of_matrix}
+            where 
+                --find the matrix by title
+                {account_of_matrix.title} = @matrix_title
+                
+                --the target of attention should be part of the matrix
+                and {account_of_matrix.account} = main_attention.{user_attention.target}
+        )
+        """
+    
     let read_attention_within_matrix
         (database:NpgsqlConnection)
         matrix_title
@@ -243,18 +272,8 @@ module User_attention_database =
             $"""
             select * 
             from {user_attention} as main_attention
-            where 
-                --the target of attention should be part of the desired matrix
-                exists ( 
-                    select ''
-                    from {account_of_matrix}
-                    where 
-                        --find the matrix by title
-                        {account_of_matrix.title} = @matrix_title
-                        
-                        --the target of attention should be part of the matrix
-                        and {account_of_matrix.account} = main_attention.{user_attention.target}
-                )
+            where
+                {sql_condition_filtering_only_matrix_members}
                 --take only attentions with the closest scraping datetime 
                 and main_attention.{user_attention.when_scraped} = {inner_sql_reading_closest_scraped_date datetime}
                 
@@ -283,17 +302,8 @@ module User_attention_database =
             from
                 {user_attention} as main_attention
             where 
-                --the target of attention should be part of the desired matrix
-                exists ( 
-                    select ''
-                    from {account_of_matrix}
-                    where 
-                        --find the matrix by title
-                        {account_of_matrix.title} = @matrix_title
-                        
-                        --the target of attention should be part of the matrix
-                        and {account_of_matrix.account} = main_attention.{user_attention.target}
-                )
+                {sql_condition_filtering_only_matrix_members}
+                
                 --take only attentions with the closest scraping datetime 
                 and main_attention.{user_attention.when_scraped} = {inner_sql_reading_closest_scraped_date datetime}
             

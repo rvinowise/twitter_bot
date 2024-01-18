@@ -14,9 +14,18 @@ open rvinowise.twitter.database_schema
 open rvinowise.twitter.database_schema.tables
 
 
+type Adjacency_matrix =
+    |Longevity_members
+    |Twitter_network
+    with
+    override this.ToString() =
+        match this with
+        |Longevity_members -> "Longevity members"
+        |Twitter_network -> "Twitter network"
 
 
 module Adjacency_matrix_database =
+    
     
     let read_members_of_matrix_sorted_by_received_attention
         (database:NpgsqlConnection)
@@ -51,7 +60,7 @@ module Adjacency_matrix_database =
     
     let read_members_of_matrix
         (database:NpgsqlConnection)
-        matrix_title
+        (matrix_title: Adjacency_matrix)
         =
         database.Query<User_handle>(
             $"select
@@ -61,7 +70,7 @@ module Adjacency_matrix_database =
             where
                 {account_of_matrix.title} = @title",
             {|
-                title=matrix_title
+                title=(string matrix_title)
             |}
         )
         |>List.ofSeq    
@@ -70,7 +79,7 @@ module Adjacency_matrix_database =
         let test =
             read_members_of_matrix
                 (Central_database.open_connection())
-                "Longevity members"
+                Adjacency_matrix.Longevity_members
                 
         ()
     

@@ -3,10 +3,13 @@
 open System
 open System.Collections.Generic
 
+open System.Threading.Tasks
+open Google
 open Google.Apis.Sheets.v4
 open Google.Apis.Sheets.v4.Data
 open Xunit
 open rvinowise.twitter
+open rvinowise.twitter.Settings.Influencer_competition
 
 
 
@@ -216,6 +219,42 @@ module Googlesheet_writing =
             )
         service.Spreadsheets.BatchUpdate(batch, sheet.doc_id).Execute()
     
+    let rec write_chunk_resiliently
+        (service: SheetsService)
+        (sheet: Google_spreadsheet)
+        starting_row
+        rows
+        =
+        let service,result =
+            try
+                service,
+                write_chunk
+                    service
+                    sheet
+                    starting_row
+                    rows
+                |>Some
+            with
+            | :? TaskCanceledException
+            | :? GoogleApiException as exc ->
+                $"""exception when writing {Seq.length rows} rows starting from {starting_row}
+                into sheet "{sheet.doc_id}", "{sheet.page_name}":
+                {exc.Message}
+                """
+                |>Log.error|>ignore
+                
+                Googlesheet.create_googlesheet_service(),None
+        
+        match result with
+        |None ->
+            write_chunk_resiliently
+                service
+                sheet
+                starting_row
+                rows
+        |Some result ->
+            service,result
+        
     let write_table 
         (service: SheetsService)
         (sheet: Google_spreadsheet)
@@ -234,16 +273,18 @@ module Googlesheet_writing =
         
         all_rows
         |>List.chunkBySize rows_amount_in_chunk
-        |>List.iteri (fun chunk_index rows ->
-            write_chunk
+        |>List.indexed
+        |>List.fold (fun service (chunk_index,rows) ->
+            write_chunk_resiliently
                 service
                 sheet
                 (chunk_index*rows_amount_in_chunk)
                 rows
-            |>ignore
+            |>fst
         )
+            service
+        |>ignore
            
-        ()
     
     let ``try write table``() =
         

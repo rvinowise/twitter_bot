@@ -44,7 +44,7 @@ module Harvest_user =
     
     
     
-    let harvest_members_of_matrix()=
+    let harvest_members_of_matrix_briefing()=
         let browser = Browser.open_browser()
         let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
         let central_database = Central_database.open_connection()
@@ -53,7 +53,7 @@ module Harvest_user =
         let matrix_members =
             Adjacency_matrix_database.read_members_of_matrix
                 central_database
-                "Longevity members"
+                Adjacency_matrix.Longevity_members
         
         let known_names =
             Twitter_user_database.read_usernames_map_from_briefing local_database

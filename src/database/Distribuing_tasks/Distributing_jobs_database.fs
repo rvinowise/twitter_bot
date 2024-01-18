@@ -2,6 +2,7 @@ namespace rvinowise.twitter
 
 open System
 open Dapper
+open Faithlife.Utility.Dapper
 open DeviceId.Encoders
 open DeviceId.Formatters
 open Npgsql
@@ -13,11 +14,6 @@ open rvinowise.twitter.database_schema.tables
 open DeviceId
    
 
-[<CLIMutable>]
-type Completed_job = {
-    scraped_user: User_handle
-    when_completed: DateTime
-}
 
 [<CLIMutable>]
 type User_scraping_job = {
@@ -32,7 +28,10 @@ type User_scraping_job = {
 
 module Distributing_jobs_database =
     
-      
+    let sql_taking_only_jobs_from_last_batch =
+        $"""
+        {user_to_scrape.created_at} = (SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape})
+        """
 
     let take_next_free_job
         (central_db: NpgsqlConnection)
@@ -51,7 +50,7 @@ module Distributing_jobs_database =
                     {user_to_scrape.account} = (
                         select {user_to_scrape.account} from {user_to_scrape}
                         where 
-                            {user_to_scrape.created_at} = (SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape})
+                            {sql_taking_only_jobs_from_last_batch}
                             and {user_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Free}'
                             and {user_to_scrape.taken_by} = ''
                         limit 1
@@ -109,9 +108,9 @@ module Distributing_jobs_database =
         db_connection.Query<User_handle>(
             $"select * from {user_to_scrape}
             where 
-                created_at = (SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape})
-                and status = 'Free'
-                and taken_by = ''
+                {sql_taking_only_jobs_from_last_batch}
+                and {user_to_scrape.status} = 'Free'
+                and {user_to_scrape.taken_by} = ''
             "
         )
     
@@ -122,9 +121,7 @@ module Distributing_jobs_database =
         db_connection.Query<string>(
             $"select {user_to_scrape.taken_by} from {user_to_scrape}
             where 
-                {user_to_scrape.created_at} = (
-                        SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
-                    )
+                {sql_taking_only_jobs_from_last_batch}
                 and {user_to_scrape.account} = @user
                 and not {user_to_scrape.taken_by} = ''
             ",
@@ -153,7 +150,8 @@ module Distributing_jobs_database =
             set 
                 {user_to_scrape.status}  = @status
             where 
-                {user_to_scrape.account} = @user",
+                {sql_taking_only_jobs_from_last_batch}
+                and {user_to_scrape.account} = @user",
             {|
                 status = status
                 handle = user
@@ -209,14 +207,17 @@ module Distributing_jobs_database =
             user_task
             
         db_connection.Query<User_handle>(
-            $"update {user_to_scrape} 
+            $"
+            update {user_to_scrape} 
             set
                 {user_to_scrape.status}  = @status,
                 {user_to_scrape.posts_amount} = @posts_amount,
                 {user_to_scrape.likes_amount} = @likes_amount,
                 {user_to_scrape.when_completed} = @when_completed
-            where 
-                {user_to_scrape.account} = @handle",
+            where
+                {sql_taking_only_jobs_from_last_batch}
+                and {user_to_scrape.account} = @handle
+            ",
             {|
                 handle = user_task
                 posts_amount = posts_amount
@@ -272,9 +273,7 @@ module Distributing_jobs_database =
         database.Query<User_handle>(
             $"select {user_to_scrape.account} from {user_to_scrape}
             where 
-                {user_to_scrape.created_at} = (
-                        SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
-                    )
+                {sql_taking_only_jobs_from_last_batch}
                 and {user_to_scrape.status} = @status
             ",
             {|
@@ -291,15 +290,13 @@ module Distributing_jobs_database =
             |>Scraping_user_status.Completed
             |>Scraping_user_status.db_value
             
-        database.Query<Completed_job>(
+        database.Query<User_scraping_job>(
             $"select 
-                {user_to_scrape.account} as scraped_user,
+                {user_to_scrape.account},
                 {user_to_scrape.when_completed}
             from {user_to_scrape}
             where 
-                {user_to_scrape.created_at} = (
-                        SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
-                    )
+                {sql_taking_only_jobs_from_last_batch}
                 and {user_to_scrape.status} = '{success_marker}'
                 and {user_to_scrape.taken_by} = @worker
             ",
@@ -307,7 +304,7 @@ module Distributing_jobs_database =
                 worker = worker
             |}
         )|>Seq.map(fun job ->
-            job.scraped_user,job.when_completed    
+            job.account,job.when_completed    
         )
     
         
@@ -329,24 +326,44 @@ module Distributing_jobs_database =
                 
             from {user_to_scrape}
             where 
-                {user_to_scrape.created_at} = (
-                        SELECT MAX({user_to_scrape.created_at}) FROM {user_to_scrape}
-                    )
+                {sql_taking_only_jobs_from_last_batch}
                 and {user_to_scrape.status} = 'Success'
             "
         )|>Seq.map(fun job ->
             job.account,job.when_completed    
         )
     
-    
-    let write_user_for_scraping
+    let read_last_unscraped_accounts
         (database:NpgsqlConnection)
-        created_at
-        user 
         =
         
-        database.Query<User_handle>(
-            $"insert into {user_to_scrape} (
+        database.Query<User_scraping_job>(
+            $"select 
+                {user_to_scrape.account},
+                {user_to_scrape.taken_by},
+                {user_to_scrape.status},
+                {user_to_scrape.posts_amount},
+                {user_to_scrape.likes_amount},
+                {user_to_scrape.when_taken},
+                {user_to_scrape.when_completed}
+                
+            from {user_to_scrape}
+            where 
+                {sql_taking_only_jobs_from_last_batch}
+                and not {user_to_scrape.status} = 'Success'
+            "
+        )|>Seq.map _.account
+        
+    let write_users_for_scraping
+        (database:NpgsqlConnection)
+        accounts
+        =
+        Log.info $"writing {Seq.length accounts} accounts as targets for scraping"
+        let batch_datetime = DateTime.Now
+        
+        database.BulkInsert(
+            $"""
+            insert into {user_to_scrape} (
                 {user_to_scrape.created_at},
                 {user_to_scrape.account},
                 {user_to_scrape.status}
@@ -356,19 +373,17 @@ module Distributing_jobs_database =
                 @handle,
                 '{Scraping_user_status.db_value Scraping_user_status.Free}'
             )
-            ",
-            {|
-                created_at = created_at
-                handle = user
-            |}
+            ...
+            """,
+            accounts
+            |>Seq.map(fun handle ->
+                {|
+                    created_at = batch_datetime
+                    handle = handle
+                |}
+            )
         ) |> ignore
     
-    let write_users_for_scraping
-        database
-        users
-        =
-        Log.info $"writing {Seq.length users} users as targets for scraping"
-        let created_at = DateTime.Now
-        users
-        |>Seq.iter (write_user_for_scraping database created_at)
+
+    
         
