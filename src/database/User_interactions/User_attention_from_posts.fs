@@ -29,6 +29,7 @@ module User_attention_from_posts =
     
     let read_likes_by_user
         (database: NpgsqlConnection)
+        (before_datetime: DateTime)
         liker
         =
         database.Query<Amount_for_account>($"""
@@ -43,23 +44,29 @@ module User_attention_from_posts =
 
             where
 	            {post.like.liker} = @liker
+                and {post.like.when_scraped} < @before_datetime 
 
             group by {post.header.author}
 
             ORDER BY amount DESC
             """,
-            {|liker=liker|}
+            {|
+                liker=liker
+                before_datetime=before_datetime
+            |}
         )|>amounts_for_user_as_tuples
         
     let ``try read_likes_by_user``()=
         let result =
             read_likes_by_user
                 (Local_database.open_connection())
+                DateTime.Now
                 (User_handle "kristenvbrown")
         ()
         
     let read_reposts_by_user
         (database: NpgsqlConnection)
+        (before_datetime: DateTime)
         reposter
         =
         database.Query<Amount_for_account>($"""
@@ -74,23 +81,29 @@ module User_attention_from_posts =
 
             where
 	            {post.repost.reposter} = @reposter
-
+                and {post.repost.when_scraped} < @before_datetime
+            
             group by {post.header.author}
 
             order by amount DESC
             """,
-            {|reposter=reposter|}
+            {|
+                reposter=reposter
+                before_datetime=before_datetime
+            |}
         )|>amounts_for_user_as_tuples
     
     let ``try read_reposts_by_user``()=
         let result =
             read_reposts_by_user
                 (Local_database.open_connection())
+                DateTime.Now
                 (User_handle "kristenvbrown")
         ()
     
     let read_replies_by_user
         (database: NpgsqlConnection)
+        (before_datetime: DateTime)
         replier
         =
         database.Query<Amount_for_account>($"""
@@ -105,12 +118,17 @@ module User_attention_from_posts =
             
             where 
                 replying_header.{post.header.author} = @replier
-
+                and replying_header.{post.header.when_written} < @before_datetime
+            
             group by 
                 {post.reply.previous_user}
+            
             order by amount DESC
             """,
-            {|replier=replier|}
+            {|
+                replier=replier
+                before_datetime=before_datetime
+            |}
         )|>amounts_for_user_as_tuples
         
         
@@ -118,6 +136,7 @@ module User_attention_from_posts =
         let result = 
             read_replies_by_user
                 (Local_database.open_connection())
+                DateTime.Now
                 "kristenvbrown"
         ()
         

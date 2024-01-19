@@ -155,7 +155,6 @@ module User_attention_database =
         ]
         |>List.iter (fun (read_attention_type,matrix_name) -> 
             upload_all_users_attention
-            //update_all_users_attention_in_database
                 (read_attention_type local_db)
                 central_db
                 matrix_name

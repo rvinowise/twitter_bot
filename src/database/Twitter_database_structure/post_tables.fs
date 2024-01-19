@@ -9,7 +9,8 @@ type Post_header_table() =
     member _.main_post_id = "main_post_id"
     member _.is_quotation = "is_quotation"
     member _.author = "author"
-    member _.created_at = "created_at"
+    member _.when_written = "when_written"
+    member _.when_scraped = "when_scraped"
 
 [<CLIMutable>]
 type Post_header_row = {
@@ -23,6 +24,7 @@ type Post_like_table() =
     override _.ToString() = "post_like"
     member _.liker = "liker"
     member _.post = "post"
+    member _.when_scraped = "when_scraped"
 
 [<CLIMutable>]
 type Post_like_row = {
@@ -34,6 +36,7 @@ type Post_repost_table() =
     override _.ToString() = "post_repost"
     member _.reposter = "reposter"
     member _.post = "post"
+    member _.when_scraped = "when_scraped"
 
 [<CLIMutable>]
 type Post_repost_row = {

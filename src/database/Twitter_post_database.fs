@@ -226,7 +226,8 @@ module Twitter_post_database =
             $"insert into {tables.post.header} (
                 {tables.post.header.main_post_id},
                 {tables.post.header.author},
-                {tables.post.header.created_at},
+                {tables.post.header.when_written},
+                {tables.post.header.when_scraped},
                 {tables.post.header.is_quotation}
             )
             values (
@@ -241,7 +242,7 @@ module Twitter_post_database =
             )
             do update set (
                 {tables.post.header.author},
-                {tables.post.header.created_at}
+                {tables.post.header.when_written}
             )
             = (@author, @created_at)
             ",
@@ -682,11 +683,13 @@ module Twitter_post_database =
         db_connection.Query(
             $"insert into {tables.post.repost} (
                 {tables.post.repost.post},
-                {tables.post.repost.reposter}
+                {tables.post.repost.reposter},
+                {tables.post.repost.when_scraped}
             )
             values (
                 @post,
-                @reposter
+                @reposter,
+                now()
             )
             on conflict (
                 {tables.post.repost.post},
@@ -708,11 +711,13 @@ module Twitter_post_database =
         db_connection.Query(
             $"insert into {tables.post.like} (
                 {tables.post.like.post},
-                {tables.post.like.liker}
+                {tables.post.like.liker},
+                {tables.post.like.when_scraped}
             )
             values (
                 @post,
-                @liker
+                @liker,
+                now()
             )
             on conflict (
                 {tables.post.like.post},
