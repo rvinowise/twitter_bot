@@ -41,7 +41,7 @@ module Program =
                 (Central_database.open_connection())
                 browser
                 html_context
-            Browser.close browser
+            Browser.quit browser
         with
         | :? WebDriverException as exc ->
             Log.error $"""can't scrape state of twitter-competitors: {exc.Message}"""|>ignore

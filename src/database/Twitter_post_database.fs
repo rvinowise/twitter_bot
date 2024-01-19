@@ -283,15 +283,15 @@ module Twitter_post_database =
                 @audience_amount
             )
             on conflict (
-                {tables.post.twitter_space.main_post_id},
-                {tables.post.twitter_space.is_quotation}
+                {tables.post.twitter_space.main_post_id}
             )
             do update set (
+                {tables.post.twitter_space.is_quotation},
                 {tables.post.twitter_space.host},
                 {tables.post.twitter_space.title},
                 {tables.post.twitter_space.audience_amount}
             )
-            = (@host, @title, @audience_amount)
+            = (@is_quotation, @host, @title, @audience_amount)
             ",
             {|
                 main_post_id=main_post_id
@@ -457,35 +457,50 @@ module Twitter_post_database =
         (db_connection:NpgsqlConnection)
         (external_url: External_website)
         (post_id:Post_id)
+        (index: int)
         =
         db_connection.Query(
             $"insert into {tables.post.external_url} (
                 {tables.post.external_url.post_id},
+                {tables.post.external_url.index},
                 {tables.post.external_url.base_url},
+                {tables.post.external_url.full_url},
                 {tables.post.external_url.page},
                 {tables.post.external_url.message},
                 {tables.post.external_url.obfuscated_url}
             )
             values (
                 @post_id,
+                @index,
                 @base_url,
+                @full_url,
                 @page,
                 @message,
                 @obfuscated_url
             )
             on conflict (
-                {tables.post.external_url.post_id}
+                {tables.post.external_url.post_id},
+                {tables.post.external_url.index}
             )
             do update set (
                 {tables.post.external_url.base_url},
+                {tables.post.external_url.full_url},
                 {tables.post.external_url.page},
                 {tables.post.external_url.message},
                 {tables.post.external_url.obfuscated_url}
             )
-            = (@base_url, @page, @message, @obfuscated_url)",
+            = (
+                @base_url,
+                @full_url,
+                @page,
+                @message,
+                @obfuscated_url
+            )",
             {|
                 post_id=post_id
+                index=index
                 base_url=external_url.base_url|>Option.defaultValue ""
+                full_url=external_url.full_url|>Option.defaultValue ""
                 page=external_url.page|>Option.defaultValue ""
                 message=external_url.message|>Option.defaultValue ""
                 obfuscated_url=external_url.obfuscated_url|>Option.defaultValue ""
@@ -610,11 +625,15 @@ module Twitter_post_database =
                 quotation
                 post_id
                 true
-        |Some (External_website external_url) -> 
-            write_external_url
-                db_connection
-                external_url
-                post_id
+        |Some (External_websites external_urls) -> 
+            external_urls
+            |>List.iteri(fun index website ->
+                write_external_url
+                    db_connection
+                    website
+                    post_id
+                    index
+            )
         |Some (External_source.Quoted_poll quotable_poll) -> 
             write_quotable_part_of_poll
                 db_connection

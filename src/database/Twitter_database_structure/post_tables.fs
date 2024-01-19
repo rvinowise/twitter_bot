@@ -81,7 +81,9 @@ type Post_reply_row = {
 type Post_external_url_table() =
     override _.ToString() = "post_external_url"
     member _.post_id = "post_id"
+    member _.index = "index"
     member _.base_url = "base_url"
+    member _.full_url = "full_url"
     member _.page = "page"
     member _.message = "message"
     member _.obfuscated_url = "obfuscated_url"
@@ -89,7 +91,9 @@ type Post_external_url_table() =
 [<CLIMutable>]
 type Post_external_url_row = {
     post_id: Post_id
+    index: int
     base_url: string
+    full_url: string
     page: string
     message: string
     obfuscated_url: string

@@ -270,10 +270,13 @@ module Harvest_posts_from_timeline =
         (browser:Browser)
         html_context
         database
-        is_finished
+        needed_posts_amount
         timeline_tab
         user
         =
+        let when_to_stop  =
+            Finish_harvesting_timeline.finish_after_amount_of_invocations needed_posts_amount
+        
         match
             Reveal_user_page.reveal_timeline
                 browser
@@ -282,14 +285,28 @@ module Harvest_posts_from_timeline =
                 user
         with
         |Revealed ->
-            harvest_timeline_tab_of_user
-                browser
-                html_context
-                database
-                is_finished
-                timeline_tab
-                user
-            |>Harvesting_timeline_result.Harvested_some_amount
+            
+            let amount =
+                harvest_timeline_tab_of_user
+                    browser
+                    html_context
+                    database
+                    when_to_stop
+                    timeline_tab
+                    user
+            if
+                amount < needed_posts_amount
+                &&
+                is_scraping_sufficient
+                    browser
+                    timeline_tab
+                    user
+                    amount
+                |>not
+            then
+                Insufficient amount
+            else
+                Success amount
         |Page_revealing_result.Failed Protected ->
             Log.info $"Timelines of user {User_handle.value user} are protected from strangers."
             Harvesting_timeline_result.Hidden_timeline Protected
@@ -299,10 +316,10 @@ module Harvest_posts_from_timeline =
         
     
     let rec resiliently_harvest_user_timeline
-        is_finished
         (browser: Browser)
         html_context
         database
+        needed_posts_amount
         timeline_tab
         user
         =
@@ -312,7 +329,7 @@ module Harvest_posts_from_timeline =
                     browser
                     html_context
                     database
-                    is_finished
+                    needed_posts_amount
                     timeline_tab
                     user
             with
@@ -323,11 +340,21 @@ module Harvest_posts_from_timeline =
                 Harvesting_timeline_result.Exception exc 
         
         match result with
-        |Harvested_some_amount _
         |Success _
-        |Insufficient _
         |Hidden_timeline Protected ->
             browser, result
+        |Insufficient amount ->
+            $"""
+            restarting browser and skipping the timeline because of an insufficient amount of scraped posts.
+            """
+            |>Log.error|>ignore
+            
+            Assigning_browser_profiles.switch_profile
+                    (Central_database.resiliently_open_connection())
+                    (This_worker.this_worker_id database)
+                    browser,
+            result
+            
         |Hidden_timeline Loading_denied ->
             Log.info $"""
             Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
@@ -338,10 +365,10 @@ module Harvest_posts_from_timeline =
                     (This_worker.this_worker_id database)
                     browser
             resiliently_harvest_user_timeline
-                is_finished
                 new_browser
                 html_context
                 database
+                needed_posts_amount
                 timeline_tab
                 user
         |Exception exc ->
@@ -349,8 +376,12 @@ module Harvest_posts_from_timeline =
                 can't harvest timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user}:
                 {exc.GetType()}
                 {exc.Message}.
-                Restarting scraping browser and skipping the user"""|>ignore
-            Browser.restart browser, result
+                Restarting scraping browser and skipping the timeline"""|>ignore
+            Assigning_browser_profiles.switch_profile
+                    (Central_database.resiliently_open_connection())
+                    (This_worker.this_worker_id database)
+                    browser,
+            result
             
         
     let rec resilient_step_of_harvesting_timelines
@@ -413,14 +444,14 @@ module Harvest_posts_from_timeline =
 
     let ``try harvest_all_last_actions_of_users (specific tabs)``()=
         
-        resilient_step_of_harvesting_timelines
-            Finish_harvesting_timeline.only_finish_when_no_posts_left
+        resiliently_harvest_user_timeline
             (Browser.open_browser())
+            (AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default)
             (Local_database.open_connection())
-            [
-                User_handle "davidasinclair", Timeline_tab.Posts_and_replies
-            ]
-        
+            Int32.MaxValue
+            Timeline_tab.Posts_and_replies
+            (User_handle "KeithComito")            
+        |>ignore
 
     let ``try harvest_all_last_actions_of_users (both tabs)``()=
         let user_timelines =

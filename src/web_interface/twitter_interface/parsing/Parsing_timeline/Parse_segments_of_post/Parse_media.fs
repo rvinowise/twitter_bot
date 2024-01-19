@@ -9,7 +9,7 @@ open rvinowise.twitter
 
 module Parse_media =
     
-    let parse_media_from_stripped_post
+    let parse_media_from_stripped_node
         (*without quotation, user-avatar and message (all places with images which are not media-load) *)
         post_node
         =

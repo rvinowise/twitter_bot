@@ -56,6 +56,7 @@ module Browser =
         options.AddArgument("--disable-notifications")
         options.AddArgument("--ignore-certificate-errors")
         options.AddArgument("--ignore-ssl-errors")
+        options.AddArgument("--no-sandbox")
         let browser_version_as_agent =
             Settings.browser.webdriver_version
             |>fun version -> version.Split '.'
@@ -108,45 +109,62 @@ module Browser =
         webdriver
     
 
+    let rec open_with_profile profile =
+        
+        //try
+            Log.info $"preparing a browser with profile {profile}"
+            {
+                Browser.webdriver =
+                    profile
+                    |>Settings.browser_profile_from_email
+                    |>run_webdriver
+                profile = profile
+            }
+        // with
+        // | :? InvalidOperationException as exc ->
+        //     $"""Exception when opening the browser: {exc.Message}
+        //     trying again"""
+        //     |>Log.error|>ignore
+        //     open_with_profile profile
+        
     let open_browser () =
-        Log.info "preparing a browser without tweaking it"
-        let first_profile =
-            Settings.browser.profiles
-            |>Seq.head
-        {
-            Browser.webdriver =
-                Settings.browser_profile_from_email first_profile
-                |>run_webdriver
-            profile = first_profile
-        }
+        Settings.browser.profiles
+        |>Seq.head
+        |>open_with_profile
     
-    let open_with_profile profile =
-        Log.info $"preparing a browser with profile {profile}"
-        {
-            Browser.webdriver =
-                profile
-                |>Settings.browser_profile_from_email
-                |>run_webdriver
-            profile = profile
-        }
     
-    let close (browser: Browser) =
+    
+    let quit (browser: Browser) =
+        browser.webdriver.Quit()
         Log.info $"browser {browser} is closed"
-        browser.webdriver.Close()
     
-    let restart (browser: Browser) =
-        close browser
-    
-        open_with_profile browser.profile
-    
-    let restart_with_profile
+    let rec restart_with_profile
         (browser: Browser)
         profile
         =
-        close browser
+        try
+            quit browser
+        with
+        | :? InvalidOperationException
+        | :? NoSuchWindowException as exc ->
+            $"""failed closing the browser: {exc.Message}"""
+            |>Log.error|>ignore
         
-        open_with_profile profile
-        
+        try
+            open_with_profile profile
+        with
+        | :? InvalidOperationException as exc ->
+            $"""Exception when restarting the browser: {exc.Message}
+            trying again"""
+            |>Log.error|>ignore
+            restart_with_profile browser profile
+   
+    let restart (browser: Browser) =
+       restart_with_profile
+           browser
+           browser.profile
+    
+         
     let open_url url_string (browser: Browser) =
         canopy.parallell.functions.url url_string browser.webdriver
         

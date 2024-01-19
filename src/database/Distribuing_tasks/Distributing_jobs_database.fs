@@ -234,7 +234,7 @@ module Distributing_jobs_database =
         (user: User_handle)
         posts_amount
         likes_amount
-        (result:Harvesting_timeline_result)
+        (last_result: Harvesting_timeline_result)
         =
         let is_successful =
             try
@@ -246,7 +246,7 @@ module Distributing_jobs_database =
                     (user: User_handle)
                     posts_amount
                     likes_amount
-                    result
+                    last_result
                 true
             with
             | :? NpgsqlException
@@ -262,7 +262,7 @@ module Distributing_jobs_database =
                 (user: User_handle)
                 posts_amount
                 likes_amount
-                result
+                last_result
                 
 
     let read_last_user_jobs_with_status

@@ -46,55 +46,7 @@ module Harvest_timelines_of_table_members =
                 free_user <- Distributing_jobs_database.resiliently_take_next_free_job worker_id
         }    
     
-    
-    let harvest_timeline_with_error_check
-        browser
-        html_context
-        work_db
-        tab
-        user
-        needed_posts_amount
-        =
-        let when_to_stop needed_amount =
-            Finish_harvesting_timeline.finish_after_amount_of_invocations needed_amount
-        
-        let browser,result =
-            Harvest_posts_from_timeline.resiliently_harvest_user_timeline
-                (when_to_stop needed_posts_amount)
-                browser
-                html_context
-                work_db
-                tab
-                user
-        
-        browser
-        ,
-        match result with
-        |Harvested_some_amount amount ->
-            if
-                amount < needed_posts_amount
-                &&
-                Harvest_posts_from_timeline.is_scraping_sufficient
-                    browser
-                    tab
-                    user
-                    amount
-                |>not
-            then
-                Insufficient amount
-            else
-                Success amount
-        |Hidden_timeline Protected ->
-            result
-        |Exception _ ->
-            result
-        |Success _
-        |Insufficient _
-        |Hidden_timeline Loading_denied ->
-            $"unexpected harvesting result at this point: {result}"
-            |>Log.error
-            |>ignore
-            result
+   
         
     
     
@@ -103,7 +55,6 @@ module Harvest_timelines_of_table_members =
         =
         let importance (result: Harvesting_timeline_result) =
             match result with
-            |Harvested_some_amount _-> 0
             |Success _-> 1
             |Insufficient _-> 3
             |Hidden_timeline reason ->
@@ -140,30 +91,40 @@ module Harvest_timelines_of_table_members =
         |>Seq.fold(fun browser user ->
             
             let browser,posts_result =
-                harvest_timeline_with_error_check
+                Harvest_posts_from_timeline.resiliently_harvest_user_timeline
                     browser
                     html_context
                     local_db
+                    needed_posts_amount
                     Timeline_tab.Posts_and_replies
                     user
-                    needed_posts_amount
             
             let browser,likes_result =    
-                harvest_timeline_with_error_check
-                    browser
-                    html_context
-                    local_db
-                    Timeline_tab.Likes
-                    user
-                    needed_posts_amount
+                match posts_result with
+                |Success _ ->
+                    let browser,likes_result = 
+                        Harvest_posts_from_timeline.resiliently_harvest_user_timeline
+                            browser
+                            html_context
+                            local_db
+                            needed_posts_amount
+                            Timeline_tab.Likes
+                            user
+                    browser, Some likes_result
+                | _ ->
+                    browser, None
             
-            unify_results
-                [posts_result;likes_result]
+            likes_result
+            |>Option.defaultValue posts_result
             |>announce_result
                 (This_worker.this_worker_id local_db)
                 user
-                (Harvesting_timeline_result.posts_amount posts_result)
-                (Harvesting_timeline_result.posts_amount likes_result)
+                (Harvesting_timeline_result.articles_amount posts_result)
+                (
+                    likes_result
+                    |>Option.map Harvesting_timeline_result.articles_amount
+                    |>Option.defaultValue 0
+                )
             browser    
         )
             browser

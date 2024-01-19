@@ -44,7 +44,17 @@
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_article.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_timeline_cell.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_timeline.fs" />
+    
+    <!-- tests of parsing twitter posts-->
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\general_posts.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\twitter_space_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\quotation_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\poll_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\broadcast_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\carousel_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\video_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\external_url_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\twitter_event_test.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\sequence_of_timeline_cells.fs" />
     
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Read_updates_on_dynamic_list\Scrape_visible_part_of_list.fs" />
@@ -129,9 +139,6 @@
     
     
     <Compile Include="Program.fs" />
-    
-    
-    <Folder Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -162,6 +169,7 @@
     <!--app  -->
     <PackageReference Include="Fparsec" Version="1.1.1" />
     <PackageReference Include="DeviceId" Version="6.6.0" />
+    <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
     
     <!-- web scraping   -->
     <PackageReference Include="canopy" Version="2.1.5" />

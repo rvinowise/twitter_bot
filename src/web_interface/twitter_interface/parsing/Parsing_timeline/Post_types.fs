@@ -198,6 +198,7 @@ type Poll = {
 
 type External_website = {
     base_url: string option
+    full_url: string option
     page: string option
     message: string option
     obfuscated_url: string option
@@ -217,7 +218,8 @@ type Twitter_event = {
 type External_source_node =
     |Quoted_message of Html_node
     |Quoted_poll of Html_node
-    |External_website of Html_node*Html_node//card.wrapper and scard.layoutSmall nodes
+    |External_website of Html_node*Html_node//card.wrapper and card.layoutSmall nodes
+    |Carousel of Html_node * (Html_node list) //carousel root and card.wrappers
     |Twitter_event of Html_node * Event_id
     
 module External_source_node =
@@ -225,12 +227,13 @@ module External_source_node =
         match node with
         |Quoted_message html
         |Quoted_poll html
+        |Carousel (html, _)
         |External_website (html,_)
         |Twitter_event (html,_) ->
             html
 
 type External_source =
-    |External_website of External_website
+    |External_websites of External_website list
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:
     if the replying message has images of showMore button;*)
     |Quoted_message of Quotable_message

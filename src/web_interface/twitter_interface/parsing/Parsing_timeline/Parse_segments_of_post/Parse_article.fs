@@ -155,7 +155,7 @@ module Parse_article =
         //at this point the article node doesn't have its message and user's avatar
         
         let media_items = 
-            Parse_media.parse_media_from_stripped_post article_node
+            Parse_media.parse_media_from_stripped_node article_node
 
             
         Main_post_body.Message (

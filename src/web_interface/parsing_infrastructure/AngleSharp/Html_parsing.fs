@@ -350,7 +350,6 @@ module Html_parsing =
         match segment.LocalName with
         |"img" -> //an emoji
             Html_node.attribute_value "alt" segment
-        //|"span" when Html_node.inner_text segment = "" -> " " //FSharpData removes spaces from spans 😳
         |_->Html_node.inner_text segment
     
     let readable_text_from_html_segments (root:Html_node) =

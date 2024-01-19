@@ -1,4 +1,4 @@
-﻿namespace rvinowise.twitter
+﻿namespace rvinowise.twitter.test
 
 open System
 open Xunit

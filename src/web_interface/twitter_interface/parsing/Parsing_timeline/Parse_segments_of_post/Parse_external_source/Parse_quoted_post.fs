@@ -78,7 +78,7 @@ module Parse_quoted_post =
         //at this point, the message is removed from the quotation node
         
         let media_items =
-            Parse_media.parse_media_from_stripped_post quotation_node
+            Parse_media.parse_media_from_stripped_node quotation_node
             
        
         if
