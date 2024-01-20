@@ -10,9 +10,21 @@ open rvinowise.twitter.database_schema.tables
 open rvinowise.twitter.database_schema
 
 
-
-module User_attention_from_posts =
+type Attention_type =
+    |Likes
+    |Replies
+    |Reposts
+    with
+    override this.ToString() =
+        match this with
+        |Likes -> "Likes"
+        |Replies -> "Replies"
+        |Reposts -> "Reposts"
         
+module User_attention_from_posts =
+    
+    
+    
     [<CLIMutable>]
     type Amount_for_account = {
         account: User_handle
@@ -26,6 +38,7 @@ module User_attention_from_posts =
         |>Seq.map (fun amount ->
             amount.account,amount.amount    
         )
+    
     
     let read_likes_by_user
         (database: NpgsqlConnection)
@@ -132,7 +145,7 @@ module User_attention_from_posts =
         )|>amounts_for_user_as_tuples
         
         
-    let ``try read_attention_from_user``()=
+    let ``try read_replies_by_user``()=
         let result = 
             read_replies_by_user
                 (Local_database.open_connection())
@@ -151,9 +164,27 @@ module User_attention_from_posts =
             group by {post.header.author}
             """
         )
-   
-    let ``try read_all_users``()=
-        let result = 
-            read_all_users
-                (Local_database.open_connection())
-        ()
+    
+    
+    let attention_types =
+        [
+            Attention_type.Likes, read_likes_by_user
+            Attention_type.Reposts, read_reposts_by_user
+            Attention_type.Replies, read_replies_by_user
+        ]
+      
+    let read_all_attention_from_account
+        (database: NpgsqlConnection)
+        (before_datetime: DateTime)
+        account
+        =
+        attention_types
+        |>List.map(fun (attention_type, read) ->
+            attention_type,
+            read database before_datetime account
+            |>List.ofSeq
+        )
+        |>Map.ofList
+        
+        
+    

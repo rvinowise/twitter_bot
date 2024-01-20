@@ -57,7 +57,7 @@ module Single_adjacency_matrix =
         googlesheet
         handle_to_hame
         all_sorted_users
-        (attention_matrix: Relative_attention_matrix)
+        (attention_matrix: Attention_for_matrix)
         =
         let attention_to_intensity_color =
             Adjacency_matrix_helpers.cell_color_for_value
@@ -74,7 +74,7 @@ module Single_adjacency_matrix =
         let rows_of_attention =
             all_sorted_users
             |>List.map (fun user ->
-                attention_matrix.attention_to_users
+                attention_matrix.absolute_attention
                 |>Map.tryFind user
                 |>Option.defaultValue Map.empty
                 |>Adjacency_matrix_helpers.row_of_attention_for_user
@@ -84,7 +84,14 @@ module Single_adjacency_matrix =
                       user
             )
         
-        Adjacency_matrix_helpers.add_headers_to_adjacency_matrix
+        rows_of_attention
+        |>Adjacency_matrix_helpers.add_attention_percent_inside_matrix_headers
+            handle_to_hame
+            all_sorted_users
+        |>Adjacency_matrix_helpers.add_total_scraped_attention_headers
+            handle_to_hame
+            all_sorted_users
+        |>Adjacency_matrix_helpers.add_username_headers
             handle_to_hame
             all_sorted_users
             rows_of_attention

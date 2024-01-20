@@ -59,7 +59,7 @@ module Parse_quoted_post =
         
         let header={
             author = parsed_header.author
-            created_at = parsed_header.written_at
+            when_written = parsed_header.written_at
             reply=reply
         }
         

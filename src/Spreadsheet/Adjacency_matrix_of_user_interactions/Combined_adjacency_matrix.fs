@@ -12,7 +12,7 @@ module Combined_adjacency_matrix =
         
     
     let compound_interactions_to_intensity_colors_functions
-        (attention_matrices: Relative_attention_matrix list)
+        (attention_matrices: Attention_for_matrix list)
         =
         
         let interactions_to_color_coefficient =
@@ -66,7 +66,7 @@ module Combined_adjacency_matrix =
         all_sorted_users
         values_to_text
         values_to_color
-        (attention_matrices: Relative_attention_matrix list)
+        (attention_matrices: Attention_for_matrix list)
         =
         
         let rows_of_interactions =
@@ -82,7 +82,7 @@ module Combined_adjacency_matrix =
                         
                     let interactions =
                         attention_matrices
-                        |>List.map (fun matrix_data -> matrix_data.attention_to_users)
+                        |>List.map (fun matrix_data -> matrix_data.absolute_attention)
                         |>attention_from_user_to_user
                             user
                             other_user
@@ -93,7 +93,7 @@ module Combined_adjacency_matrix =
                 )
             )
         
-        Adjacency_matrix_helpers.add_headers_to_adjacency_matrix
+        Adjacency_matrix_helpers.add_username_headers
             handle_to_hame
             all_sorted_users
             rows_of_interactions

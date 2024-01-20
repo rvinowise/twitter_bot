@@ -1,5 +1,6 @@
 ﻿namespace rvinowise.twitter
 
+open System.Globalization
 open rvinowise.twitter
 open rvinowise.web_scraping
 open Xunit
@@ -16,8 +17,10 @@ type Border_values = {
     average:float
 }
 
-type Relative_attention_matrix = {
-    attention_to_users: Map<User_handle, Map<User_handle, float>>
+type Attention_for_matrix = {
+    absolute_attention: Map<User_handle, Map<User_handle, int>>
+    relative_attention: Map<User_handle, Map<User_handle, float>>
+    total_attention: Map<User_handle, int>
     border_attention_to_others: Border_values
     border_attention_to_oneself: Border_values
     color: Color
@@ -31,7 +34,7 @@ type Interaction_cell = {
 
 type Interaction_design = {
     color: Color
-    attention_type: string
+    attention_type: Attention_type
 }
     
 
@@ -39,15 +42,15 @@ module Adjacency_matrix_helpers =
     
     let likes_design = {
         color = {r=1;g=0;b=0}
-        attention_type = "Likes"
+        attention_type = Attention_type.Likes
     }
     let reposts_design = {
         color = {r=0;g=1;b=0}
-        attention_type = "Reposts"
+        attention_type = Attention_type.Reposts
     }
     let replies_design = {
         color = {r=0;g=0;b=1}
-        attention_type = "Replies"
+        attention_type = Attention_type.Replies
     }
     let combined_interactions_title = "Everything"
     
@@ -69,7 +72,9 @@ module Adjacency_matrix_helpers =
             |>Option.defaultValue 0.0
         )
         
-    let border_values_of_attention attention =
+    let border_values_of_attention
+        (attention: float seq)
+         =
         if Seq.isEmpty attention then
             {
                 Border_values.min = 0
@@ -84,7 +89,6 @@ module Adjacency_matrix_helpers =
                     Seq.max attention
                 average = (
                     attention
-                    |>Seq.map float
                     |>Seq.average
                 )
             }
@@ -107,16 +111,23 @@ module Adjacency_matrix_helpers =
     let attention_matrix_for_colored_interactions
         color
         attention_map
+        total_attention
         =
+        let relative_attention =
+            absolute_to_relative_attention
+                attention_map
+                total_attention
         {
-            attention_to_users = attention_map
+            absolute_attention = attention_map
+            relative_attention = relative_attention 
+            total_attention = total_attention 
             color = color
             border_attention_to_oneself=
-                attention_map
+                relative_attention
                 |>interactions_with_oneself
                 |>border_values_of_attention
             border_attention_to_others=
-                attention_map
+                relative_attention
                 |>interactions_with_others
                 |>border_values_of_attention
         }
@@ -252,18 +263,30 @@ module Adjacency_matrix_helpers =
         self_interaction_color
         all_sorted_users
         attentive_user
-        (all_attention:Map<User_handle, float>)
+        (absolute_attentions:Map<User_handle, int>)
+        (relative_attentions:Map<User_handle, float>)
         =
         all_sorted_users
         |>List.map(fun other_user ->
+            let absolute_value =
+                absolute_attentions
+                |>Map.tryFind other_user
+                |>Option.defaultValue 0
+            
             let relative_value =
-                all_attention
+                relative_attentions
                 |>Map.tryFind other_user
                 |>Option.defaultValue 0.0
+            
+            let cell_text =
+                String.Format(
+                    NumberFormatInfo.InvariantInfo,
+                    "{0:0.##}\n{1:0.##}",
+                    absolute_value,
+                    relative_value*100.0
+                )
             {
-                Cell.value =
-                    (relative_value * 100.0)
-                    |>Cell_value.Float
+                Cell.value = Cell_value.Text cell_text
                 color =
                     if attentive_user = other_user then
                         self_interaction_color
@@ -301,13 +324,19 @@ module Adjacency_matrix_helpers =
         }]
 
 
-    let add_headers_to_adjacency_matrix
+    let add_attention_percent_inside_matrix_headers
+        all_sorted_handles
+        rows_of_interactions
+        =()
+        
+    
+    let add_username_headers
         handle_to_hame
         all_sorted_handles
         rows_of_interactions
         =
             
-        let header_of_users =
+        let top_row_of_users =
             header_of_users
                 handle_to_hame
                 all_sorted_handles
@@ -317,7 +346,7 @@ module Adjacency_matrix_helpers =
                 handle_to_hame
                 all_sorted_handles
             
-        (header_of_users::rows_of_interactions)
+        (top_row_of_users::rows_of_interactions)
         |>Table.transpose Cell.empty
         |>List.append [left_column_of_users]
         |>Table.transpose Cell.empty

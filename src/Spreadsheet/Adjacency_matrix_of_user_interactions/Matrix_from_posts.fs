@@ -5,12 +5,46 @@ open Npgsql
 open rvinowise.twitter
 open Xunit
 
-(* user attention from local databases are combined in the central database.
-this module exports them into the google sheet as a matrix *)
 
-module Matrix_from_attention_to_sheet =
+type User_attention_of_type = {
+    absolute_attention: Map<User_handle, int>    
+    total_attention: int    
+    relative_attention: Map<User_handle, float>    
+}
+
+module Matrix_from_posts =
     
+    let reverse_nested_maps (map: Map<'a,Map<'b,'T>>) = 
+        [
+            for KeyValue(a, m) in map do
+                for KeyValue(b, v) in m do
+                    yield b, (a, v)
+        ]
+        |> Seq.groupBy fst 
+        |> Seq.map (fun (b, ats) -> b, ats |> Seq.map snd |> Map.ofSeq) 
+        |> Map.ofSeq 
 
+    let merge_maps
+        (merge_values : 'Key -> 'Value -> 'Value -> 'Value)
+        (added_map : Map<'Key, 'Value>)
+        (base_map : Map<'Key, 'Value>)
+        =
+        Map.fold (fun total_map key added_value ->
+            match
+                Map.tryFind key total_map
+            with
+            |Some existing_value ->
+                total_map
+                |>Map.add key (
+                    merge_values key existing_value added_value 
+                ) 
+            |None ->
+                total_map
+                |>Map.add key added_value 
+        )
+            base_map
+            added_map
+    
     let accounts_to_their_received_attention
         (users_attention: Map<User_handle, Map<User_handle, float>>)
         =
@@ -53,33 +87,13 @@ module Matrix_from_attention_to_sheet =
         |>List.sortByDescending snd
         |>List.map fst
     
-    let accounts_sorted_by_integration_into_network
-        database
-        matrix_title
-        matrix_datetime
+    let sort_accounts_by_integration_into_network
+        all_matrix_members
+        relative_attention
         =
-        let all_matrix_members =
-            Adjacency_matrix_database.read_members_of_matrix
-                database
-                matrix_title
+        let zero_integration_for_everybody =
+            all_matrix_members
             |>List.map (fun account -> account,0.0)
-            
-            
-        let users_attention =
-            User_attention_database.read_combined_attention_within_matrix
-                database
-                matrix_title
-                matrix_datetime
-        
-        let users_total_attention =
-            User_attention_database.read_total_combined_attention_from_users
-                database 
-                matrix_datetime
-        
-        let relative_attention =
-            Adjacency_matrix_helpers.absolute_to_relative_attention
-                users_attention
-                users_total_attention
         
         let paid_attention =
             relative_attention
@@ -89,7 +103,7 @@ module Matrix_from_attention_to_sheet =
             relative_attention
             |>accounts_to_their_received_attention
         
-        all_matrix_members
+        zero_integration_for_everybody
         |>List.append (Map.toList paid_attention)
         |>List.append (Map.toList received_attention)
         |>List.fold(fun network_integrations (user,value) ->
@@ -106,14 +120,89 @@ module Matrix_from_attention_to_sheet =
         |>Map.toList
         |>List.sortByDescending snd
 
+    let detailed_attention_from_account
+        (database: NpgsqlConnection)
+        before_date
+        account
+        =
+        
+        User_attention_from_posts.attention_types
+        |>List.map(fun (attention_type,read_attention) ->
+            let absolute_attention =
+                read_attention
+                    database
+                    before_date
+                    account
+                |>Map.ofSeq
+                
+            let total_known_attention =
+                absolute_attention
+                |>Map.values
+                |>Seq.reduce (+)
+                
+            
+            attention_type,
+            {
+                absolute_attention = absolute_attention
+                        
+                total_attention = total_known_attention
+                
+                relative_attention =
+                    absolute_attention
+                    |>Map.map(fun target absolute_attention ->
+                        (float absolute_attention)/(float total_known_attention)
+                    )
+            }
+        )
+        
+        
     let write_matrices_to_sheet
         sheet_service
-        (database: NpgsqlConnection)
+        (central_db: NpgsqlConnection)
+        (local_db: NpgsqlConnection)
         doc_id
         matrix_title
         matrix_datetime
         handle_to_name
         =
+        let matrix_members =
+            Adjacency_matrix_database.read_members_of_matrix
+                central_db
+                matrix_title
+        
+        let user_detailed_attention =
+            matrix_members
+            |>List.map (fun account ->
+                account,
+                detailed_attention_from_account
+                    local_db
+                    matrix_datetime
+                    account
+            )
+        
+        let combined_relative_attention =
+            user_detailed_attention
+            |>List.map(fun (attentive_user, attention_details) ->
+                attentive_user,
+                attention_details
+                |>List.map (fun (_,attention_detail) ->
+                    attention_detail.relative_attention   
+                )
+                |>List.fold(fun total_map attention_map ->
+                    merge_maps
+                        (fun target old_value new_value -> old_value + new_value)
+                        attention_map
+                        total_map
+                )
+                    Map.empty
+            )|>Map.ofList
+        
+        let sorted_members_of_matrix =
+            sort_accounts_by_integration_into_network
+                matrix_members
+                combined_relative_attention
+            |>List.map fst
+        
         let titles_and_interactions =
             [
                 Adjacency_matrix_helpers.likes_design;
@@ -146,12 +235,7 @@ module Matrix_from_attention_to_sheet =
                     users_relative_attention
             )
         
-        let sorted_members_of_matrix =
-            accounts_sorted_by_integration_into_network
-                database
-                matrix_title
-                matrix_datetime  
-            |>List.map fst
+        
             
         // Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
         //     sheet_service
@@ -168,7 +252,7 @@ module Matrix_from_attention_to_sheet =
             sorted_members_of_matrix
          
     
-    let ``interactions_to_sheet``()=
+    let attention_matrix_to_sheet()=
         
         let doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
         
@@ -182,6 +266,7 @@ module Matrix_from_attention_to_sheet =
         write_matrices_to_sheet
             (Googlesheet.create_googlesheet_service())
             central_db
+            local_db
             doc_id
             Adjacency_matrix.Longevity_members
             DateTime.Now

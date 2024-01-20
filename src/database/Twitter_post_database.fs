@@ -225,16 +225,17 @@ module Twitter_post_database =
         db_connection.Query(
             $"insert into {tables.post.header} (
                 {tables.post.header.main_post_id},
+                {tables.post.header.is_quotation},
                 {tables.post.header.author},
                 {tables.post.header.when_written},
-                {tables.post.header.when_scraped},
-                {tables.post.header.is_quotation}
+                {tables.post.header.when_scraped}
             )
             values (
                 @main_post_id,
+                @is_quotation,
                 @author,
-                @created_at,
-                @is_quotation
+                @when_written,
+                now()
             )
             on conflict (
                 {tables.post.header.main_post_id},
@@ -244,13 +245,13 @@ module Twitter_post_database =
                 {tables.post.header.author},
                 {tables.post.header.when_written}
             )
-            = (@author, @created_at)
+            = (@author, @when_written)
             ",
             {|
                 main_post_id=main_post_id
-                author=header.author.handle
-                created_at=header.created_at
                 is_quotation=is_quotation
+                author=header.author.handle
+                when_written=header.when_written
             |}
         ) |> ignore
         
@@ -358,10 +359,7 @@ module Twitter_post_database =
                 @main_post_id,
                 @event_id
             )
-            on conflict (
-                {tables.post.twitter_event_in_post.main_post_id},
-                {tables.post.twitter_event_in_post.event_id}
-            )
+            on conflict
             do nothing
             ",
             {|
@@ -691,10 +689,7 @@ module Twitter_post_database =
                 @reposter,
                 now()
             )
-            on conflict (
-                {tables.post.repost.post},
-                {tables.post.repost.reposter}
-            )
+            on conflict 
             do nothing",
             {|
                 post=post_id
@@ -719,10 +714,7 @@ module Twitter_post_database =
                 @liker,
                 now()
             )
-            on conflict (
-                {tables.post.like.post},
-                {tables.post.like.liker}
-            )
+            on conflict
             do nothing",
             {|
                 post=post_id

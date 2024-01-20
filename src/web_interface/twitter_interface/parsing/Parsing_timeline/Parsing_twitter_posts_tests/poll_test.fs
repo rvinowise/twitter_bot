@@ -33,7 +33,7 @@ module poll_test =
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
-        poll.quotable_part.header.created_at
+        poll.quotable_part.header.when_written
         |>should equal (DateTime(2023,11,21,23,26,24))
         
         poll.choices
@@ -71,7 +71,7 @@ module poll_test =
             name="tehprom"
             handle = User_handle "tehprom269887"
         }
-        poll.quotable_part.header.created_at
+        poll.quotable_part.header.when_written
         |>should equal (DateTime(2023,11,29,2,28,19))
         
         poll.choices
@@ -107,5 +107,5 @@ module poll_test =
             handle = User_handle "tehprom269887"
         }
         
-        quoted_poll.header.created_at
+        quoted_poll.header.when_written
         |>should equal (DateTime(2023,11,18,1,50,44))

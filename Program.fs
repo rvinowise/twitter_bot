@@ -90,7 +90,7 @@ module Program =
         | "stitch"::rest ->
             User_attention_database.upload_all_local_attentions()
         | "test"::rest ->
-            Matrix_from_attention_to_sheet.``interactions_to_sheet``()
+            Matrix_from_posts.attention_matrix_to_sheet()
         | unknown_parameters ->
             $"unknown parameters: {unknown_parameters}"
             |>Log.error|>ignore

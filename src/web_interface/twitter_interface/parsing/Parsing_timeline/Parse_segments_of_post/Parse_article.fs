@@ -210,7 +210,7 @@ module Parse_article =
         
         {
             Post_header.author =parsed_header.author
-            created_at=parsed_header.written_at
+            when_written=parsed_header.written_at
             reply=reply
         },post_id
         

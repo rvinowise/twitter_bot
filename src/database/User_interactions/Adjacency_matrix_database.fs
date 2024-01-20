@@ -27,37 +27,6 @@ type Adjacency_matrix =
 module Adjacency_matrix_database =
     
     
-    let read_members_of_matrix_sorted_by_received_attention
-        (database:NpgsqlConnection)
-        matrix_title
-        =
-        database.Query<User_handle>(
-            $"""
-            select *
-            from 
-                {account_of_matrix} as account_of_matrix
-            inner join (
-                    select 
-                        {user_attention.target},
-                        sum({user_attention.amount}) as total_received_attention
-                    from 
-                        {user_attention}
-                    group by 
-                        {user_attention.target}
-                ) as received_attention
-                on 
-                    received_attention.{user_attention.target} = account_of_matrix.{account_of_matrix.account}
-            where 
-                account_of_matrix.{account_of_matrix.title} = @matrix_title
-            order by 
-                received_attention.total_received_attention desc
-            """,
-            {|
-                matrix_title=matrix_title
-            |}
-        )
-        |>List.ofSeq
-    
     let read_members_of_matrix
         (database:NpgsqlConnection)
         (matrix_title: Adjacency_matrix)
@@ -110,8 +79,16 @@ module Adjacency_matrix_database =
             )
         )|> ignore
         
+    let transfer_matrix_members_across_databases () =
+        let local_db = Local_database.open_connection()
+        let central_db = Central_database.open_connection()
         
-    
+        read_members_of_matrix
+            central_db
+            Adjacency_matrix.Longevity_members
+        |>write_members_of_matrix
+            local_db
+            Adjacency_matrix.Longevity_members
             
     let ``add_matrix_from_sheet``()=
         Googlesheet_reading.read_range

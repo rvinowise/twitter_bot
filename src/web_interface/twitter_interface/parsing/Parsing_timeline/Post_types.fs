@@ -162,7 +162,7 @@ type Reply = {
     
 type Post_header = {
     author: Twitter_user
-    created_at: DateTime
+    when_written: DateTime
     reply: Reply option
 }
 
@@ -258,7 +258,7 @@ module Post_header =
         header.author
 
     let created_at header =
-        header.created_at
+        header.when_written
 
     let reply_status header =
         header.reply

@@ -17,7 +17,8 @@ type Post_header_row = {
     main_post_id: Post_id
     is_quotation: bool
     author: User_handle
-    created_at: DateTime
+    when_written: DateTime
+    when_scraped: DateTime
 }  
 
 type Post_like_table() =
@@ -30,6 +31,7 @@ type Post_like_table() =
 type Post_like_row = {
     liker: User_handle
     post: Post_id
+    when_scraped: DateTime
 }  
 
 type Post_repost_table() =
@@ -42,6 +44,7 @@ type Post_repost_table() =
 type Post_repost_row = {
     reposter: User_handle
     post: Post_id
+    when_scraped: DateTime
 }  
 
 
