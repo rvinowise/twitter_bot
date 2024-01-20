@@ -12,12 +12,12 @@ module Combined_adjacency_matrix =
         
     
     let compound_interactions_to_intensity_colors_functions
-        (attention_matrices: Attention_for_matrix list)
+        (colors_within_borders: (Color*Border_values) list)
         =
         
         let interactions_to_color_coefficient =
-            attention_matrices
-            |>List.map(fun {border_attention_to_others = border_values} ->
+            colors_within_borders
+            |>List.map(fun (_,border_values) ->
                 Adjacency_matrix_helpers.coefficient_between_values
                     border_values
             )
@@ -35,8 +35,8 @@ module Combined_adjacency_matrix =
                 )
             
             let colors =
-                attention_matrices
-                |>List.map (fun interaction_type->interaction_type.color)
+                colors_within_borders
+                |>List.map fst
             
             color_multipliers
             |>List.zip colors
@@ -56,7 +56,7 @@ module Combined_adjacency_matrix =
             |>Map.tryFind user
             |>Option.defaultValue Map.empty
             |>Map.tryFind other_user
-            |>Option.defaultValue 0.0
+            |>Option.defaultValue 0
         )
     
     let update_googlesheet_with_compound_interactions
@@ -100,7 +100,28 @@ module Combined_adjacency_matrix =
         |>Googlesheet_writing.write_table
             sheet_service
             googlesheet
-            
+    
+    let relative_values_to_text
+        (interactions: float list)
+        =
+        System.String.Format(
+            NumberFormatInfo.InvariantInfo,
+            "{0:0.##}\n{1:0.##},{2:0.##}",
+            interactions[0]*100.0,
+            interactions[1]*100.0,
+            interactions[2]*100.0
+        )
+    let absolute_values_to_text
+        (interactions: int list)
+        =
+        System.String.Format(
+            NumberFormatInfo.InvariantInfo,
+            "{0:0}\n{1:0},{2:0}",
+            interactions[0],
+            interactions[1],
+            interactions[2]
+        )  
+    
     let write_combined_interactions_to_googlesheet
         sheet_service
         googlesheet
@@ -108,18 +129,6 @@ module Combined_adjacency_matrix =
         all_sorted_users
         all_interaction_types
         =
-        let values_to_text
-            (interactions: float list)
-            =
-            //sprintf "%.3g\n%.3g,%.3g" (interactions[0]*100.0) (interactions[1]*100.0) (interactions[2]*100.0)
-            System.String.Format(
-                NumberFormatInfo.InvariantInfo,
-                "{0:0.##}\n{1:0.##},{2:0.##}",
-                interactions[0]*100.0,
-                interactions[1]*100.0,
-                interactions[2]*100.0
-            )
-        
         let values_to_color =
             compound_interactions_to_intensity_colors_functions
                 all_interaction_types
@@ -129,6 +138,6 @@ module Combined_adjacency_matrix =
             googlesheet
             handle_to_hame
             all_sorted_users
-            values_to_text
+            absolute_values_to_text
             values_to_color
             all_interaction_types

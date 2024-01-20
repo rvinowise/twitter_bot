@@ -83,20 +83,20 @@ module Single_adjacency_matrix =
                       all_sorted_users
                       user
             )
-        
-        rows_of_attention
-        |>Adjacency_matrix_helpers.add_attention_percent_inside_matrix_headers
-            handle_to_hame
-            all_sorted_users
-        |>Adjacency_matrix_helpers.add_total_scraped_attention_headers
-            handle_to_hame
-            all_sorted_users
-        |>Adjacency_matrix_helpers.add_username_headers
-            handle_to_hame
-            all_sorted_users
-            rows_of_attention
-        |>Googlesheet_writing.write_table
-            sheet_service
-            googlesheet
+        ()
+//        rows_of_attention
+//        |>Adjacency_matrix_helpers.add_attention_percent_inside_matrix_headers
+//            handle_to_hame
+//            all_sorted_users
+//        |>Adjacency_matrix_helpers.add_total_scraped_attention_headers
+//            handle_to_hame
+//            all_sorted_users
+//        |>Adjacency_matrix_helpers.add_username_headers
+//            handle_to_hame
+//            all_sorted_users
+//            rows_of_attention
+//        |>Googlesheet_writing.write_table
+//            sheet_service
+//            googlesheet
     
     

@@ -203,38 +203,38 @@ module Matrix_from_posts =
                 combined_relative_attention
             |>List.map fst
         
-        let titles_and_interactions =
-            [
-                Adjacency_matrix_helpers.likes_design;
-                Adjacency_matrix_helpers.reposts_design;
-                Adjacency_matrix_helpers.replies_design
-            ]
-            |>List.map(fun design ->
-                design.attention_type,
-                
-                let users_attention =
-                    User_attention_database.read_attention_within_matrix
-                        database
-                        matrix_title
-                        design.attention_type
-                        matrix_datetime
-                
-                let users_total_attention =
-                    User_attention_database.read_total_attention_from_users
-                        database 
-                        design.attention_type
-                        matrix_datetime
-                
-                let users_relative_attention =
-                    Adjacency_matrix_helpers.absolute_to_relative_attention
-                        users_attention
-                        users_total_attention
-                
-                Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
-                    design.color
-                    users_relative_attention
-            )
-        
+//        let titles_and_interactions =
+//            [
+//                Adjacency_matrix_helpers.likes_design;
+//                Adjacency_matrix_helpers.reposts_design;
+//                Adjacency_matrix_helpers.replies_design
+//            ]
+//            |>List.map(fun design ->
+//                design.attention_type,
+//                
+//                let users_attention =
+//                    User_attention_database.read_attention_within_matrix
+//                        database
+//                        matrix_title
+//                        design.attention_type
+//                        matrix_datetime
+//                
+//                let users_total_attention =
+//                    User_attention_database.read_total_attention_from_users
+//                        database 
+//                        design.attention_type
+//                        matrix_datetime
+//                
+//                let users_relative_attention =
+//                    Adjacency_matrix_helpers.absolute_to_relative_attention
+//                        users_attention
+//                        users_total_attention
+//                
+//                Adjacency_matrix_helpers.attention_matrix_for_colored_interactions
+//                    design.color
+//                    users_relative_attention
+//            )
+        ()
         
             
         // Write_matrix_to_sheet.try_write_separate_interactions_to_sheet
@@ -244,12 +244,12 @@ module Matrix_from_posts =
         //     handle_to_name
         //     sorted_members_of_matrix
             
-        Write_matrix_to_sheet.try_write_combined_interactions_to_sheet
-            sheet_service
-            doc_id
-            titles_and_interactions
-            handle_to_name
-            sorted_members_of_matrix
+//        Write_matrix_to_sheet.try_write_combined_interactions_to_sheet
+//            sheet_service
+//            doc_id
+//            titles_and_interactions
+//            handle_to_name
+//            sorted_members_of_matrix
          
     
     let attention_matrix_to_sheet()=
