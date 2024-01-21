@@ -6,10 +6,12 @@ open rvinowise.twitter
 open Xunit
 
 
-type User_attention_of_type = {
-    absolute_attention: Map<User_handle, int>    
-    total_attention: int    
-    relative_attention: Map<User_handle, float>    
+type Attention_in_matrix = {
+    absolute_attention: Map<User_handle, Map<User_handle, int>>
+    total_known_attention: Map<User_handle, int>    
+    relative_attention: Map<User_handle, Map<User_handle, float>>
+    total_paid_attention: Map<User_handle, float>
+    total_received_attention: Map<User_handle, float>
 }
 
 module Matrix_from_posts =
@@ -24,27 +26,65 @@ module Matrix_from_posts =
         |> Seq.map (fun (b, ats) -> b, ats |> Seq.map snd |> Map.ofSeq) 
         |> Map.ofSeq 
 
-    let merge_maps
-        (merge_values : 'Key -> 'Value -> 'Value -> 'Value)
-        (added_map : Map<'Key, 'Value>)
-        (base_map : Map<'Key, 'Value>)
-        =
-        Map.fold (fun total_map key added_value ->
-            match
-                Map.tryFind key total_map
-            with
-            |Some existing_value ->
-                total_map
-                |>Map.add key (
-                    merge_values key existing_value added_value 
-                ) 
-            |None ->
-                total_map
-                |>Map.add key added_value 
-        )
-            base_map
-            added_map
     
+    let merge_maps_by_appending
+        (merge_values : 'Key -> 'Value -> 'Value -> 'Value)
+        (maps : Map<'Key, 'Value> seq)
+        =
+        maps
+    
+    let merge_maps_by_folding
+        (merge_values : 'Key -> 'Value -> 'Value -> 'Value)
+        (maps : Map<'Key, 'Value> seq)
+        =
+        maps
+        |>Seq.fold (fun total_map added_map ->
+            added_map
+            |>Map.fold (fun total_map key added_value ->
+                match
+                    Map.tryFind key total_map
+                with
+                |Some existing_value ->
+                    total_map
+                    |>Map.add key (
+                        merge_values key existing_value added_value 
+                    ) 
+                |None ->
+                    total_map
+                    |>Map.add key added_value 
+            )
+                Map.empty
+                
+        )
+            Map.empty
+    
+    let merge_maps = merge_maps_by_folding
+    
+    [<Fact>]
+    let ``try merge_maps, small maps, adding values``()=
+        let map1 = ["user1",0;"user2",1;"user3",2]|>Map.ofList
+        let map2 = ["user1",10;"other_user2",11;"user3",12]|>Map.ofList
+        let map3 = ["other_user1",100;"other_user2",101]|>Map.ofList
+    
+        let merged123 =
+            merge_maps
+                (fun _ value1 value2 -> value1 + value2)
+                [map1;map2;map3]
+    
+        let merged12 =
+            merge_maps
+                (fun _ value1 value2 -> value1 + value2)
+                [map1;map2]
+        
+        let merged13 =
+            merge_maps
+                (fun _ value1 value2 -> value1 + value2)
+                [map1;map3]
+    
+        merged123
+        |>should equal (
+                
+        )
     let accounts_to_their_received_attention
         (users_attention: Map<User_handle, Map<User_handle, float>>)
         =
@@ -78,7 +118,7 @@ module Matrix_from_posts =
             |>Seq.reduce (+)
         )|>Map.ofSeq
     
-    let accounts_sorted_by_received_attention
+    let sort_accounts_by_received_attention
         (users_attention: Map<User_handle, Map<User_handle, float>>)
         =
         users_attention
@@ -89,23 +129,16 @@ module Matrix_from_posts =
     
     let sort_accounts_by_integration_into_network
         all_matrix_members
-        relative_attention
+        combined_paid_attention
+        combined_received_attention
         =
         let zero_integration_for_everybody =
             all_matrix_members
             |>List.map (fun account -> account,0.0)
         
-        let paid_attention =
-            relative_attention
-            |>accounts_to_their_paid_attention
-        
-        let received_attention =
-            relative_attention
-            |>accounts_to_their_received_attention
-        
         zero_integration_for_everybody
-        |>List.append (Map.toList paid_attention)
-        |>List.append (Map.toList received_attention)
+        |>List.append (Map.toList combined_paid_attention)
+        |>List.append (Map.toList combined_received_attention)
         |>List.fold(fun network_integrations (user,value) ->
             let old_network_integration =
                 network_integrations
@@ -120,55 +153,12 @@ module Matrix_from_posts =
         |>Map.toList
         |>List.sortByDescending snd
 
-    let detailed_attention_from_account
-        (database: NpgsqlConnection)
-        before_date
-        account
-        =
-        
-        User_attention_from_posts.attention_types
-        |>List.map(fun (attention_type,read_attention) ->
-            let absolute_attention =
-                read_attention
-                    database
-                    before_date
-                    account
-                |>Map.ofSeq
-                
-            let total_known_attention =
-                absolute_attention
-                |>Map.values
-                |>Seq.reduce (+)
-                
-            
-            attention_type,
-            {
-                absolute_attention = absolute_attention
-                        
-                total_attention = total_known_attention
-                
-                relative_attention =
-                    absolute_attention
-                    |>Map.map(fun target absolute_attention ->
-                        (float absolute_attention)/(float total_known_attention)
-                    )
-            }
-        )
-        
-        
-    let write_matrices_to_sheet
-        sheet_service
-        (database: NpgsqlConnection)
-        doc_id
-        matrix_title
+    
+    let attention_in_matrices
+        database
         matrix_datetime
-        handle_to_name
+        matrix_title
         =
-        let matrix_members =
-            Adjacency_matrix_database.read_members_of_matrix
-                database
-                matrix_title
-        
         [
             Adjacency_matrix_helpers.likes_design,
             User_attention_from_posts.read_likes_inside_matrix,
@@ -212,36 +202,43 @@ module Matrix_from_posts =
                 |>accounts_to_their_received_attention
             
             
-                
-        )   
+            {
+                absolute_attention = absolute_attention_in_matrix
+                total_known_attention = total_known_attention
+                relative_attention = relative_paid_attention_in_matrix
+                total_paid_attention = total_paid_attention_in_matrix
+                total_received_attention = total_received_attention_in_matrix
+            }    
+        )
         
+    let write_matrices_to_sheet
+        sheet_service
+        (database: NpgsqlConnection)
+        doc_id
+        matrix_title
+        matrix_datetime
+        handle_to_name
+        =
+        let matrix_members =
+            Adjacency_matrix_database.read_members_of_matrix
+                database
+                matrix_title
         
-        let user_detailed_attention =
-            matrix_members
-            |>List.map (fun account ->
-                account,
-                detailed_attention_from_account
-                    database
-                    matrix_datetime
-                    account
-            )
+        let computed_attention =
+            attention_in_matrices
+                database
+                matrix_datetime
+                matrix_title
         
         let combined_relative_attention =
-            user_detailed_attention
-            |>List.map(fun (attentive_user, attention_details) ->
-                attentive_user,
-                attention_details
-                |>List.map (fun (_,attention_detail) ->
-                    attention_detail.relative_attention   
-                )
-                |>List.fold(fun total_map attention_map ->
-                    merge_maps
-                        (fun target old_value new_value -> old_value + new_value)
-                        attention_map
-                        total_map
-                )
-                    Map.empty
-            )|>Map.ofList
+            computed_attention
+            |>List.map(fun computed_attention ->
+                merge_maps
+                    (fun target old_value new_value -> old_value + new_value)
+                    computed_attention.total_paid_attention
+                    computed_attention.total_received_attention
+                
+            )
         
         let sorted_members_of_matrix =
             sort_accounts_by_integration_into_network
