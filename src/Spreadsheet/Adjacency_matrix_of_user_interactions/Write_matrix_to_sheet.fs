@@ -80,6 +80,7 @@ module Write_matrix_to_sheet =
                 }
                 handle_to_hame
                 all_sorted_users
+            () //test    
         |None ->
             $"a sheet with name 'Everything' isn't found in the google-sheet document {sheet_document},
             skipping writing this type of user interactions"

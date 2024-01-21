@@ -139,5 +139,5 @@ module Combined_adjacency_matrix =
             handle_to_hame
             all_sorted_users
             absolute_values_to_text
-            values_to_color
-            all_interaction_types
+            // values_to_color
+            // all_interaction_types

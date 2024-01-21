@@ -158,8 +158,7 @@ module Matrix_from_posts =
         
     let write_matrices_to_sheet
         sheet_service
-        (central_db: NpgsqlConnection)
-        (local_db: NpgsqlConnection)
+        (database: NpgsqlConnection)
         doc_id
         matrix_title
         matrix_datetime
@@ -167,15 +166,62 @@ module Matrix_from_posts =
         =
         let matrix_members =
             Adjacency_matrix_database.read_members_of_matrix
-                central_db
+                database
                 matrix_title
+        
+        [
+            Adjacency_matrix_helpers.likes_design,
+            User_attention_from_posts.read_likes_inside_matrix,
+            User_attention_from_posts.read_total_known_likes_of_matrix_members;
+            
+            Adjacency_matrix_helpers.reposts_design,
+            User_attention_from_posts.read_reposts_inside_matrix,
+            User_attention_from_posts.read_total_known_reposts_of_matrix_members;
+            
+            
+            Adjacency_matrix_helpers.replies_design,
+            User_attention_from_posts.read_replies_inside_matrix,
+            User_attention_from_posts.read_total_known_replies_of_matrix_members;
+        ]
+        |>List.map(fun (design, read_attention_inside_matrix, read_total_known_attention) ->
+            let total_known_attention =
+                read_total_known_attention
+                    database
+                    matrix_datetime
+                    matrix_title
+                |>Map.ofSeq
+            
+            let absolute_attention_in_matrix =
+                read_attention_inside_matrix
+                    database
+                    matrix_datetime
+                    matrix_title
+            
+            let relative_paid_attention_in_matrix =
+                Adjacency_matrix_helpers.absolute_to_relative_attention
+                    absolute_attention_in_matrix
+                    total_known_attention
+            
+            
+            let total_paid_attention_in_matrix =
+                relative_paid_attention_in_matrix
+                |>accounts_to_their_paid_attention
+            
+            let total_received_attention_in_matrix =
+                relative_paid_attention_in_matrix
+                |>accounts_to_their_received_attention
+            
+            
+                
+        )   
+        
         
         let user_detailed_attention =
             matrix_members
             |>List.map (fun account ->
                 account,
                 detailed_attention_from_account
-                    local_db
+                    database
                     matrix_datetime
                     account
             )
@@ -265,7 +311,6 @@ module Matrix_from_posts =
         
         write_matrices_to_sheet
             (Googlesheet.create_googlesheet_service())
-            central_db
             local_db
             doc_id
             Adjacency_matrix.Longevity_members

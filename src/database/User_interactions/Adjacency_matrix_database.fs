@@ -14,14 +14,7 @@ open rvinowise.twitter.database_schema
 open rvinowise.twitter.database_schema.tables
 
 
-type Adjacency_matrix =
-    |Longevity_members
-    |Twitter_network
-    with
-    override this.ToString() =
-        match this with
-        |Longevity_members -> "Longevity members"
-        |Twitter_network -> "Twitter network"
+
 
 
 module Adjacency_matrix_database =
@@ -74,7 +67,7 @@ module Adjacency_matrix_database =
             |>List.map(fun handle ->
                 {|
                     account = handle
-                    title = matrix_title
+                    title = string matrix_title
                 |}    
             )
         )|> ignore
@@ -85,10 +78,10 @@ module Adjacency_matrix_database =
         
         read_members_of_matrix
             central_db
-            Adjacency_matrix.Longevity_members
+            Adjacency_matrix.Twitter_network
         |>write_members_of_matrix
             local_db
-            Adjacency_matrix.Longevity_members
+            Adjacency_matrix.Twitter_network
             
     let ``add_matrix_from_sheet``()=
         Googlesheet_reading.read_range

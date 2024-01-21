@@ -144,7 +144,7 @@ module Harvest_posts_from_timeline =
         let write_post post =
             post_count <- post_count + 1
             match tab with
-            |Likes ->
+            |Timeline_tab.Likes ->
                 write_liked_post user database post
             |_ ->
                 Twitter_post_database.write_main_post    
