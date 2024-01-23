@@ -45,7 +45,7 @@ module Combined_adjacency_matrix =
                 
         interaction_to_intensity_color
         
-    let attention_from_user_to_user
+    let combined_attention_from_user_to_user
         user
         other_user
         attention_maps
@@ -59,48 +59,7 @@ module Combined_adjacency_matrix =
             |>Option.defaultValue 0
         )
     
-    let update_googlesheet_with_compound_interactions
-        sheet_service
-        googlesheet
-        handle_to_hame
-        all_sorted_users
-        values_to_text
-        values_to_color
-        (attention_matrices: Attention_for_matrix list)
-        =
-        
-        let rows_of_interactions =
-            all_sorted_users
-            |>List.map (fun user ->
-                all_sorted_users
-                |>List.map (fun other_user ->
-                    if
-                        user = User_handle "JamesRstrole"
-                        && other_user = User_handle "JamesRstrole"
-                    then
-                        Log.debug "test"
-                        
-                    let interactions =
-                        attention_matrices
-                        |>List.map (fun matrix_data -> matrix_data.absolute_attention)
-                        |>attention_from_user_to_user
-                            user
-                            other_user
-
-                    Cell.from_colored_text
-                        (values_to_text interactions)
-                        (values_to_color interactions)
-                )
-            )
-        
-        Adjacency_matrix_helpers.add_username_headers
-            handle_to_hame
-            all_sorted_users
-            rows_of_interactions
-        |>Googlesheet_writing.write_table
-            sheet_service
-            googlesheet
-    
+   
     let relative_values_to_text
         (interactions: float list)
         =
@@ -120,24 +79,146 @@ module Combined_adjacency_matrix =
             interactions[0],
             interactions[1],
             interactions[2]
-        )  
+        )
+     
+    let add_headers
+        handle_to_hame
+        all_sorted_handles
+        (total_known_attention: Map<User_handle,int> list)
+        (table: Cell list list)
+        =
+        let top_row_of_users =
+            Adjacency_matrix_helpers.top_row_of_users
+                handle_to_hame
+                all_sorted_handles    
+        
+        let all_known_attention_column =
+            all_sorted_handles
+            |>List.map(fun attentive_user ->
+                let known_attention =
+                    total_known_attention
+                    |>List.map(fun attention_of_type ->
+                        attention_of_type
+                        |>Map.tryFind attentive_user
+                        |>Option.defaultValue 0
+                    )
+                {
+                    Cell.color = Adjacency_matrix_helpers.grey_header
+                    style = Text_style.regular
+                    value =
+                        known_attention
+                        |>absolute_values_to_text
+                        |>Cell_value.Text
+                }
+            )
+            |>List.append [
+                {
+                    Cell.color=Adjacency_matrix_helpers.grey_header
+                    value = Cell_value.Text "total known\nattention"
+                    style = Text_style.vertical 
+                }
+            ]
+        
+        let left_column_of_users =
+            all_sorted_handles
+            |>List.map (Googlesheet_for_twitter.handle_to_user_hyperlink handle_to_hame)
+            |>List.map (fun url -> {
+                Cell.value = Cell_value.Formula url
+                color = Color.white
+                style = Text_style.regular
+            })
+            |>List.append [
+                {
+                    Cell.value = Cell_value.Formula """=HYPERLINK("https://github.com/rvinowise/twitter_bot","src")"""
+                    color = Color.white
+                    style = Text_style.regular
+                }
+            ]
+        
+        table
+        |>List.append [top_row_of_users]
+        |>Table.transpose Cell.empty
+        |>List.append [all_known_attention_column]
+        |>List.append [left_column_of_users]
+        |>Table.transpose Cell.empty
     
-    let write_combined_interactions_to_googlesheet
+    
+    
+    let rows_of_combined_attention_for_user
+        values_to_text
+        values_to_color
+        attention_matrices
+        all_sorted_users
+        =
+        all_sorted_users
+        |>List.map (fun user ->
+            all_sorted_users
+            |>List.map (fun other_user ->
+                let combined_attention =
+                    attention_matrices
+                    |>List.map (fun matrix_data -> matrix_data.absolute_attention)
+                    |>combined_attention_from_user_to_user
+                        user
+                        other_user
+
+                Cell.from_colored_text
+                    (combined_attention |>List.map float |>values_to_color )
+                    (values_to_text combined_attention)
+            )
+        )
+    
+    let update_googlesheet_with_combined_interactions
+        handle_to_hame
+        values_to_text
+        values_to_color
         sheet_service
         googlesheet
-        handle_to_hame
         all_sorted_users
-        all_interaction_types
+        (attention_matrices: Attention_in_matrix list)
         =
-        let values_to_color =
-            compound_interactions_to_intensity_colors_functions
-                all_interaction_types
         
-        update_googlesheet_with_compound_interactions
-            sheet_service
-            googlesheet
+        let total_known_attention =
+            attention_matrices
+            |>List.map(_.total_known_attention)
+            
+        rows_of_combined_attention_for_user
+            values_to_text
+            values_to_color
+            attention_matrices
+            all_sorted_users
+        |>add_headers
             handle_to_hame
             all_sorted_users
+            total_known_attention
+        |>Googlesheet_writing.write_table
+            sheet_service
+            googlesheet
+    
+      
+    
+    let write_combined_interactions_to_googlesheet
+        handle_to_hame
+        sheet_service
+        googlesheet
+        all_sorted_users
+        matrices_data
+        =
+        let values_to_color =
+            matrices_data
+            |>List.map(fun matrix_data ->
+                matrix_data.design.color,
+                matrix_data.absolute_attention
+                |>Adjacency_matrix_helpers.interactions_with_everybody
+                |>Seq.map float
+                |>Adjacency_matrix_helpers.border_values_of_attention
+            )
+            |>compound_interactions_to_intensity_colors_functions
+        
+        update_googlesheet_with_combined_interactions
+            handle_to_hame
             absolute_values_to_text
-            // values_to_color
-            // all_interaction_types
+            values_to_color
+            sheet_service
+            googlesheet
+            all_sorted_users
+            matrices_data

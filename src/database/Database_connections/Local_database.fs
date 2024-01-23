@@ -12,6 +12,6 @@ module Local_database =
     let open_connection () =
         let db_connection = Database.open_connection Settings.local_database
         
-        Twitter_database_types.set_twitter_type_handlers()
+        Twitter_database_type_mappers.set_twitter_type_handlers()
         
         db_connection

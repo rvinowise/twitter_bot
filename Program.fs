@@ -85,6 +85,7 @@ module Program =
             |>int
             |>Harvest_timelines_of_table_members.harvest_timelines_from_central_database
                 (Local_database.open_connection())
+            |>ignore
         | "competition"::rest ->
             announce_competition_successes()
         | "test"::rest ->

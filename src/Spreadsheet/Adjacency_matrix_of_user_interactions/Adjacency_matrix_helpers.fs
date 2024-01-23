@@ -6,10 +6,8 @@ open rvinowise.web_scraping
 open Xunit
 open System
 
-type Interaction_colorscheme = {
-    min_color: Color
-    max_color: Color
-}
+
+
 
 type Border_values = {
     min:float
@@ -17,25 +15,27 @@ type Border_values = {
     average:float
 }
 
-type Attention_for_matrix = {
-    absolute_attention: Map<User_handle, Map<User_handle, int>>
-    relative_attention: Map<User_handle, Map<User_handle, float>>
-    total_attention: Map<User_handle, int>
-    border_attention_to_others: Border_values
-    border_attention_to_oneself: Border_values
+type Attention_matrix_design = {
     color: Color
+    attention_type: Attention_type
 }
 
-type Interaction_cell = {
+type Attention_in_matrix = {
+    absolute_attention: Map<User_handle, Map<User_handle, int>>
+    total_known_attention: Map<User_handle, int>    
+    relative_attention: Map<User_handle, Map<User_handle, float>>
+    total_paid_attention: Map<User_handle, float>
+    total_received_attention: Map<User_handle, float>
+    design: Attention_matrix_design
+}
+
+type Attention_cell = {
     likes: int
     reposts: int
     replies: int
 }
 
-type Interaction_design = {
-    color: Color
-    attention_type: Attention_type
-}
+
     
 
 module Adjacency_matrix_helpers =
@@ -54,6 +54,13 @@ module Adjacency_matrix_helpers =
     }
     let combined_interactions_title = "Everything"
     
+    
+    let interactions_with_everybody interactions =
+        interactions
+        |>Map.toSeq
+        |>Seq.collect(fun (user,interactions) ->
+            Map.values interactions
+        )
     let interactions_with_others interactions =
         interactions
         |>Map.toSeq
@@ -107,30 +114,6 @@ module Adjacency_matrix_helpers =
                 (float absolute_attention) / (float user_total_attention)
             )
         )
-     
-    let attention_matrix_for_colored_interactions
-        color
-        attention_map
-        total_attention
-        =
-        let relative_attention =
-            absolute_to_relative_attention
-                attention_map
-                total_attention
-        {
-            absolute_attention = attention_map
-            relative_attention = relative_attention 
-            total_attention = total_attention 
-            color = color
-            border_attention_to_oneself=
-                relative_attention
-                |>interactions_with_oneself
-                |>border_values_of_attention
-            border_attention_to_others=
-                relative_attention
-                |>interactions_with_others
-                |>border_values_of_attention
-        }
      
     let inline clamp minimum maximum value = value |> max minimum |> min maximum
     
@@ -238,69 +221,30 @@ module Adjacency_matrix_helpers =
     
     
         
-    let user_interactions_to_colored_values
-        interaction_to_intensity_color
-        self_interaction_to_intensity_color
-        (user_interactions: Map<User_handle, Map<User_handle, int>>)
+    let user_attention_to_colored_values
+        attention_to_intensity_color
+        self_attention_to_intensity_color
+        (user_attention: Map<User_handle, Map<User_handle, int>>)
         =
-        user_interactions
+        user_attention
         |>Map.map(fun user interactions ->
             interactions
-            |>Map.map (fun other_user interaction_amount ->
+            |>Map.map (fun other_user attention_amount ->
                 if
                     other_user = user
                 then
-                    interaction_amount,
-                    self_interaction_to_intensity_color interaction_amount
+                    attention_amount,
+                    self_attention_to_intensity_color attention_amount
                 else
-                    interaction_amount,
-                    interaction_to_intensity_color interaction_amount
+                    attention_amount,
+                    attention_to_intensity_color attention_amount
             )
         )
     
-    let row_of_attention_for_user
-        interaction_color
-        self_interaction_color
-        all_sorted_users
-        attentive_user
-        (absolute_attentions:Map<User_handle, int>)
-        (relative_attentions:Map<User_handle, float>)
-        =
-        all_sorted_users
-        |>List.map(fun other_user ->
-            let absolute_value =
-                absolute_attentions
-                |>Map.tryFind other_user
-                |>Option.defaultValue 0
-            
-            let relative_value =
-                relative_attentions
-                |>Map.tryFind other_user
-                |>Option.defaultValue 0.0
-            
-            let cell_text =
-                String.Format(
-                    NumberFormatInfo.InvariantInfo,
-                    "{0:0.##}\n{1:0.##}",
-                    absolute_value,
-                    relative_value*100.0
-                )
-            {
-                Cell.value = Cell_value.Text cell_text
-                color =
-                    if attentive_user = other_user then
-                        self_interaction_color
-                            relative_value
-                    else
-                        interaction_color
-                            relative_value
-                        
-                style = Text_style.regular
-            }
-        )
     
     
-    let header_of_users handle_to_hame all_sorted_handles =
+    
+    let top_row_of_users handle_to_hame all_sorted_handles =
         all_sorted_handles
         |>List.map (Googlesheet_for_twitter.handle_to_user_hyperlink handle_to_hame)
         |>List.map (fun url -> {
@@ -309,7 +253,10 @@ module Adjacency_matrix_helpers =
             style = Text_style.vertical
         })
         
-    let left_column_of_users handle_to_hame all_sorted_handles =
+    let left_column_of_users
+        handle_to_hame 
+        all_sorted_handles
+        =
         all_sorted_handles
         |>List.map (Googlesheet_for_twitter.handle_to_user_hyperlink handle_to_hame)
         |>List.map (fun url -> {
@@ -323,11 +270,9 @@ module Adjacency_matrix_helpers =
             style = Text_style.regular
         }]
 
+    let grey_header = {r=0.9;g=0.9;b=0.9}
 
-    let add_attention_percent_inside_matrix_headers
-        all_sorted_handles
-        rows_of_interactions
-        =()
+    
         
     
     let add_username_headers
@@ -337,7 +282,7 @@ module Adjacency_matrix_helpers =
         =
             
         let top_row_of_users =
-            header_of_users
+            top_row_of_users
                 handle_to_hame
                 all_sorted_handles
         

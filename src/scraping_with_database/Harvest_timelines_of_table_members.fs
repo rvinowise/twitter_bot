@@ -128,20 +128,24 @@ module Harvest_timelines_of_table_members =
             browser    
         )
             browser
-        |>ignore
     
     let harvest_timelines_from_central_database
         local_db
         article_amount 
         =
         let worker_id = This_worker.this_worker_id local_db
+        
         harvest_timelines_from_jobs
             local_db
             (Distributing_jobs_database.resiliently_write_final_result)
             article_amount
             (jobs_from_central_database worker_id)
-    
-
+        |>ignore
+        
+        Assigning_browser_profiles.release_browser_profile
+            (Central_database.resiliently_open_connection())
+            worker_id
+            
     let ``try harvest_timelines``()=
         [
             User_handle "AD74593974"
@@ -166,6 +170,9 @@ module Harvest_timelines_of_table_members =
         |>Distributing_jobs_database.write_users_for_scraping central_db
     
     let write_tasks_to_scrape_next_matrix_timeframe ()=
+        //2nd frame = 2024-01-19 22:04:07.576195+00
+        //3rd frame = 2024-01-22 17:34:39.745473+00
+        
         let central_db =
             Central_database.open_connection()
         

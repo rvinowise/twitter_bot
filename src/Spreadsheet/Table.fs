@@ -9,12 +9,18 @@ type Cell_value =
     |Formula of string
     |Integer of int
     |Float of float
+    |Percent of float
 
 module Cell_value=
     let is_empty value =
         match value with
-        |Text value |Formula value -> value = "" 
-        |Integer _ | Float _ -> false 
+        |Text value
+        |Formula value
+            -> value = "" 
+        |Integer _
+        |Float _
+        |Percent _
+            -> false 
 
 type Text_orientation =
     |Horizontal
@@ -75,7 +81,8 @@ module Cell =
         }
     
     let from_colored_text
-        text color
+        color
+        text
         =
         {
             Cell.color = color

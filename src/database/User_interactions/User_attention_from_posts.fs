@@ -10,25 +10,7 @@ open rvinowise.twitter.database_schema.tables
 open rvinowise.twitter.database_schema
 
 
-type Adjacency_matrix =
-    |Longevity_members
-    |Twitter_network
-    with
-    override this.ToString() =
-        match this with
-        |Longevity_members -> "Longevity members"
-        |Twitter_network -> "Twitter network"
 
-type Attention_type =
-    |Likes
-    |Replies
-    |Reposts
-    with
-    override this.ToString() =
-        match this with
-        |Likes -> "Likes"
-        |Replies -> "Replies"
-        |Reposts -> "Reposts"
 
 [<CLIMutable>]
 type User_attention = {
@@ -105,22 +87,7 @@ module User_attention_from_posts =
         )|>amounts_for_user_as_tuples
     
     
-    let sql_account_should_be_inside_matrix
-        account
-        =
-        $"""
-        --the account should be part of the desired matrix
-        exists ( 
-            select ''
-            from {account_of_matrix}
-            where 
-                --find the matrix by title
-                {account_of_matrix}.{account_of_matrix.title} = @matrix_title
-                
-                --the target of attention should be part of the matrix
-                and {account_of_matrix}.{account_of_matrix.account} = {account}
-        )
-        """
+    
     
     let sql_condition_filtering_only_matrix_members
         attentive_user
@@ -128,10 +95,10 @@ module User_attention_from_posts =
         =
         $"""
         --the attentive user should be part of the desired matrix
-        {sql_account_should_be_inside_matrix attentive_user}
+        {Twitter_database.sql_account_should_be_inside_matrix attentive_user}
         
         --the target of attention should be part of the desired matrix
-        {sql_account_should_be_inside_matrix target_of_attention}
+        and {Twitter_database.sql_account_should_be_inside_matrix target_of_attention}
         """
     
     let read_likes_inside_matrix
@@ -181,7 +148,8 @@ module User_attention_from_posts =
                 and {post.header.is_quotation} = false
 
             where
-                {sql_account_should_be_inside_matrix ("main_attention."+post.like.liker)}
+                {Twitter_database.sql_account_should_be_inside_matrix
+                     ("main_attention."+post.like.liker)}
                 and main_attention.{post.like.when_scraped} < @before_datetime 
 
             group by 
@@ -279,7 +247,8 @@ module User_attention_from_posts =
                 and {post.header.is_quotation} = false
 
             where
-                {sql_account_should_be_inside_matrix ("main_attention."+post.repost.reposter)}
+                {Twitter_database.sql_account_should_be_inside_matrix
+                     ("main_attention."+post.repost.reposter)}
                 and main_attention.{post.repost.when_scraped} < @before_datetime
             
             group by 
@@ -379,7 +348,7 @@ module User_attention_from_posts =
                 and replying_header.{post.header.is_quotation} = false
             
             where 
-                {sql_account_should_be_inside_matrix
+                {Twitter_database.sql_account_should_be_inside_matrix
                      ("replying_header."+post.header.author)}
                 and replying_header.{post.header.when_written} < @before_datetime
             

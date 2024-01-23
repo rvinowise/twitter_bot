@@ -94,11 +94,11 @@ module Merging_different_databases =
 
        
     let try_merge_tables() =
-        Twitter_database_types.set_twitter_type_handlers()
+        Twitter_database_type_mappers.set_twitter_type_handlers()
         
         let source =
             Database.open_connection
-                "Host=localhost:5432;Username=postgres;Password=' ';Database=twitter_black_box"
+                "Host=localhost:5432;Username=postgres;Password=' ';Database=twitter2"
         
         let target =
             Database.open_connection

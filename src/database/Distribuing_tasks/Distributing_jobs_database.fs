@@ -47,12 +47,16 @@ module Distributing_jobs_database =
                     {user_to_scrape.taken_by} = @worker,
                     {user_to_scrape.when_taken} = @when_taken
                 where 
-                    {sql_taking_only_jobs_from_last_batch}
-                    and {user_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Free}'
-                    and {user_to_scrape.taken_by} = ''
-
-                limit 1
-                returning {user_to_scrape.account}    
+                    {user_to_scrape.account} = (
+                        select {user_to_scrape.account} from {user_to_scrape}
+                        where 
+                            {sql_taking_only_jobs_from_last_batch}
+                            and {user_to_scrape.status} = '{Scraping_user_status.db_value Scraping_user_status.Free}'
+                            and {user_to_scrape.taken_by} = ''
+                        limit 1
+                    )
+                    and {sql_taking_only_jobs_from_last_batch}
+                returning {user_to_scrape.account}   
                 ",
                 {|
                     worker=worker_id
@@ -310,7 +314,6 @@ module Distributing_jobs_database =
     let read_last_completed_jobs
         (database:NpgsqlConnection)
         =
-        
         database.Query<User_scraping_job>(
             $"select 
                 {user_to_scrape.account},
@@ -382,5 +385,22 @@ module Distributing_jobs_database =
         ) |> ignore
     
 
-    
+    let read_timeframes
+        (database:NpgsqlConnection)
+        (matrix_title: Adjacency_matrix)
+        =
+        database.Query<User_scraping_job>(
+            $"select 
+                {user_to_scrape.created_at},
+                {user_to_scrape.when_taken},
+                {user_to_scrape.when_completed}
+                
+            from {user_to_scrape}
+            where 
+                {user_to_scrape.account} 
+            group by {user_to_scrape.created_at}
+            "
+        )|>Seq.map(fun job ->
+            job.account,job.when_completed    
+        )
         

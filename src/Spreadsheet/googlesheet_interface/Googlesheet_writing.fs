@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 
+open System.Net.Http
 open System.Threading.Tasks
 open Google
 open Google.Apis.Sheets.v4
@@ -21,7 +22,8 @@ module Googlesheet_writing =
         match value with
         |Integer number ->
             ExtendedValue( NumberValue= (number|>float|>Nullable) )
-        |Float number ->
+        |Float number
+        |Percent number ->
             ExtendedValue( NumberValue= (number|>float|>Nullable) )
         |Text text ->
             ExtendedValue(StringValue = text)
@@ -69,6 +71,15 @@ module Googlesheet_writing =
                             |>Color.to_google_color
                         )
                     )    
+                ),
+                
+                NumberFormat = NumberFormat(
+                    Type =
+                        match cell.value with
+                        |Percent _ -> "PERCENT"    
+                        |Integer _
+                        |Float _ -> "NUMBER"
+                        |_ -> "TEXT"
                 )
             ),
             UserEnteredValue = value_to_google_value cell.value
@@ -236,6 +247,7 @@ module Googlesheet_writing =
                 |>Some
             with
             | :? TaskCanceledException
+            | :? HttpRequestException
             | :? GoogleApiException as exc ->
                 $"""exception when writing {Seq.length rows} rows starting from {starting_row}
                 into sheet "{sheet.doc_id}", "{sheet.page_name}":

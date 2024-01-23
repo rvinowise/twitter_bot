@@ -85,10 +85,11 @@
     
     <!-- Databases -->
     <Compile Include="src\database\Database.fs" />
-    <Compile Include="src\database\Twitter_database_types.fs" />
     <Compile Include="src\database\Twitter_database_structure\post_tables.fs" />
     <Compile Include="src\database\Twitter_database_structure\twitter_activity.fs" />
     <Compile Include="src\database\Twitter_database_structure\twitter_database_structure.fs" />
+    <Compile Include="src\database\Twitter_database.fs" />
+    <Compile Include="src\database\Twitter_database_type_mappers.fs" />
     <Compile Include="src\database\Database_connections\Local_database.fs" />
     <Compile Include="src\database\Database_connections\Central_database.fs" />
 

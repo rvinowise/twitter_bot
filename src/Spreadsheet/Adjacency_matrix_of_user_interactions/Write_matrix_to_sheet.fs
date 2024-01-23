@@ -9,58 +9,46 @@ open Xunit
 
 module Write_matrix_to_sheet =
         
-    let write_relative_interactions_to_googlesheet
-        (sheet_service: SheetsService)
-        sheet
-        relative_interactions
-        handle_to_hame
-        all_sorted_users
-        =
-        Single_adjacency_matrix.update_googlesheet
-            sheet_service
-            sheet
-            handle_to_hame
-            all_sorted_users
-            relative_interactions
+
     
     
     let try_write_separate_interactions_to_sheet
+        handle_to_hame
         sheet_service
         sheet_document
-        titles_and_interactions
-        handle_to_hame
+        (matrices_data: Attention_in_matrix list)
         all_sorted_users
         =
-        titles_and_interactions
-        |>List.iter ( fun (title, interaction_type) ->
-                
+        matrices_data
+        |>List.iter ( fun matrix_data ->
+            let page_title = string matrix_data.design.attention_type
             match
                 Googlesheet_id.try_sheet_id_from_title
                     sheet_service
                     sheet_document
-                    title
+                    page_title
             with
             |Some sheet_id ->
-                write_relative_interactions_to_googlesheet
+                Single_adjacency_matrix.update_googlesheet
+                    handle_to_hame
                     sheet_service
                     {
                         Google_spreadsheet.doc_id = sheet_document
-                        page_name=title
+                        page_name=page_title
                     }
-                    interaction_type
-                    handle_to_hame
                     all_sorted_users
+                    matrix_data
             |None -> 
-                $"a sheet with name {title} isn't found in the google-sheet document {sheet_document},
+                $"a sheet with name {page_title} isn't found in the google-sheet document {sheet_document},
                 skipping writing this type of user interactions"
                 |>Log.important
         ) 
             
     let try_write_combined_interactions_to_sheet
+        handle_to_hame
         sheet_service
         sheet_document
-        titles_and_interactions
-        handle_to_hame
+        (matrices_data: Attention_in_matrix list)
         all_sorted_users
         =
         match
@@ -70,17 +58,15 @@ module Write_matrix_to_sheet =
                     "Everything"
         with
         |Some page_id ->
-            titles_and_interactions
-            |>List.map snd
-            |>Combined_adjacency_matrix.write_combined_interactions_to_googlesheet
+            Combined_adjacency_matrix.write_combined_interactions_to_googlesheet
+                handle_to_hame
                 sheet_service
                 {
                     Google_spreadsheet.doc_id = sheet_document
                     page_name="Everything"
                 }
-                handle_to_hame
                 all_sorted_users
-            () //test    
+                matrices_data
         |None ->
             $"a sheet with name 'Everything' isn't found in the google-sheet document {sheet_document},
             skipping writing this type of user interactions"

@@ -248,7 +248,7 @@ module Harvest_posts_from_timeline =
             html_parsing_context
             tab
             user 
-        
+        |>ignore
         
         write_newest_post_on_timeline
             browser
