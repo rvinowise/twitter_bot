@@ -81,7 +81,17 @@ type User_to_scrape_table() =
     member _.when_taken = "when_taken"
     member _.when_completed = "when_completed"
    
-    
+[<CLIMutable>]
+type User_to_scrape_row = {
+    created_at: DateTime
+    account: User_handle
+    taken_by: string
+    status: string
+    posts_amount: int
+    likes_amount: int
+    when_taken: DateTime
+    when_completed: DateTime
+}    
 
 
 type Account_of_matrix_table() =

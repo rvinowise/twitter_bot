@@ -7,6 +7,7 @@ open DeviceId.Encoders
 open DeviceId.Formatters
 open Npgsql
 open Xunit
+open rvinowise.html_parsing
 open rvinowise.twitter
 open rvinowise.twitter.database_schema
 open rvinowise.twitter.database_schema.tables
@@ -403,4 +404,43 @@ module Distributing_jobs_database =
         )|>Seq.map(fun job ->
             job.account,job.when_completed    
         )
+    
+    [<Fact>]
+    let ``try datetime shift in local_db``()=
+        let database = Local_database.open_connection()
+        let datetime =
+            Html_parsing.parse_datetime "yyyy-MM-dd HH:mm:ss.ffffff" "2024-01-22 22:09:05.929624"
         
+        database.Query<Post_header_row>(
+            $"select * from {post.header}
+            where 
+                {post.header.when_scraped} = @datetime
+            ",
+            {|
+                datetime =  datetime 
+            |}
+        )
+        |>List.ofSeq
+        |>ignore
+        
+        ()
+        
+    [<Fact>]
+    let ``try datetime shift in central_db``()=
+        let database = Central_database.open_connection()
+        let datetime =
+            Html_parsing.parse_datetime "yyyy-MM-dd HH:mm:ss.ffffff" "2024-01-22 20:34:39.745473"
+        
+        database.Query<User_to_scrape_row>(
+            $"select * from {user_to_scrape}
+            where 
+                {user_to_scrape.created_at} = @datetime
+            ",
+            {|
+                datetime =  datetime 
+            |}
+        )
+        |>List.ofSeq
+        |>ignore
+        
+        ()

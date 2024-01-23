@@ -163,7 +163,6 @@ module Matrix_from_posts =
             User_attention_from_posts.read_reposts_inside_matrix,
             User_attention_from_posts.read_total_known_reposts_of_matrix_members;
             
-            
             Adjacency_matrix_helpers.replies_design,
             User_attention_from_posts.read_replies_inside_matrix,
             User_attention_from_posts.read_total_known_replies_of_matrix_members;
