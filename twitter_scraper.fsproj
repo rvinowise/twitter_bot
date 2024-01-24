@@ -75,8 +75,12 @@
 
 
     <!-- google spread sheets interface   -->
-    
-    
+    <Compile Include="src\visualisation\Spreadsheet\Color.fs" />
+    <Compile Include="src\visualisation\Spreadsheet\Table.fs" />
+    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet.fs" />
+    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet_writing.fs" />
+    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet_reading.fs" />
+    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet_for_twitter.fs" />
     
     <!-- Databases -->
     <Compile Include="src\database\Database.fs" />
@@ -103,12 +107,7 @@
     <Compile Include="src\database\User_interactions\Adjacency_matrix_database.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
 
-    <Compile Include="src\visualisation\Spreadsheet\Color.fs" />
-    <Compile Include="src\visualisation\Spreadsheet\Table.fs" />
-    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet.fs" />
-    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet_writing.fs" />
-    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet_reading.fs" />
-    <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Googlesheet_for_twitter.fs" />
+    
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Adjacency_matrix_helpers.fs" />
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Single_adjacency_matrix.fs" />
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Combined_adjacency_matrix.fs" />
