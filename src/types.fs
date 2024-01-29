@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.twitter
 
 open System
+open System.Globalization
 open rvinowise.twitter
 
 
@@ -75,4 +76,11 @@ module Twitter_user =
         user.handle
         
         
-    
+
+module Datetime =
+    let parse_datetime format text =
+        DateTime.ParseExact(
+            text,
+            format,
+            CultureInfo.InvariantCulture
+        )

@@ -5,7 +5,6 @@ open System.Data
 open Dapper
 open Npgsql
 open rvinowise.twitter
-open rvinowise.twitter.database_schema.tables
 
 
 
@@ -76,23 +75,3 @@ type Attention_type =
       
       
       
-module Twitter_database =
-    let sql_account_should_be_inside_matrix
-        account
-        =
-        $"""
-        --the account should be part of the desired matrix
-        exists ( 
-            select ''
-            from {account_of_matrix}
-            where 
-                --find the matrix by title
-                {account_of_matrix}.{account_of_matrix.title} = @matrix_title
-                
-                --the target of attention should be part of the matrix
-                and {account_of_matrix}.{account_of_matrix.account} = {account}
-        )
-        """
-        
-        
-    

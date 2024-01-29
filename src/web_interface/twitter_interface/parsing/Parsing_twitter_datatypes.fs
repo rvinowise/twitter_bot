@@ -62,4 +62,4 @@ module Parsing_twitter_datatypes =
             DateTime.MinValue
             
     let parse_twitter_datetime text =
-        Html_parsing.parse_datetime "yyyy-MM-dd'T'HH:mm:ss.fff'Z'" text
+        Datetime.parse_datetime "yyyy-MM-dd'T'HH:mm:ss.fff'Z'" text

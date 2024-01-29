@@ -360,12 +360,7 @@ module Html_parsing =
     
     
         
-    let parse_datetime format text =
-        DateTime.ParseExact(
-            text,
-            format,
-            CultureInfo.InvariantCulture
-        )
+    
         
     let standartize_linebreaks (text:string) =
         text.ReplaceLineEndings()

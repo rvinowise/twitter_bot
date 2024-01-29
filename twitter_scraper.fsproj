@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 <!-- so that testing framewrk would work together with the explicit main function (in Program.fs) -->
     <GenerateProgramFile>false</GenerateProgramFile> 
   </PropertyGroup>
@@ -84,10 +84,11 @@
     
     <!-- Databases -->
     <Compile Include="src\database\Database.fs" />
+    <Compile Include="src\database\Twitter_database.fs" />
     <Compile Include="src\database\Twitter_database_structure\post_tables.fs" />
     <Compile Include="src\database\Twitter_database_structure\twitter_activity.fs" />
+    <Compile Include="src\database\Twitter_database_structure\user_attention.fs" />
     <Compile Include="src\database\Twitter_database_structure\twitter_database_structure.fs" />
-    <Compile Include="src\database\Twitter_database.fs" />
     <Compile Include="src\database\Twitter_database_type_mappers.fs" />
     <Compile Include="src\database\Database_connections\Local_database.fs" />
     <Compile Include="src\database\Database_connections\Central_database.fs" />
@@ -103,22 +104,28 @@
     <Folder Include="src\database\Twitter_post_database" />
     <Compile Include="src\database\Twitter_following_database.fs" />
     
-    <Compile Include="src\database\User_interactions\User_attention_from_posts.fs" />
     <Compile Include="src\database\User_interactions\Adjacency_matrix_database.fs" />
+    <Compile Include="src\database\User_interactions\User_attention_from_posts.fs" />
+    <Compile Include="src\database\User_interactions\User_attention_database.fs" />
+    <Compile Include="src\database\User_interactions\User_attention_database_test.fs" />
     <Compile Include="src\remarks\Format_score_for_twitter.fs" />
 
     
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Adjacency_matrix_helpers.fs" />
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Single_adjacency_matrix.fs" />
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Combined_adjacency_matrix.fs" />
+    <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Prepare_attention_matrix.fs" />
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Write_matrix_to_sheet.fs" />
-    <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Matrix_from_posts.fs" />
     <Compile Include="src\visualisation\Spreadsheet\Adjacency_matrix_of_user_interactions\Color_blending_example.fs" />
     <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Import_scores_from_googlesheet.fs" />
     <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Import_referrals_from_googlesheet.fs" />
     <Compile Include="src\visualisation\Spreadsheet\googlesheet_interface\Export_scores_to_googlesheet.fs" />
     
+    
+    <Compile Include="src\visualisation\Clustering\Graph_from_clustering.fs" />
     <Compile Include="src\visualisation\Clustering\Dendrogram.fs" />
+    <Compile Include="src\visualisation\Clustering\Attention_test.fs" />
+    
     
     
     <Compile Include="src\scraping_with_database\Harvest_user.fs" />
@@ -196,10 +203,19 @@
     <!--visualisation-->
     <PackageReference Include="Plotly.NET" Version="4.2.0" />
     <PackageReference Include="Google.Apis.Sheets.v4" Version="1.61.0.3141" />
-    <PackageReference Include="FSharp.Stats" Version="0.5.0" />
+    <PackageReference Include="Rubjerg.Graphviz" Version="2.0.1" />
 
+    <!-- data analysis -->
+    <PackageReference Include="FSharp.Stats" Version="0.5.0" />
+    <PackageReference Include="aglomera" Version="1.1.1" />
+    <PackageReference Include="Aglomera.D3" Version="1.1.0" />
+    
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetGraph_withPorts\Sources\FSharpWrapper\FSharpWrapper.fsproj" />
+  </ItemGroup>
+  
   <ItemGroup>
     <Content Include="test.html" />
   </ItemGroup>

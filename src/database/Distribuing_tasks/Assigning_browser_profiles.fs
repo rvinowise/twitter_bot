@@ -132,20 +132,29 @@ module Assigning_browser_profiles =
             |>Harvesting_exception
             |>raise 
         
-    let switch_profile
+    let rec switch_profile
         (central_db: NpgsqlConnection)
         worker_id
         (browser:Browser)
         =
-        switch_profile_in_central_database
-            central_db
-            Settings.browser.profiles
-            worker_id
-        |>function
-        |Some profile_email ->
-            profile_email
-            |>Browser.restart_with_profile browser
-        |None ->
-            "can't switch browser profiles, because the central database didn't yield the next free one"
+        try 
+            switch_profile_in_central_database
+                central_db
+                Settings.browser.profiles
+                worker_id
+            |>function
+            |Some profile_email ->
+                profile_email
+                |>Browser.restart_with_profile browser
+            |None ->
+                "can't switch browser profiles, because the central database didn't yield the next free one"
+                |>Log.error|>ignore
+                browser
+        with
+        | :? OpenQA.Selenium.WebDriverException as exc ->
+            $"failed switching profiles: {exc.Message}, trying again"
             |>Log.error|>ignore
-            browser
+            switch_profile
+                central_db
+                worker_id
+                browser

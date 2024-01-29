@@ -89,7 +89,7 @@ module Program =
         | "competition"::rest ->
             announce_competition_successes()
         | "test"::rest ->
-            Matrix_from_posts.attention_matrix_to_sheet()
+            Write_matrix_to_sheet.attention_matrix_to_sheet()
         | unknown_parameters ->
             $"unknown parameters: {unknown_parameters}"
             |>Log.error|>ignore

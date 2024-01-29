@@ -2,6 +2,7 @@ namespace rvinowise.twitter
 
 open System
 open System.Data
+open System.Data.SqlTypes
 open Dapper
 open Npgsql
 open rvinowise.twitter
@@ -66,6 +67,25 @@ type Scraping_user_status_mapper() =
     override this.Parse(value: obj) =
         Scraping_user_status.from_db_value (value :?> string) 
 
+
+type Attention_type_mapper() =
+    inherit SqlMapper.TypeHandler<Attention_type>()
+    override this.SetValue(
+            parameter:IDbDataParameter ,
+            value: Attention_type
+        )
+        =
+        parameter.Value <- string value
+    
+    override this.Parse(value: obj) =
+        match value :?> string with
+        |"Likes" -> Attention_type.Likes
+        |"Replies" -> Attention_type.Replies
+        |"Reposts" -> Attention_type.Reposts
+        | unknown_type ->
+            $"unknown attention type: {unknown_type}"
+            |>SqlTypeException
+            |>raise 
 
 type Post_id_mapper() =
     inherit SqlMapper.TypeHandler<Post_id>()
@@ -139,4 +159,5 @@ module Twitter_database_type_mappers =
         SqlMapper.AddTypeHandler(Option_mapper<Post_id>(Post_id_mapper()))
         SqlMapper.AddTypeHandler(Option_string_mapper())
         SqlMapper.AddTypeHandler(Scraping_user_status_mapper())
+        SqlMapper.AddTypeHandler(Attention_type_mapper())
         

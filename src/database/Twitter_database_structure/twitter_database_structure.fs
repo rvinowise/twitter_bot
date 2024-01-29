@@ -109,14 +109,6 @@ type Browser_profile_table() =
     member _.worker = "worker"
     member _.last_used = "last_used"
     
-
-type User_attention_table() =
-    override _.ToString() = "public.user_attention"
-    member _.attention_type = "attention_type"
-    member _.attentive_user = "attentive_user"
-    member _.target = "target"
-    member _.amount = "amount"
-    member _.when_scraped = "when_scraped"
     
 
 type Followers_table() =
@@ -152,7 +144,6 @@ module tables =
     let last_visited_post_in_timeline = Last_visited_post_in_timeline_table()
     let activity_amount = Activity_amount_table()
     let followers = Followers_table()
-    let user_attention = User_attention_table()
     let browser_profile = Browser_profile_table()
     let this_node = This_node_table()
     let account_of_matrix = Account_of_matrix_table()
@@ -161,3 +152,6 @@ module tables =
     let user_briefing = User_briefing_table()
     let user_visited_by_following_scraper = User_visited_by_following_scraper_table()
     let user_to_scrape = User_to_scrape_table()
+
+    let user_attention = User_attention_table()
+    let total_user_attention = Cached_total_user_attention_table()

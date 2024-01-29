@@ -409,7 +409,7 @@ module Distributing_jobs_database =
     let ``try datetime shift in local_db``()=
         let database = Local_database.open_connection()
         let datetime =
-            Html_parsing.parse_datetime "yyyy-MM-dd HH:mm:ss.ffffff" "2024-01-24 14:29:00.250168"
+            Datetime.parse_datetime "yyyy-MM-dd HH:mm:ss.ffffff" "2024-01-24 14:29:00.250168"
         
         database.Query<Post_header_row>(
             $"select * from {post.header}
@@ -429,7 +429,7 @@ module Distributing_jobs_database =
     let ``try datetime shift in central_db``()=
         let database = Central_database.open_connection()
         let datetime =
-            Html_parsing.parse_datetime "yyyy-MM-dd HH:mm:ss.ffffff" "2024-01-22 20:34:39.745473"
+            Datetime.parse_datetime "yyyy-MM-dd HH:mm:ss.ffffff" "2024-01-22 20:34:39.745473"
         
         database.Query<User_to_scrape_row>(
             $"select * from {user_to_scrape}

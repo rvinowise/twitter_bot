@@ -4,6 +4,7 @@ open System
 open System.Collections.Generic
 open Npgsql
 open Dapper
+open Dapper
 open Xunit
 
 open rvinowise.twitter.database_schema.tables
@@ -11,14 +12,6 @@ open rvinowise.twitter.database_schema
 
 
 
-
-[<CLIMutable>]
-type User_attention = {
-    attentive_user: User_handle
-    target: User_handle
-    amount: int
-}     
-        
 module User_attention_from_posts =
     
     
@@ -38,22 +31,22 @@ module User_attention_from_posts =
         )
     
     let total_known_amounts_as_tuples
-        (users_attention: User_attention seq)
+        (users_attention: Cached_total_user_attention_row seq)
         =
         users_attention
-        |>Seq.map (fun amount ->
-            amount.attentive_user,amount.amount    
+        |>Seq.map (fun total_attention ->
+            total_attention.attentive_user,total_attention.amount    
         )
     
     let attention_as_maps
-        (users_attention: User_attention seq)
+        (users_attention: Cached_user_attention_row seq)
         =
         users_attention
         |>Seq.groupBy _.attentive_user
         |>Seq.map (fun (attentive_user, amount_for_targets) ->
             attentive_user,
             amount_for_targets
-            |>Seq.map(fun attention_of_user -> attention_of_user.target, attention_of_user.amount)
+            |>Seq.map(fun attention_of_user -> attention_of_user.target, attention_of_user.absolute_amount)
             |>Map.ofSeq
         )|>Map.ofSeq
     
@@ -74,7 +67,7 @@ module User_attention_from_posts =
 
             where
 	            {post.like.liker} = @liker
-                and {post.like.when_scraped} < @before_datetime 
+                and {post.like}.{post.like.when_scraped} < @before_datetime 
 
             group by {post.header.author}
 
@@ -87,7 +80,25 @@ module User_attention_from_posts =
         )|>amounts_for_user_as_tuples
     
     
-    
+    let read_total_likes_by_user
+        (database: NpgsqlConnection)
+        (before_datetime: DateTime)
+        liker
+        =
+        database.QuerySingleOrDefault<int>($"""
+            select 
+                count(*) as amount 
+            from {post.like}
+
+            where
+	            {post.like.liker} = @liker
+                and {post.like.when_scraped} < @before_datetime 
+            """,
+            {|
+                liker=liker
+                before_datetime=before_datetime
+            |}
+        )
     
     let sql_condition_filtering_only_matrix_members
         attentive_user
@@ -95,22 +106,22 @@ module User_attention_from_posts =
         =
         $"""
         --the attentive user should be part of the desired matrix
-        {Twitter_database.sql_account_should_be_inside_matrix attentive_user}
+        {Twitter_user_database.sql_account_should_be_inside_matrix attentive_user}
         
         --the target of attention should be part of the desired matrix
-        and {Twitter_database.sql_account_should_be_inside_matrix target_of_attention}
+        and {Twitter_user_database.sql_account_should_be_inside_matrix target_of_attention}
         """
     
     let read_likes_inside_matrix
         (database: NpgsqlConnection)
-        (before_datetime: DateTime)
         matrix_title
+        (before_datetime: DateTime)
         =
-        database.Query<User_attention>($"""
+        database.Query<Cached_user_attention_row>($"""
             select 
                 {post.like.liker} as {user_attention.attentive_user},
                 {post.header}.{post.header.author} as {user_attention.target}, 
-                count(*) as amount 
+                count(*) as {user_attention.absolute_amount} 
             from {post.like} as main_attention
 
             join {post.header} on 
@@ -134,13 +145,13 @@ module User_attention_from_posts =
     
     let read_total_known_likes_of_matrix_members
         (database: NpgsqlConnection)
-        (before_datetime: DateTime)
         matrix_title
+        (before_datetime: DateTime)
         =
-        database.Query<User_attention>($"""
+        database.Query<Cached_total_user_attention_row>($"""
             select 
-                {post.like.liker} as {user_attention.attentive_user},
-                count(*) as amount 
+                {post.like.liker} as {total_user_attention.attentive_user},
+                count(*) as {total_user_attention.amount} 
             from {post.like} as main_attention
 
             join {post.header} on 
@@ -148,12 +159,12 @@ module User_attention_from_posts =
                 and {post.header.is_quotation} = false
 
             where
-                {Twitter_database.sql_account_should_be_inside_matrix
+                {Twitter_user_database.sql_account_should_be_inside_matrix
                      ("main_attention."+post.like.liker)}
                 and main_attention.{post.like.when_scraped} < @before_datetime 
 
             group by 
-                {user_attention.attentive_user}
+                {total_user_attention.attentive_user}
 
             ORDER BY amount DESC
             """,
@@ -167,8 +178,8 @@ module User_attention_from_posts =
         let result =
             read_total_known_likes_of_matrix_members
                 (Local_database.open_connection())
-                DateTime.Now
                 Longevity_members
+                DateTime.Now
         ()
         
     let read_reposts_by_user
@@ -188,7 +199,7 @@ module User_attention_from_posts =
 
             where
 	            {post.repost.reposter} = @reposter
-                and {post.repost.when_scraped} < @before_datetime
+                and {post.repost}.{post.repost.when_scraped} < @before_datetime
             
             group by {post.header.author}
 
@@ -200,16 +211,36 @@ module User_attention_from_posts =
             |}
         )|>amounts_for_user_as_tuples
     
-    let read_reposts_inside_matrix
+    let read_total_reposts_by_user
         (database: NpgsqlConnection)
         (before_datetime: DateTime)
-        matrix_title
+        reposter
         =
-        database.Query<User_attention>($"""
+        database.QuerySingleOrDefault<int>($"""
+            select 
+                count(*) as amount 
+            from {post.repost}
+
+            where
+	            {post.repost.reposter} = @reposter
+                and {post.repost.when_scraped} < @before_datetime
+            """,
+            {|
+                reposter=reposter
+                before_datetime=before_datetime
+            |}
+        )
+    
+    let read_reposts_inside_matrix
+        (database: NpgsqlConnection)
+        matrix_title
+        (before_datetime: DateTime)
+        =
+        database.Query<Cached_user_attention_row>($"""
             select 
                 {post.repost.reposter} as {user_attention.attentive_user},
                 {post.header.author} as {user_attention.target},
-                count(*) as amount 
+                count(*) as {user_attention.absolute_amount} 
             from {post.repost} as main_attention
 
             join {post.header} on 
@@ -233,13 +264,13 @@ module User_attention_from_posts =
    
     let read_total_known_reposts_of_matrix_members
         (database: NpgsqlConnection)
-        (before_datetime: DateTime)
         matrix_title
+        (before_datetime: DateTime)
         =
-        database.Query<User_attention>($"""
+        database.Query<Cached_total_user_attention_row>($"""
             select 
-                {post.repost.reposter} as {user_attention.attentive_user},
-                count(*) as amount 
+                {post.repost.reposter} as {total_user_attention.attentive_user},
+                count(*) as {total_user_attention.amount} 
             from {post.repost} as main_attention
 
             join {post.header} on 
@@ -247,12 +278,12 @@ module User_attention_from_posts =
                 and {post.header.is_quotation} = false
 
             where
-                {Twitter_database.sql_account_should_be_inside_matrix
+                {Twitter_user_database.sql_account_should_be_inside_matrix
                      ("main_attention."+post.repost.reposter)}
                 and main_attention.{post.repost.when_scraped} < @before_datetime
             
             group by 
-                {user_attention.attentive_user}
+                {total_user_attention.attentive_user}
 
             order by amount DESC
             """,
@@ -266,8 +297,8 @@ module User_attention_from_posts =
         let result =
             read_total_known_reposts_of_matrix_members
                 (Local_database.open_connection())
-                DateTime.Now
                 Adjacency_matrix.Longevity_members
+                DateTime.Now
         ()
     
     let read_replies_by_user
@@ -300,17 +331,41 @@ module User_attention_from_posts =
             |}
         )|>amounts_for_user_as_tuples
     
+    let read_total_replies_by_user
+        (database: NpgsqlConnection)
+        (before_datetime: DateTime)
+        replier
+        =
+        database.QuerySingleOrDefault<int>($"""
+            select 
+                count(*) as amount 
+            from {post.reply}
+
+            join {post.header} as replying_header on
+	            replying_header.{post.header.main_post_id} = {post.reply.next_post}
+                and replying_header.{post.header.is_quotation} = false
+            
+            where 
+                replying_header.{post.header.author} = @replier
+                and replying_header.{post.header.when_written} < @before_datetime
+            
+            """,
+            {|
+                replier=replier
+                before_datetime=before_datetime
+            |}
+        )
     
     let read_replies_inside_matrix
         (database: NpgsqlConnection)
-        (before_datetime: DateTime)
         matrix_title
+        (before_datetime: DateTime)
         =
-        database.Query<User_attention>($"""
+        database.Query<Cached_user_attention_row>($"""
             select 
                 replying_header.{post.header.author} as {user_attention.attentive_user},
                 {post.reply.previous_user} as {user_attention.target}, 
-                count(*) as amount 
+                count(*) as {user_attention.absolute_amount} 
             from {post.reply} as main_attention
 
             join {post.header} as replying_header on
@@ -334,13 +389,13 @@ module User_attention_from_posts =
     
     let read_total_known_replies_of_matrix_members
         (database: NpgsqlConnection)
-        (before_datetime: DateTime)
         matrix_title
+        (before_datetime: DateTime)
         =
-        database.Query<User_attention>($"""
+        database.Query<Cached_total_user_attention_row>($"""
             select 
-                replying_header.{post.header.author} as {user_attention.attentive_user},
-                count(*) as amount 
+                replying_header.{post.header.author} as {total_user_attention.attentive_user},
+                count(*) as {total_user_attention.amount} 
             from {post.reply} as main_attention
 
             join {post.header} as replying_header on
@@ -348,12 +403,12 @@ module User_attention_from_posts =
                 and replying_header.{post.header.is_quotation} = false
             
             where 
-                {Twitter_database.sql_account_should_be_inside_matrix
+                {Twitter_user_database.sql_account_should_be_inside_matrix
                      ("replying_header."+post.header.author)}
                 and replying_header.{post.header.when_written} < @before_datetime
             
             group by 
-                {user_attention.attentive_user}
+                {total_user_attention.attentive_user}
             
             order by amount DESC
             """,
@@ -367,8 +422,8 @@ module User_attention_from_posts =
         let result = 
             read_total_known_replies_of_matrix_members
                 (Local_database.open_connection())
-                DateTime.Now
                 Adjacency_matrix.Longevity_members
+                DateTime.Now
         ()    
     let ``try read_replies_by_user``()=
         let result = 
@@ -400,8 +455,8 @@ module User_attention_from_posts =
       
     let read_all_attention_from_account
         (database: NpgsqlConnection)
-        (before_datetime: DateTime)
         account
+        (before_datetime: DateTime)
         =
         attention_types
         |>List.map(fun (attention_type, read) ->
