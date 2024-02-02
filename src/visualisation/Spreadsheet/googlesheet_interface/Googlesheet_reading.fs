@@ -56,6 +56,36 @@ module Parse_google_cell =
         else
             parse_url_cell google_cell
     
+    let try_twitter_user_handle_from_visible_text
+        (google_cell: Google_cell)
+        =
+        let google_value = google_cell.EffectiveValue
+        if google_value.StringValue <> "" then
+            User_handle.try_handle_from_text google_value.StringValue
+        else
+            None
+            
+    let try_twitter_user_handle_from_url
+        (google_cell: Google_cell)
+        =
+        User_handle.try_handle_from_url google_cell.Hyperlink
+    
+    let try_twitter_user_handle_from_google_cell
+        (google_cell: Google_cell)
+        =
+        if isNull google_cell.EffectiveValue then
+            None
+        else
+            [
+                try_twitter_user_handle_from_visible_text
+                try_twitter_user_handle_from_url
+            ]
+            |>List.tryPick (fun try_find_handle ->
+                try_find_handle google_cell
+            )
+            
+            
+    
     let visible_value
         (google_cell:Google_cell)
         =
@@ -87,6 +117,7 @@ module Parse_google_cell =
             style=
                 Text_style.regular
         }
+    
 
 module Googlesheet_reading =
 

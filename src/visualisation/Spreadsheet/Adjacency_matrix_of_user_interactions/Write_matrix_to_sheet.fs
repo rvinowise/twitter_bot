@@ -129,18 +129,23 @@ module Write_matrix_to_sheet =
         //let doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0" //live
         let doc_id = "1HvxPIvcAiKlzLNqSO7aVJZBi9ClH6-5rxGYWW8QByCo" //test
         
+        let central_db = Central_database.resiliently_open_connection()
         let local_db = Local_database.open_connection()
         
         let handle_to_name =
             Twitter_user_database.handle_to_username
                 local_db
         
-        write_matrices_to_sheet
+        Adjacency_matrix_database.read_timeframes_of_matrix
+            central_db
+            local_db
+            Adjacency_matrix.Twitter_network
+        |>List.last
+        |> _.last_completion
+        |>write_matrices_to_sheet
             handle_to_name
             (Googlesheet.create_googlesheet_service())
             local_db
             doc_id
             Adjacency_matrix.Twitter_network
-            //DateTime.Now
-            (Datetime.parse_datetime "yyyy-MM-dd HH:mm:ss" "2024-01-25 18:36:45")
         ()

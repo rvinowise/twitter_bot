@@ -44,23 +44,32 @@ module User_handle =
         User_handle (Uri(user_url).Segments|>Array.last)
     
     let try_handle_from_text (text:string) =
-        if Seq.tryHead text = Some '@' then
+        if isNull text then
+            None
+        elif Seq.tryHead text = Some '@' then
             text[1..]
-            |>User_handle
-            |>Some
+            |>function
+            |"" -> None
+            |existing_text ->
+                existing_text
+                |>User_handle
+                |>Some
         else
             None
         
     let try_handle_from_url user_url =
-        try
-            (Uri(user_url).Segments)
-            |>Array.last
-            |>User_handle
-            |>Some
-        with
-        | :? FormatException as exc ->
-            Log.error $"can't get user handle from url {user_url}: {exc}"|>ignore
+        if isNull user_url then
             None
+        else
+            try
+                (Uri(user_url).Segments)
+                |>Array.last
+                |>User_handle
+                |>Some
+            with
+            | :? FormatException as exc ->
+                Log.error $"can't get user handle from url {user_url}: {exc}"|>ignore
+                None
 
 [<CLIMutable>]            
 type Twitter_user = {

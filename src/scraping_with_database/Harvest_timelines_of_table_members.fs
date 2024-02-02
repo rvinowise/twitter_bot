@@ -14,28 +14,7 @@ open rvinowise.web_scraping
 module Harvest_timelines_of_table_members =
     
     
-    let users_from_spreadsheet
-        service
-        sheet
-        =
-        Googlesheet_reading.read_table
-            Parse_google_cell.urls
-            service
-            sheet
-        |>Table.transpose Cell.empty
-        |>List.head
-        |>List.skip 1
-        |>List.map (fun user_cell ->
-            match user_cell.value with
-            |Cell_value.Text url ->
-                match User_handle.try_handle_from_url url with
-                |Some handle -> handle
-                |None -> raise (TypeAccessException $"failed to find a user handle in the url {url}")
-            |_ ->
-                $"this cell should have text in it, but there's {user_cell.value}"
-                |>TypeAccessException
-                |>raise 
-        )
+    
     
   
     let jobs_from_central_database worker_id =
@@ -165,21 +144,21 @@ module Harvest_timelines_of_table_members =
             Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
             page_name="Members"
         }
-        |>users_from_spreadsheet
+        |>Create_matrix_from_sheet.users_from_spreadsheet
             (Googlesheet.create_googlesheet_service())
         |>Distributing_jobs_database.write_users_for_scraping central_db
     
     let write_tasks_to_scrape_next_matrix_timeframe ()=
-        //2nd frame = 2024-01-19 22:04:07.576195+00
-        //3rd frame = 2024-01-22 17:34:39.745473+00
-        //4rd frame = 2024-01-26 02:02:24.623843+00
-        
+
         let central_db =
-            Central_database.open_connection()
+            Central_database.resiliently_open_connection()
+        
+        let local_db =
+            Local_database.open_connection()
         
         Adjacency_matrix_database.read_members_of_matrix
-            central_db
-            Adjacency_matrix.Longevity_members
+            local_db
+            Adjacency_matrix.Philosophy_members
         |>Distributing_jobs_database.write_users_for_scraping
             central_db
             

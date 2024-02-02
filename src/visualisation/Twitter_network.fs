@@ -54,9 +54,9 @@ module Twitter_network =
         
         
         [
-            Social_activity_amounts.Followers, "Followers"
-            Social_activity_amounts.Followees, "Followees"
-            Social_activity_amounts.Posts, "Post"
+            Social_activity_amounts_type.Followers, "Followers"
+            Social_activity_amounts_type.Followees, "Followees"
+            Social_activity_amounts_type.Posts, "Post"
         ]
         |>List.map (fun (activity_type, name) ->
             activity_amounts_for_days

@@ -16,36 +16,43 @@ module Harvest_list_members =
    
     let lists =
         [
-            "https://twitter.com/i/lists/878862836042153984"
-            "https://twitter.com/i/lists/71920806"
-            "https://twitter.com/i/lists/1378099512359591941"
-            "https://twitter.com/i/lists/1391914804953194499"
-            "https://twitter.com/i/lists/1319382252208459780"
-            "https://twitter.com/i/lists/1330801495860793348"
-            "https://twitter.com/i/lists/1397353557838401537"
-            "https://twitter.com/i/lists/1460797977769885700"
-            "https://twitter.com/i/lists/1409896835276234754"
-            "https://twitter.com/i/lists/1369058532792930308"
-            "https://twitter.com/i/lists/181072039"
-            "https://twitter.com/i/lists/1428694689251794948"
-            "https://twitter.com/i/lists/1619444175807647744"
-            "https://twitter.com/i/lists/1516165329239613450"
-            "https://twitter.com/i/lists/1510658778848534533"
-            "https://twitter.com/i/lists/1507436796673728512"
-            "https://twitter.com/i/lists/1500402405632094209"
-            "https://twitter.com/i/lists/1482445806347112450"
-            "https://twitter.com/i/lists/1466418926057840641"
-            "https://twitter.com/i/lists/1434244379519029249"
-            "https://twitter.com/i/lists/1432484199513141250"
-            "https://twitter.com/i/lists/1403019461171449858"
-            "https://twitter.com/i/lists/1304087470158614531"
-            "https://twitter.com/i/lists/1272186364365242369"
-            "https://twitter.com/i/lists/205082422"
-            "https://twitter.com/i/lists/1149360369762263040"
-            "https://twitter.com/i/lists/1432436305980321792"
-            "https://twitter.com/i/lists/1429884547127136258"
-            "https://twitter.com/i/lists/1568377523666587649"
-            "https://twitter.com/i/lists/200195165"
+            "https://twitter.com/i/lists/1451369115613114386"
+            "https://twitter.com/i/lists/1465878634519044099"
+            "https://twitter.com/i/lists/1316578688205426689"
+            "https://twitter.com/i/lists/1518438116943663104"
+            "https://twitter.com/i/lists/1460603765262856200"
+            "https://twitter.com/i/lists/1020756547213938700"
+            "https://twitter.com/i/lists/1332283856720949248"
+            "https://twitter.com/i/lists/1090107"
+            "https://twitter.com/i/lists/1479004920590311425"
+            "https://twitter.com/i/lists/940941894749745152"
+            "https://twitter.com/i/lists/1576073400132452352"
+            "https://twitter.com/i/lists/1346858133822562304"
+            "https://twitter.com/i/lists/1467230292205309958"
+            "https://twitter.com/i/lists/1498373473277812743"
+            "https://twitter.com/i/lists/1504430180537810948"
+            "https://twitter.com/i/lists/1281040400216514560"
+            "https://twitter.com/i/lists/1318543386715062272"
+            "https://twitter.com/i/lists/1298662177105215491"
+            "https://twitter.com/i/lists/1505135154167230468"
+            "https://twitter.com/i/lists/1123068084108058624"
+            "https://twitter.com/i/lists/1344597663422029824"
+            "https://twitter.com/i/lists/1510396523967778818"
+            "https://twitter.com/i/lists/1181894239313186816"
+            "https://twitter.com/i/lists/1546479016437321732"
+            "https://twitter.com/i/lists/807582499283103744"
+            "https://twitter.com/i/lists/823592271639695360"
+            "https://twitter.com/i/lists/1360780822169681920"
+            "https://twitter.com/i/lists/1420072649598795776"
+            "https://twitter.com/i/lists/1552795515200454663"
+            "https://twitter.com/i/lists/1676915596846596096"
+            "https://twitter.com/i/lists/120023753"
+            "https://twitter.com/i/lists/117262948"
+            "https://twitter.com/i/lists/818235212257755137"
+            "https://twitter.com/i/lists/1209211712571879425"
+            "https://twitter.com/i/lists/1315146423873175553"
+            "https://twitter.com/i/lists/1378398833848197122"
+            "https://twitter.com/i/lists/1397909085673099266"
         ]
         |>List.map(fun list_url ->
             list_url.Split "/"
@@ -53,10 +60,7 @@ module Harvest_list_members =
         )
     
     
-    let members_sheet = {
-        Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
-        page_name="Members"
-    }
+    
     
     let harvest_list_members
         browser
@@ -69,14 +73,15 @@ module Harvest_list_members =
             |>Scrape_list_members.scrape_twitter_list_members
                 browser
                 parsing_context
+            |>List.ofSeq
+            
         members
-        |>Seq.iter(fun user_bio ->
-            Harvest_user.harvest_top_of_user_page
-                browser
-                parsing_context
-                database
-                user_bio.user.handle
-        )
+        |>List.map Twitter_profile_from_catalog.handle
+        |>Harvest_user.resiliently_harvest_top_pages_of_users
+            browser
+            parsing_context
+            database
+            
         members
   
     
@@ -102,21 +107,21 @@ module Harvest_list_members =
             
             Social_activity_database.read_last_amount_for_user
                 database
-                Social_activity_amounts.Followers
+                Social_activity_amounts_type.Followers
                 member_profile.handle
             |>_.amount
             |>Cell.from_plain_integer
             
             Social_activity_database.read_last_amount_for_user
                 database
-                Social_activity_amounts.Followees
+                Social_activity_amounts_type.Followees
                 member_profile.handle
             |>_.amount
             |>Cell.from_plain_integer
             
             Social_activity_database.read_last_amount_for_user
                 database
-                Social_activity_amounts.Posts
+                Social_activity_amounts_type.Posts
                 member_profile.handle
             |>_.amount
             |>Cell.from_plain_integer 
@@ -139,21 +144,6 @@ module Harvest_list_members =
             googlesheet_service
             googlesheet
     
-    let import_users_from_spreadsheet
-        googlesheet_service
-        googlesheet
-        =
-        ()
-    
-
-    let ``try import_users_from_spreadsheet``()=
-        let googlesheet_service = Googlesheet.create_googlesheet_service()
-        let users =
-            import_users_from_spreadsheet
-                googlesheet_service
-                members_sheet
-        ()
-        
 
     let ``try export members``()=
         let database = Local_database.open_connection() 
@@ -176,16 +166,49 @@ module Harvest_list_members =
         |>export_members_to_spreadsheet
             database
             googlesheet_service
-            members_sheet
+            {
+                Google_spreadsheet.doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0"
+                page_name="Members"
+            }
     
 
+    let harvest_lacking_social_activity_of_members
+        browser
+        parsing_context
+        database
+        members
+        =
+        let olders_accepted_date = DateTime.Now - TimeSpan.FromDays(30)
+        let unscraped_members=
+            members
+            |>List.filter(fun account ->
+                let last_scraping_date,activity_amounts =
+                    Harvest_user.last_date_of_known_social_activity
+                        database
+                        account
+                last_scraping_date < olders_accepted_date
+            )
+        $"{unscraped_members.Length} members out of {members.Length} don't have scraped activity newer than {olders_accepted_date}, harvesting them"
+        |>Log.info
+            
+        unscraped_members
+        |>Harvest_user.resiliently_harvest_top_pages_of_users
+            browser
+            parsing_context
+            database
+        
+        
     let ``harvest lists``() =
-        let browser = Browser.open_browser()
-        let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
         let database = Local_database.open_connection() 
+        let browser =
+            Assigning_browser_profiles.open_browser_with_free_profile
+                (Central_database.resiliently_open_connection())
+                (This_worker.this_worker_id database)
+        
+        let html_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
         let googlesheet_service = Googlesheet.create_googlesheet_service()
         
-        let members_with_amount = 
+        let members_with_lists_amount = 
             lists
             |>Seq.collect(fun list_id ->
                 Scrape_list_members.scrape_twitter_list_members_and_amount
@@ -197,24 +220,25 @@ module Harvest_list_members =
             |>Seq.countBy id
             |>List.ofSeq
         
-        let members = members_with_amount|>List.map fst
+        let members = members_with_lists_amount|>List.map fst
             
         Log.important $"found {List.length members} distinct members in given lists"
         
         members
-        |>List.iter (fun user ->
-            Harvest_user.harvest_top_of_user_page
-                browser
-                html_context
-                database
-                user.handle
-        )
+        |>List.map _.handle
+        |>harvest_lacking_social_activity_of_members
+            browser
+            html_context
+            database
     
         export_members_to_spreadsheet
             database
             googlesheet_service
-            members_sheet
-            members_with_amount
+            {
+                Google_spreadsheet.doc_id = "1IghY1FjqODJq5QpaDcCDl2GyerqEtRR79-IcP55aOxI"
+                page_name="Members"
+            }
+            members_with_lists_amount
     
 
 

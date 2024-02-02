@@ -22,6 +22,10 @@ module User_social_activity =
     let posts_amount state =
         state.posts_amount
 
+    let all_fields_available state =
+        state.posts_amount.IsSome &&
+        state.followers_amount.IsSome &&
+        state.followees_amount.IsSome
 
 
 module Scrape_user_social_activity =
@@ -59,8 +63,8 @@ module Scrape_user_social_activity =
             |>Browser.read posts_qty_field
             |>Parsing_twitter_datatypes.try_parse_abbreviated_number 
     
-    
-    let try_scrape_acquaintances_amount_of_user browser user_handle link =
+    //for pages, which are not "protected" -- the url shows the exact accounts of acquaintances
+    let try_scrape_acquaintances_amount_of_user_from_url browser user_handle link =
         let followers_qty_field = $"a[href='/{User_handle.value user_handle}/{link}'] span span"
         followers_qty_field
         |>Browser.try_element_reliably browser
@@ -74,11 +78,34 @@ module Scrape_user_social_activity =
             |>Browser.read followers_qty_field
             |>Parsing_twitter_datatypes.try_parse_abbreviated_number
     
+    //for "protected" pages -- there's no urls, but the amounts of acquaintances are visible as plain text
+    // let try_scrape_acquaintances_amount_of_user_from_plain_text
+    //     browser
+    //     user_handle
+    //     remark //Following or Followers  
+    //     =
+    //     let bio_node =
+    //         browser
+    //         "div[data-testid='UserName']"
+    //     
+    //     let followers_qty_field = $"a[href='/{User_handle.value user_handle}/{link}'] span span"
+    //     followers_qty_field
+    //     |>Browser.try_element_reliably browser
+    //     |>function
+    //     |None->
+    //         $"url '{User_handle.url_from_handle user_handle}' doesn't show the {link} field"
+    //         |>Log.error|>ignore
+    //         None
+    //     |Some followers_qty_field->
+    //         browser
+    //         |>Browser.read followers_qty_field
+    //         |>Parsing_twitter_datatypes.try_parse_abbreviated_number
+    
     let try_scrape_followers_amount_of_user browser user_handle =
-        try_scrape_acquaintances_amount_of_user browser user_handle "verified_followers"
+        try_scrape_acquaintances_amount_of_user_from_url browser user_handle "verified_followers"
     
     let try_scrape_followees_amount_of_user browser user_handle =
-        try_scrape_acquaintances_amount_of_user browser user_handle "following"
+        try_scrape_acquaintances_amount_of_user_from_url browser user_handle "following"
     
     let try_scrape_user_social_activity browser user_handle =
         {

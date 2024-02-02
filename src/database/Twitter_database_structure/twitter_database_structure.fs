@@ -21,7 +21,7 @@ module Amount_for_account =
         }
 
 
-type Social_activity_amounts =
+type Social_activity_amounts_type =
     |Followers
     |Followees
     |Posts

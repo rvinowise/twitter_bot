@@ -23,8 +23,9 @@ module Central_database =
                 open_connection ()
                 |>Some
             with
-            | :? NpgsqlException as exc ->
-                $"""failed opening the connection with the central database: {exc.Message}, trying again."""
+            | :? NpgsqlException
+            | :? System.Net.Sockets.SocketException as exc ->
+                $"""failed opening the connection with the central database: {exc.GetType()}, {exc.Message}, trying again."""
                 |>Log.error|>ignore
                 None
        

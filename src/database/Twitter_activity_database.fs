@@ -14,7 +14,7 @@ module Social_activity_database =
     
     let write_activity_amount_of_user
         (db_connection: NpgsqlConnection)
-        (amount_of_what:Social_activity_amounts)
+        (amount_of_what:Social_activity_amounts_type)
         (datetime:DateTime)
         account
         (amount:int)
@@ -47,7 +47,7 @@ module Social_activity_database =
     
     let write_optional_activity_amount_of_user
         (db_connection: NpgsqlConnection)
-        (amount_of_what:Social_activity_amounts)
+        (amount_of_what:Social_activity_amounts_type)
         (datetime:DateTime)
         user
         (amount:int option)
@@ -73,21 +73,21 @@ module Social_activity_database =
         |>User_social_activity.followees_amount
         |>write_optional_activity_amount_of_user
                 db_connection
-                Social_activity_amounts.Followees
+                Social_activity_amounts_type.Followees
                 datetime
                 user
         activity
         |>User_social_activity.followers_amount
         |>write_optional_activity_amount_of_user
                 db_connection
-                Social_activity_amounts.Followers
+                Social_activity_amounts_type.Followers
                 datetime
                 user           
         activity
         |>User_social_activity.posts_amount
         |>write_optional_activity_amount_of_user
                 db_connection
-                Social_activity_amounts.Posts
+                Social_activity_amounts_type.Posts
                 datetime
                 user
     
@@ -115,7 +115,7 @@ module Social_activity_database =
         |>Seq.iter(fun (user, score)-> 
             write_activity_amount_of_user
                 db_connection
-                Social_activity_amounts.Followers
+                Social_activity_amounts_type.Followers
                 datetime 
                 user
                 score
@@ -131,7 +131,7 @@ module Social_activity_database =
         |>Seq.iter(fun (user, score)-> 
             write_activity_amount_of_user
                 db_connection
-                Social_activity_amounts.Posts
+                Social_activity_amounts_type.Posts
                 datetime 
                 user
                 score
@@ -178,7 +178,7 @@ module Social_activity_database =
     
     let read_last_amounts_closest_to_moment
         (db_connection: NpgsqlConnection)
-        (amount_of_what: Social_activity_amounts)
+        (amount_of_what: Social_activity_amounts_type)
         (moment:DateTime)
         =
         db_connection.Query<Amount_for_account>(
@@ -194,19 +194,20 @@ module Social_activity_database =
                         *
                     from {tables.activity_amount}
                     where 
-                        {tables.activity_amount.activity} = '{amount_of_what}'
+                        {tables.activity_amount.activity} = @amount_of_what
                         and {tables.activity_amount.datetime} <= @last_moment
                 ) as amounts_by_time
             where my_row_number = 1
             """,
             {|
                 last_moment=moment
+                amount_of_what = string amount_of_what
             |}
         )
     
     let read_last_amount_for_user
         (db_connection: NpgsqlConnection)
-        (amount_of_what: Social_activity_amounts)
+        (amount_of_what: Social_activity_amounts_type)
         (account: User_handle)
         =
         db_connection.Query<Amount_for_account>(
@@ -218,11 +219,12 @@ module Social_activity_database =
                     {tables.activity_amount}
                 where 
                     {tables.activity_amount.account} = @account
-                    and {tables.activity_amount.activity} = {amount_of_what}
+                    and {tables.activity_amount.activity} = @amount_of_what
                 order by {tables.activity_amount.datetime} DESC limit 1
              """,
             {|
                 account = account
+                amount_of_what = string amount_of_what
             |}
         )|>Seq.tryHead
         |>Option.defaultValue (Amount_for_account.empty account)
@@ -264,7 +266,7 @@ module Social_activity_database =
      
     let read_last_amounts_closest_to_moment_for_users
         (db_connection: NpgsqlConnection)
-        (record_with_amounts: Social_activity_amounts)
+        (record_with_amounts: Social_activity_amounts_type)
         (last_moment: DateTime)
         (users: User_handle Set)
         =

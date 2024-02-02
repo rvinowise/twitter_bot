@@ -1,6 +1,7 @@
 ﻿namespace rvinowise.web_scraping
 
 open System
+open System.Diagnostics
 open System.IO
 open OpenQA.Selenium
 open OpenQA.Selenium.Chrome
@@ -20,6 +21,7 @@ type Browser =
     interface IDisposable
         with
         member this.Dispose() =
+            Log.debug $"Dispose is called for browser with profile {this.profile}"
             this.webdriver.Quit() 
 
         
@@ -135,7 +137,14 @@ module Browser =
     
     
     let quit (browser: Browser) =
+        
         browser.webdriver.Quit()
+        Process.GetProcessesByName("chromedriver")
+        |>Seq.iter(fun driver_process ->
+            Log.debug $"killing process {driver_process.ProcessName}"
+            driver_process.Kill()
+        )
+        
         Log.info $"browser {browser} is closed"
     
     let rec restart_with_profile

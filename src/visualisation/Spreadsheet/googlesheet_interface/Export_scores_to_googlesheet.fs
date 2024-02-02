@@ -77,7 +77,7 @@ module Export_scores_to_googlesheet =
     
     let get_history_of_amounts_for_users
         db_connection
-        (amount_of_what: Social_activity_amounts)
+        (amount_of_what)
         days_from_today
         =
         let last_datetime =
@@ -201,11 +201,11 @@ module Export_scores_to_googlesheet =
     let update_googlesheets database =
         update_googlesheet
             database
-            Social_activity_amounts.Followers
+            Social_activity_amounts_type.Followers
             Settings.Influencer_competition.Google_sheets.followers_amount
         update_googlesheet
             database
-            Social_activity_amounts.Posts
+            Social_activity_amounts_type.Posts
             Settings.Influencer_competition.Google_sheets.posts_amount
     
     let ``try update_googlesheets``() =
@@ -216,7 +216,7 @@ module Export_scores_to_googlesheet =
     let ``try input_posts_amount_to_sheet``() =
         update_googlesheet
             (Local_database.open_connection())
-            Social_activity_amounts.Posts
+            Social_activity_amounts_type.Posts
             {
                 Google_spreadsheet.doc_id = "1E_4BeKi0gOkaqsDkuY_0DeHssEcbLOBBzYmdneQo5Uw"
                 page_name="posts_amount"

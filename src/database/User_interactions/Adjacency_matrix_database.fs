@@ -15,7 +15,11 @@ open rvinowise.twitter.database_schema.tables
 
 
 
-
+type Matrix_timeframe = {
+    when_jobs_prepared: DateTime
+    first_completion: DateTime
+    last_completion: DateTime
+}
 
 module Adjacency_matrix_database =
     
@@ -61,10 +65,11 @@ module Adjacency_matrix_database =
                 @title
             )
             ...
-            
+            on conflict
+            do nothing
             """,
             members
-            |>List.map(fun handle ->
+            |>Seq.map(fun handle ->
                 {|
                     account = handle
                     title = string matrix_title
@@ -83,24 +88,105 @@ module Adjacency_matrix_database =
             local_db
             Adjacency_matrix.Twitter_network
             
-    let ``add_matrix_from_sheet``()=
-        Googlesheet_reading.read_range
-            Parse_google_cell.visible_text_from_cell
-            (Googlesheet.create_googlesheet_service())
-            {
-                Google_spreadsheet.doc_id="1d39R9T4JUQgMcJBZhCuF49Hm36QB1XA6BUwseIX-UcU"
-                page_name = "Followers amount"
-            }
-            ((2,3),(2,1000))
-        |>Table.trim_table String.IsNullOrEmpty
-        |>List.collect id
-        |>List.map (fun handle ->
-            handle
-            |>User_handle.trim_potential_atsign
-            |>User_handle
+    
+        
+        
+    let check_correctness_of_timeframe
+        (timeframe: Matrix_timeframe)
+        =
+        if not (
+            timeframe.when_jobs_prepared < timeframe.first_completion
+            &&
+            timeframe.first_completion < timeframe.last_completion
+        ) then
+            $"bad matrix timeframe: {timeframe}"
+            |>DataMisalignedException
+            |>raise 
+        timeframe
+    let check_correctness_of_datetime_sequence
+        (timeframes: Matrix_timeframe list)
+        =
+        timeframes
+        |>List.skip 1
+        |>List.fold(fun previous_timeframe this_timeframe ->
+            if not (
+                previous_timeframe.when_jobs_prepared < this_timeframe.when_jobs_prepared
+            ) then
+                $"bad sequence of matrix timeframes: previous_timeframe={previous_timeframe}, this_timeframe={this_timeframe}"
+                |>DataMisalignedException
+                |>raise
+            this_timeframe
+            |>check_correctness_of_timeframe
         )
-        |>write_members_of_matrix
-            (Central_database.open_connection())
-            "Twitter network"
-                
-        ()      
+            (
+             timeframes
+             |>List.head
+             |>check_correctness_of_timeframe
+            )
+        |>ignore
+        timeframes
+        
+    let read_timeframes
+        (database:NpgsqlConnection)
+        (matrix_members: User_handle Set)
+        =
+        database.Query<User_to_scrape_row>(
+            $"select *
+            from {user_to_scrape}
+            where 
+                not {user_to_scrape.status} = 'Free'
+                and not {user_to_scrape.status} = 'Taken'
+            "
+        )
+        |>Seq.filter(fun (job:User_to_scrape_row) -> Set.contains job.account matrix_members)
+        |>Seq.groupBy(fun (job:User_to_scrape_row) -> job.created_at)
+        |>Seq.filter(fun (created_at, jobs_maybe_without_needed_users) ->
+            jobs_maybe_without_needed_users
+            |>Seq.map _.account
+            |>Set.ofSeq
+            |>Set.intersect matrix_members
+            |>Set.count
+            |>(=) matrix_members.Count
+        )
+        |>Seq.sortBy fst
+        |>Seq.map(fun (created_at, jobs_with_all_needed_users) ->
+            let sorted_jobs = 
+                jobs_with_all_needed_users
+                |>Seq.map(_.when_completed)
+                |>Seq.sort
+            {
+                Matrix_timeframe.when_jobs_prepared =
+                    created_at
+                first_completion =
+                    sorted_jobs
+                    |>Seq.head
+                last_completion =
+                    sorted_jobs
+                    |>Seq.last
+            }
+        )
+        |>Seq.toList
+        |>check_correctness_of_datetime_sequence
+    
+    let read_timeframes_of_matrix
+        central_database
+        local_database
+        matrix_title
+        =
+        let matrix_members =
+            read_members_of_matrix
+                local_database
+                matrix_title
+            |>Set.ofSeq
+            
+        read_timeframes
+            central_database
+            matrix_members
+    
+    let ``try read_timeframes_of_matrix``()=
+        let frames =
+            read_timeframes_of_matrix
+                (Central_database.resiliently_open_connection())
+                (Local_database.open_connection())
+                Longevity_members
+        ()

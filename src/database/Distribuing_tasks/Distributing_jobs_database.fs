@@ -1,6 +1,7 @@
 namespace rvinowise.twitter
 
 open System
+open System.Data.Common
 open Dapper
 open Faithlife.Utility.Dapper
 open DeviceId.Encoders
@@ -14,18 +15,6 @@ open rvinowise.twitter.database_schema.tables
 
 open DeviceId
    
-
-
-[<CLIMutable>]
-type User_scraping_job = {
-    account: User_handle
-    taken_by: string
-    status: string
-    posts_amount: int
-    likes_amount: int
-    when_taken: DateTime
-    when_completed: DateTime
-}
 
 module Distributing_jobs_database =
     
@@ -292,7 +281,7 @@ module Distributing_jobs_database =
             |>Scraping_user_status.Completed
             |>Scraping_user_status.db_value
             
-        database.Query<User_scraping_job>(
+        database.Query<User_to_scrape_row>(
             $"select 
                 {user_to_scrape.account},
                 {user_to_scrape.when_completed}
@@ -315,7 +304,7 @@ module Distributing_jobs_database =
     let read_last_completed_jobs
         (database:NpgsqlConnection)
         =
-        database.Query<User_scraping_job>(
+        database.Query<User_to_scrape_row>(
             $"select 
                 {user_to_scrape.account},
                 {user_to_scrape.taken_by},
@@ -338,7 +327,7 @@ module Distributing_jobs_database =
         (database:NpgsqlConnection)
         =
         
-        database.Query<User_scraping_job>(
+        database.Query<User_to_scrape_row>(
             $"select 
                 {user_to_scrape.account},
                 {user_to_scrape.taken_by},
@@ -386,24 +375,7 @@ module Distributing_jobs_database =
         ) |> ignore
     
 
-    let read_timeframes
-        (database:NpgsqlConnection)
-        (matrix_title: Adjacency_matrix)
-        =
-        database.Query<User_scraping_job>(
-            $"select 
-                {user_to_scrape.created_at},
-                {user_to_scrape.when_taken},
-                {user_to_scrape.when_completed}
-                
-            from {user_to_scrape}
-            where 
-                {user_to_scrape.account} 
-            group by {user_to_scrape.created_at}
-            "
-        )|>Seq.map(fun job ->
-            job.account,job.when_completed    
-        )
+    
     
     [<Fact>]
     let ``try datetime shift in local_db``()=

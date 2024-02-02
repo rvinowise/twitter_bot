@@ -56,10 +56,12 @@ module Scraping_user_status =
 type Adjacency_matrix =
     |Longevity_members
     |Twitter_network
+    |Philosophy_members
     with
     override this.ToString() =
         match this with
         |Longevity_members -> "Longevity members"
+        |Philosophy_members -> "Philosophy members"
         |Twitter_network -> "Twitter network"
 
 type Attention_type =

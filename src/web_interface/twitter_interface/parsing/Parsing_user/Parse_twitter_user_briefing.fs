@@ -30,17 +30,13 @@ module Parse_twitter_user_briefing =
         let bio briefing_node =
             briefing_node
             |>Html_node.try_descendant """div[data-testid='UserDescription']"""
-            |>function
-            |Some bio_node ->
-                bio_node
-                |>Html_parsing.readable_text_from_html_segments
-            |None->""
+            |>Option.map Html_parsing.readable_text_from_html_segments
+            |>Option.defaultValue ""
             
         let location briefing_node =
-            
             briefing_node
-            |>Html_node.try_descendant "span[data-testid='UserLocation'] > span > span"
-            |>Option.map Html_node.inner_text
+            |>Html_node.try_descendant "span[data-testid='UserLocation'] > span"
+            |>Option.map Html_parsing.readable_text_from_html_segments
             |>Option.defaultValue ""
             
         let web_site briefing_node =

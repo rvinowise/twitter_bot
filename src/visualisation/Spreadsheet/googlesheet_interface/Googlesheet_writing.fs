@@ -30,7 +30,7 @@ module Googlesheet_writing =
         |Formula text ->
             ExtendedValue(FormulaValue = text)
     
-    let rather_dark (color:Color) =
+    let is_rather_dark (color:Color) =
         let red_liteness = 1.5
         let green_liteness = 1.6
         let blue_liteness = 0.5
@@ -41,7 +41,7 @@ module Googlesheet_writing =
     let text_color_for_background
         (background_color:Color)
         =
-        if rather_dark background_color then
+        if is_rather_dark background_color then
             Color.white
         else
             Color.black
@@ -134,11 +134,11 @@ module Googlesheet_writing =
     
 
     
-    let write_sheet_dimension
+    let add_dimensions_to_sheet
         (service: SheetsService)
         (sheet: Google_spreadsheet)
-        columns_amount
-        rows_amount
+        added_columns_amount
+        added_rows_amount
         =
         let batch_request = BatchUpdateSpreadsheetRequest(
             Requests =([
@@ -150,7 +150,7 @@ module Googlesheet_writing =
                                 sheet.doc_id
                                 sheet.page_name,
                         Dimension = "COLUMNS",
-                        Length = Nullable columns_amount
+                        Length = Nullable added_columns_amount
                     )
                 )
                 Request(
@@ -161,7 +161,7 @@ module Googlesheet_writing =
                                 sheet.doc_id
                                 sheet.page_name,
                         Dimension = "ROWS",
-                        Length = Nullable rows_amount
+                        Length = Nullable added_rows_amount
                     )
                 )
             ]|>List)
@@ -172,8 +172,55 @@ module Googlesheet_writing =
         
         response
     
+    let set_dimensions_of_sheet
+        (service: SheetsService)
+        (sheet: Google_spreadsheet)
+        columns_amount
+        rows_amount
+        =
+        let batch_request =
+            BatchUpdateSpreadsheetRequest(
+                Requests = ([
+                    Request(
+                        UpdateSheetProperties = UpdateSheetPropertiesRequest(
+                            Properties = SheetProperties(
+                                SheetId=
+                                    Googlesheet_id.sheet_id_from_title
+                                        service
+                                        sheet.doc_id
+                                        sheet.page_name,
+                                GridProperties = GridProperties(
+                                    ColumnCount=Nullable columns_amount,    
+                                    RowCount=Nullable rows_amount    
+                                )
+                                
+                            ),
+                            Fields="gridProperties"
+                        )
+                    )
+                ]|>List)
+            )
+        service.Spreadsheets.BatchUpdate(batch_request, sheet.doc_id).Execute()
+        |>ignore
+    
+    let ``try ensure_dimensions_of_sheet``()=
+        set_dimensions_of_sheet
+            (Googlesheet.create_googlesheet_service())
+            {
+                Google_spreadsheet.doc_id = "1IghY1FjqODJq5QpaDcCDl2GyerqEtRR79-IcP55aOxI"
+                page_name="Likes"
+            }
+            1000
+            4
+    
+    let check_sheet_dimensions
+        (service: SheetsService)
+        (sheet: Google_spreadsheet)
+        =
+        ()
+    
     let ``try write_sheet_dimension``()=
-        write_sheet_dimension
+        add_dimensions_to_sheet
             (Googlesheet.create_googlesheet_service())
             {
                 Google_spreadsheet.doc_id = "1HqO4nKW7Jt4i4T3Rir9xtkSwI0l9uVVsqHTOPje-pAY"
@@ -274,6 +321,20 @@ module Googlesheet_writing =
         =
         $"""writing table to googlesheet {sheet.doc_id}, page {sheet.page_name}"""
         |>Log.important
+        
+        let rows_amount =
+            List.length all_rows
+        
+        let columns_amount =
+            all_rows
+            |>List.head
+            |>List.length 
+        
+        set_dimensions_of_sheet
+            service
+            sheet
+            columns_amount
+            rows_amount
         
         //assuming 10000 cells per chunk
         let rows_amount_in_chunk =
