@@ -36,7 +36,10 @@ type Browser_settings = {
 
 module Settings = 
     
-    let configuration_builder = ConfigurationBuilder().AddJsonFile("appsettings.json", false, true);
+    let configuration_builder =
+        ConfigurationBuilder().
+            SetBasePath(DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName).
+            AddJsonFile("appsettings.json", false, true);
     let configuration_root = configuration_builder.Build() :> IConfiguration
     
     

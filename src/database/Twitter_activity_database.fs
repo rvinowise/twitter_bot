@@ -261,7 +261,7 @@ module Social_activity_database =
         let test =
             read_last_competitors
                 (Central_database.open_connection())
-                (DateTime.Now-TimeSpan.FromDays(5))
+                (DateTime.UtcNow-TimeSpan.FromDays(5))
         ()
      
     let read_last_amounts_closest_to_moment_for_users

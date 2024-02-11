@@ -13,7 +13,7 @@ module Announce_competition_score =
         html_context =
         
         
-        let before_scraping_competitors = DateTime.Now
+        let before_scraping_competitors = DateTime.UtcNow
         let competitors =
             Settings.Influencer_competition.Competitors.list
             //|>Scrape_list_members.scrape_twitter_list_members_and_amount
@@ -22,9 +22,9 @@ module Announce_competition_score =
                   html_context
             |>Seq.map Twitter_profile_from_catalog.user
         
-        Log.info $"reading list of competitors took {DateTime.Now-before_scraping_competitors}"
+        Log.info $"reading list of competitors took {DateTime.UtcNow-before_scraping_competitors}"
         
-        let before_scraping_activity = DateTime.Now
+        let before_scraping_activity = DateTime.UtcNow
         let activity_of_competitors =
             competitors
             |>Seq.map (fun user ->
@@ -34,24 +34,24 @@ module Announce_competition_score =
                 Scrape_user_social_activity.try_scrape_user_social_activity browser
                     handle
             )
-        Log.info $"reading activity of competitors took {DateTime.Now-before_scraping_activity}"
+        Log.info $"reading activity of competitors took {DateTime.UtcNow-before_scraping_activity}"
             
-        let before_updating_names = DateTime.Now
+        let before_updating_names = DateTime.UtcNow
         competitors
         |>Twitter_user_database.update_user_names_in_db
             database
-        Log.info $"updating names of competitors in DB took {DateTime.Now-before_updating_names}"
+        Log.info $"updating names of competitors in DB took {DateTime.UtcNow-before_updating_names}"
         
-        let before_writing_activity = DateTime.Now
+        let before_writing_activity = DateTime.UtcNow
         activity_of_competitors
         |>Social_activity_database.write_optional_social_activity_of_users
               database
-              DateTime.Now
-        Log.info $"writing activity of competitors to DB took {DateTime.Now-before_writing_activity}"
+              DateTime.UtcNow
+        Log.info $"writing activity of competitors to DB took {DateTime.UtcNow-before_writing_activity}"
         
-        let before_updating_googlesheet = DateTime.Now
+        let before_updating_googlesheet = DateTime.UtcNow
         Export_scores_to_googlesheet.update_googlesheets database
-        Log.info $"updating scores in googlesheet took {DateTime.Now-before_updating_googlesheet}"
+        Log.info $"updating scores in googlesheet took {DateTime.UtcNow-before_updating_googlesheet}"
 
         Log.info "finish scraping and announcing scores."
         ()

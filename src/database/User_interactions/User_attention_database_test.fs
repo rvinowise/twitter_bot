@@ -58,7 +58,7 @@ module User_attention_database_test =
     [<Fact>]
     let ``cached user-to-user attention gives the same result as newly calculated attention``()=
         let database = Testing_database.open_connection()
-        let before_datetime = DateTime.Now
+        let before_datetime = DateTime.UtcNow
         
         let matrix_members =
             Adjacency_matrix_database.read_members_of_matrix
@@ -75,7 +75,7 @@ module User_attention_database_test =
     [<Fact>]
     let ``cached total attention gives the same result as newly calculated attention``()=
         let database = Testing_database.open_connection()
-        let before_datetime = DateTime.Now
+        let before_datetime = DateTime.UtcNow
         
         let matrix_members =
             Adjacency_matrix_database.read_members_of_matrix
@@ -94,7 +94,7 @@ module User_attention_database_test =
         User_attention_database.delete_all_cached_attention
             database
         
-        let before_datetime = DateTime.Now
+        let before_datetime = DateTime.UtcNow
         
         let matrix_members =
             Adjacency_matrix_database.read_members_of_matrix

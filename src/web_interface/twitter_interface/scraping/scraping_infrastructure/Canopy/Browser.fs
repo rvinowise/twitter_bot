@@ -29,17 +29,26 @@ module Browser =
     
     let ensure_webdriver_is_downloaded version =
         let webdriver_download_path =
-            $"""https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{version}/win64/chromedriver-win64.zip"""
+            if Environment.OSVersion.Platform = PlatformID.Win32NT then
+                $"""https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{version}/win64/chromedriver-win64.zip"""
+            elif Environment.OSVersion.Platform = PlatformID.Unix then
+                $"""https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{version}/linux64/chromedriver-linux64.zip"""
+            else
+                $"unknown platform {Environment.OSVersion.Platform}, it's not clear, which browser driver to install"
+                |>Log.error|>ignore
+                $"""https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{version}/linux64/chromedriver-linux64.zip"""
+                
         let local_webdriver_path =
+            DirectoryInfo(Settings.browser.path).Parent.FullName
             //$"""{AppDomain.CurrentDomain.BaseDirectory}webdriver\{version}\X64\"""
-            Path.Combine [|
-                Settings.browser.profiles_root
-                $"""webdriver\{version}\X64\"""    
-            |]
+            // Path.Combine [|
+            //     Settings.browser.path
+            //     $"""webdriver\{version}\X64\"""    
+            // |]
             
         WebDriverManager.DriverManager().SetUpDriver(
             webdriver_download_path,
-            local_webdriver_path+"chromedriver.exe"
+            Path.Combine(local_webdriver_path,"chromedriver.exe")
         )
         |>sprintf "webdriver installation result: %s"
         |>Log.important
@@ -59,6 +68,7 @@ module Browser =
         options.AddArgument("--ignore-certificate-errors")
         options.AddArgument("--ignore-ssl-errors")
         options.AddArgument("--no-sandbox")
+        options.AddArgument("--no-proxy-server")
         let browser_version_as_agent =
             Settings.browser.webdriver_version
             |>fun version -> version.Split '.'

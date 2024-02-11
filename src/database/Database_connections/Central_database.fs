@@ -24,7 +24,8 @@ module Central_database =
                 |>Some
             with
             | :? NpgsqlException
-            | :? System.Net.Sockets.SocketException as exc ->
+            | :? System.Net.Sockets.SocketException
+            | :? TimeoutException as exc ->
                 $"""failed opening the connection with the central database: {exc.GetType()}, {exc.Message}, trying again."""
                 |>Log.error|>ignore
                 None

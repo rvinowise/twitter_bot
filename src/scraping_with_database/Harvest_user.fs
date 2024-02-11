@@ -48,7 +48,7 @@ module Harvest_user =
            
         Social_activity_database.write_optional_social_activity_of_user
               database
-              DateTime.Now
+              DateTime.UtcNow
               user
               social_activity
         

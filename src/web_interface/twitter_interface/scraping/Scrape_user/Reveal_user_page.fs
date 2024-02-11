@@ -8,12 +8,14 @@ open rvinowise.web_scraping
 type Timeline_hiding_reason =
 |Loading_denied
 |Protected
+|No_login
 
 module Timeline_hiding_reason =
     let db_value (reason:Timeline_hiding_reason) =
         match reason with
         |Loading_denied -> "Loading_denied"
         |Protected -> "Protected"
+        |No_login -> "No_login"
         
 type Page_revealing_result =
 |Revealed
@@ -22,6 +24,18 @@ type Page_revealing_result =
 
 module Reveal_user_page =
 
+    
+    let is_browser_profile_without_login
+        browser
+        html_context
+        =
+        "a[data-testid='login']"
+        |>Browser.try_element  browser
+        |>function
+        |Some login_button->
+            Some Loading_denied
+        |None->
+            None
     
     let is_timeline_failing_loading
         browser

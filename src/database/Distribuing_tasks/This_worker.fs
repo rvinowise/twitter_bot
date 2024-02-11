@@ -83,7 +83,7 @@ module This_worker =
                     DeviceIdBuilder()
                         .AddMachineName()
                         .UseFormatter(StringDeviceIdFormatter(PlainTextDeviceIdComponentEncoder()))
-                        .ToString()+"_"+DateTime.Now.ToString("yyyy-MM-dd_HH:mm")
+                        .ToString()+"_"+DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm")
                 
                 Log.info $"generating new id of this worker: {generated_node_id} and saving it in the local database"
                 

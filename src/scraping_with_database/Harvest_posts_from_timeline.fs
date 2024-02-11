@@ -310,8 +310,8 @@ module Harvest_posts_from_timeline =
         |Page_revealing_result.Failed Protected ->
             Log.info $"Timelines of user {User_handle.value user} are protected from strangers."
             Harvesting_timeline_result.Hidden_timeline Protected
-        |Page_revealing_result.Failed Timeline_hiding_reason.Loading_denied ->
-            Harvesting_timeline_result.Hidden_timeline Loading_denied
+        |Page_revealing_result.Failed failure_reason ->
+            Harvesting_timeline_result.Hidden_timeline failure_reason
         
         
     
@@ -355,10 +355,18 @@ module Harvest_posts_from_timeline =
                     browser,
             result
             
-        |Hidden_timeline Loading_denied ->
-            Log.info $"""
-            Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
-            Switching browser profiles"""
+        |Hidden_timeline failing_of_our_browser ->
+            
+            match failing_of_our_browser with
+            |Loading_denied ->
+                Log.info $"""
+                Timeline {Timeline_tab.human_name timeline_tab} of user {User_handle.value user} didn't load.
+                Switching browser profiles"""
+            |No_login |_ ->
+                Log.info $"""
+                browser {browser.profile} is not logged in to twitter.
+                Switching browser profiles"""
+            
             let new_browser = 
                 Assigning_browser_profiles.switch_profile
                     (Central_database.resiliently_open_connection())

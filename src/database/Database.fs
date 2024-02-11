@@ -12,7 +12,7 @@ module Database =
     let set_timezone_of_this_machine
         (connection:NpgsqlConnection)
         =
-        let utc_offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Negate()
+        let utc_offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).Negate()
         connection.Query<DateTime>(
             $"""set timezone to '{utc_offset}'"""
         )|>ignore
@@ -21,7 +21,7 @@ module Database =
         let data_source = NpgsqlDataSource.Create(connection_string)
         let db_connection = data_source.OpenConnection()
         
-        set_timezone_of_this_machine db_connection
+        //set_timezone_of_this_machine db_connection
         
         db_connection
         

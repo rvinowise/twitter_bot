@@ -5,6 +5,7 @@ open Dapper
 open DeviceId.Encoders
 open DeviceId.Formatters
 open Npgsql
+open OpenQA.Selenium
 open Xunit
 open rvinowise.twitter
 open rvinowise.twitter.database_schema
@@ -32,7 +33,7 @@ module Assigning_browser_profiles =
             ",
             {|
                 worker=worker_id
-                when_taken=DateTime.Now
+                when_taken=DateTime.UtcNow
             |}
         )|>Seq.tryHead
     
@@ -84,7 +85,25 @@ module Assigning_browser_profiles =
             Log.info "the central database didn't return next free profile"
             
         free_profile
-    
+   
+    let read_profile_taken_by_this_worker
+        (central_db: NpgsqlConnection)
+        worker_id
+        =
+        central_db.Query<Email>(
+            $"
+            select 
+                {tables.browser_profile.email}
+            from
+                {tables.browser_profile}
+            where 
+                {tables.browser_profile.worker} = @worker
+            ",
+            {|
+                worker=worker_id
+            |}
+        )|>Seq.tryHead
+        
 
     let ``try take_next_free_profile``()=
         let result =
@@ -114,23 +133,42 @@ module Assigning_browser_profiles =
             possible_profiles
             worker_id
             
-    let open_browser_with_free_profile 
+    let rec open_browser_with_free_profile 
         (central_db: NpgsqlConnection)
         worker_id
         =
-        take_next_free_profile
-            central_db
-            Settings.browser.profiles
-            worker_id
-        |>function
-        |Some email ->
-            email
-            |>Browser.open_with_profile 
-        |None ->
-            "can't open a browser with a free profile from the central database, because it didn't return any free profile"
-            |>Log.error
-            |>Harvesting_exception
-            |>raise 
+        try
+            read_profile_taken_by_this_worker
+                central_db
+                worker_id
+            |>function
+            |Some profile ->
+                $"worker {worker_id} was already holding the profile {profile}, keep using it"
+                |>Log.info
+                Some profile
+            |None ->
+                take_next_free_profile
+                    central_db
+                    Settings.browser.profiles
+                    worker_id
+            |>function
+            |Some email ->
+                email
+                |>Browser.open_with_profile 
+            |None ->
+                "can't open a browser with a free profile from the central database, because it didn't return any free profile"
+                |>Log.error
+                |>Harvesting_exception
+                |>raise 
+        with
+        | :? WebDriverException as exc ->
+            $"failed to open browser: {exc.Message},
+            trying again"
+            |>Log.error|>ignore
+            open_browser_with_free_profile
+                central_db
+                worker_id
+            
         
     let rec switch_profile
         (central_db: NpgsqlConnection)

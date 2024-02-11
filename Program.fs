@@ -1,5 +1,6 @@
 namespace rvinowise.twitter
 
+open System
 open System.Threading.Tasks
 open OpenQA.Selenium
 open rvinowise.html_parsing
@@ -74,25 +75,32 @@ module Program =
     [<EntryPoint>]
     let main args =
         let args = args|>List.ofArray
-        match args with
-        | "following"::rest ->
-            //Scraping.set_canopy_configuration_directories()
-            harvest_following rest
-        | "interactions"::rest ->
-            announce_user_interactions()
-        | "tasks"::posts_amount::rest ->
-            posts_amount
-            |>int
-            |>Harvest_timelines_of_table_members.harvest_timelines_from_central_database
-                (Local_database.open_connection())
-            |>ignore
-        | "competition"::rest ->
-            announce_competition_successes()
-        | "test"::rest ->
-            Write_matrix_to_sheet.attention_matrix_to_sheet()
-        | unknown_parameters ->
-            $"unknown parameters: {unknown_parameters}"
+        try 
+            match args with
+            | "following"::rest ->
+                //Scraping.set_canopy_configuration_directories()
+                harvest_following rest
+            | "interactions"::rest ->
+                announce_user_interactions()
+            | "tasks"::posts_amount::rest ->
+                posts_amount
+                |>int
+                |>Harvest_timelines_of_table_members.harvest_timelines_from_central_database
+                    (Local_database.open_connection())
+                |>ignore
+            | "competition"::rest ->
+                announce_competition_successes()
+            | "test"::rest ->
+                Write_matrix_to_sheet.attention_matrix_to_sheet()
+            | unknown_parameters ->
+                $"unknown parameters: {unknown_parameters}"
+                |>Log.error|>ignore
+        with
+        | exc ->
+            $"Unhandled exception {exc.GetType()}
+            {exc.Message}
+            {exc.StackTrace}"
             |>Log.error|>ignore
-        
+            
         Log.important "bot finished execution."
         0

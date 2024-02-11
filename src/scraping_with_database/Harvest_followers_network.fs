@@ -21,6 +21,7 @@ module Harvest_followers_network =
             parsing_context
             db_connection
             user
+        |>ignore
 
         let followees,followers =
             user
@@ -79,7 +80,7 @@ module Harvest_followers_network =
             |>List.filter (
                 Social_following_database.was_user_harvested_recently
                     db_connection
-                    (DateTime.Now-repeat_if_older_than)
+                    (DateTime.UtcNow-repeat_if_older_than)
                 >>not
             )
             

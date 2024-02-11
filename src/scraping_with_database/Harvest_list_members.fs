@@ -14,45 +14,23 @@ open Xunit
 
 module Harvest_list_members =
    
+    (* 2024-02-11
+    taken single users by query "transhumanism" "transhumanist" "immortalism" "immortalist"
+    
+    members of lists by the query:
+    "e/acc"
+    
+    *)
+    
     let lists =
         [
-            "https://twitter.com/i/lists/1451369115613114386"
-            "https://twitter.com/i/lists/1465878634519044099"
-            "https://twitter.com/i/lists/1316578688205426689"
-            "https://twitter.com/i/lists/1518438116943663104"
-            "https://twitter.com/i/lists/1460603765262856200"
-            "https://twitter.com/i/lists/1020756547213938700"
-            "https://twitter.com/i/lists/1332283856720949248"
-            "https://twitter.com/i/lists/1090107"
-            "https://twitter.com/i/lists/1479004920590311425"
-            "https://twitter.com/i/lists/940941894749745152"
-            "https://twitter.com/i/lists/1576073400132452352"
-            "https://twitter.com/i/lists/1346858133822562304"
-            "https://twitter.com/i/lists/1467230292205309958"
-            "https://twitter.com/i/lists/1498373473277812743"
-            "https://twitter.com/i/lists/1504430180537810948"
-            "https://twitter.com/i/lists/1281040400216514560"
-            "https://twitter.com/i/lists/1318543386715062272"
-            "https://twitter.com/i/lists/1298662177105215491"
-            "https://twitter.com/i/lists/1505135154167230468"
-            "https://twitter.com/i/lists/1123068084108058624"
-            "https://twitter.com/i/lists/1344597663422029824"
-            "https://twitter.com/i/lists/1510396523967778818"
-            "https://twitter.com/i/lists/1181894239313186816"
-            "https://twitter.com/i/lists/1546479016437321732"
-            "https://twitter.com/i/lists/807582499283103744"
-            "https://twitter.com/i/lists/823592271639695360"
-            "https://twitter.com/i/lists/1360780822169681920"
-            "https://twitter.com/i/lists/1420072649598795776"
-            "https://twitter.com/i/lists/1552795515200454663"
-            "https://twitter.com/i/lists/1676915596846596096"
-            "https://twitter.com/i/lists/120023753"
-            "https://twitter.com/i/lists/117262948"
-            "https://twitter.com/i/lists/818235212257755137"
-            "https://twitter.com/i/lists/1209211712571879425"
-            "https://twitter.com/i/lists/1315146423873175553"
-            "https://twitter.com/i/lists/1378398833848197122"
-            "https://twitter.com/i/lists/1397909085673099266"
+            "https://twitter.com/i/lists/228873043"
+            "https://twitter.com/i/lists/1507135025921159170"
+            "https://twitter.com/i/lists/200195165"
+            "https://twitter.com/i/lists/1032699809453498369"
+            "https://twitter.com/i/lists/1597741824415768578"
+            
+            
         ]
         |>List.map(fun list_url ->
             list_url.Split "/"
@@ -178,7 +156,7 @@ module Harvest_list_members =
         database
         members
         =
-        let olders_accepted_date = DateTime.Now - TimeSpan.FromDays(30)
+        let olders_accepted_date = DateTime.UtcNow - TimeSpan.FromDays(30)
         let unscraped_members=
             members
             |>List.filter(fun account ->

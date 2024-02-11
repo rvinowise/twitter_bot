@@ -50,12 +50,12 @@ module Dendrogram =
     
     let image_from_dot_file filename =()
         
-    
     let open_image_of_graph (graph_node:Node) =
         let filename = Directory.GetCurrentDirectory() + $"/{graph_node.data.id}"
         let dot_file =
             graph_node.graph
             |>Graph.save_to_file filename
+        
         let root =
             try 
                 dot_file
@@ -98,6 +98,22 @@ module Dendrogram =
                 amount_relative_to_everything / total_attention_inside_matrix
             )
         )
+    
+    let combined_paid_relative_attention
+        attention_types
+        =
+        attention_types
+        |>List.map _.total_paid_attention
+        |>Prepare_attention_matrix.merge_maps
+            (fun _ old_value new_value -> old_value + new_value)
+    
+    let combined_received_relative_attention
+        attention_types
+        =
+        attention_types
+        |>List.map _.total_received_attention
+        |>Prepare_attention_matrix.merge_maps
+            (fun _ old_value new_value -> old_value + new_value)
      
     let find_clusters
         database
@@ -133,32 +149,51 @@ module Dendrogram =
             |> _.GetClustering(all_users)
        
       
+        let filename =
+            [|
+                Directory.GetCurrentDirectory()
+                $"""{matrix}_{datetime.ToString("yyyy-MM-dd_HH-mm")}"""
+            |]
+            |>Path.Combine
+            
+        
         clustering
         |>Graph_from_clustering.create_graph
             handle_to_name
             (
                 Prepare_attention_matrix.combined_inout_relative_attention
                     full_attention_data
-                // full_attention_data.Head.total_received_attention
             )
-        |>open_image_of_graph
+            (
+                 combined_received_relative_attention
+                    full_attention_data
+            )
+            (
+                 combined_paid_relative_attention
+                    full_attention_data
+            )
+        |>Node.graph
+        |>Graph.save_to_file filename
+        |>ignore
         
-        //clustering.SaveD3DendrogramFile("C:/prj/clusters.json", formatting= Formatting.Indented)
-        
-        ()
+        Log.important $"a dendrogram is saved to the file: {filename}"
    
-    [<Fact>]
     let ``try visualise clusters``() =
         let database = Local_database.open_connection()
         let handle_to_name =
             Twitter_user_database.handle_to_username
                 database
-                
-        find_clusters
+        let matrix = Adjacency_matrix.Philosophy_members
+            
+        Adjacency_matrix_database.read_last_timeframe_of_matrix
+            (Central_database.resiliently_open_connection())
+            database
+            matrix
+        |>find_clusters
             database
             handle_to_name
-            Adjacency_matrix.Longevity_members
-            (Datetime.parse_datetime "yyyy-MM-dd HH:mm:ss" "2024-01-25 18:36:45")
+            matrix
+            
     
     
      
@@ -177,7 +212,7 @@ module Dendrogram =
         )
         |>Graph.with_edge (
             (Graph.provide_vertex "Rybin" root)
-        )
+        )|>ignore
             
         
         let cluster2 =
@@ -190,7 +225,7 @@ module Dendrogram =
         )
         |>Graph.with_edge (
             (Graph.provide_vertex "Prapion" root)
-        )
+        )|>ignore
         
             
         root

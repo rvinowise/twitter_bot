@@ -7,6 +7,7 @@ open Faithlife.Utility.Dapper
 open DeviceId.Encoders
 open DeviceId.Formatters
 open Npgsql
+open NpgsqlTypes
 open Xunit
 open rvinowise.html_parsing
 open rvinowise.twitter
@@ -50,7 +51,7 @@ module Distributing_jobs_database =
                 ",
                 {|
                     worker=worker_id
-                    when_taken=DateTime.Now
+                    when_taken=DateTime.UtcNow
                 |}
             )|>Seq.tryHead
         
@@ -74,7 +75,8 @@ module Distributing_jobs_database =
                         worker_id
                 taken_job, true
             with
-            | :? NpgsqlException as exc ->
+            | :? NpgsqlException
+            | :? TimeoutException as exc ->
                 $"""Exception {exc.GetType()} when trying to take the next free job from the central datbase: {exc.Message}.
                 trying again with reistablishing the connection"""
                 |>Log.error|>ignore
@@ -213,7 +215,7 @@ module Distributing_jobs_database =
                 handle = user_task
                 posts_amount = posts_amount
                 likes_amount = likes_amount
-                when_completed = DateTime.Now
+                when_completed = DateTime.UtcNow
                 status=Scraping_user_status.Completed result
             |}
         ) |> ignore
@@ -241,7 +243,8 @@ module Distributing_jobs_database =
                 true
             with
             | :? NpgsqlException
-            | :? TimeoutException as exc ->
+            | :? TimeoutException
+            | :? System.Net.Sockets.SocketException as exc ->
                 $"""Exception {exc.GetType()} when trying to set a task as complete in the central datbase: {exc.Message}.
                 trying again with reistablishing the connection"""
                 |>Log.error|>ignore
@@ -349,7 +352,7 @@ module Distributing_jobs_database =
         accounts
         =
         Log.info $"writing {Seq.length accounts} accounts as targets for scraping"
-        let batch_datetime = DateTime.Now
+        let batch_datetime = DateTime.UtcNow
         
         database.BulkInsert(
             $"""

@@ -1,5 +1,6 @@
 ﻿namespace rvinowise.twitter
 
+open System.Diagnostics.Contracts
 open System.Globalization
 open rvinowise.twitter
 open rvinowise.web_scraping
@@ -109,10 +110,14 @@ module Adjacency_matrix_helpers =
             
             attention
             |>Map.map (fun target absolute_attention ->
-                let user_total_attention = //there are no zero values of attention at this point
+                let user_total_attention =
                     total_attention
                     |>Map.find attentor
-                (float absolute_attention) / (float user_total_attention)
+                Contract.Assert(user_total_attention >= absolute_attention, "total attention can't be less than attention to one target")
+                if user_total_attention = 0 then
+                    0.
+                else
+                    (float absolute_attention) / (float user_total_attention)
             )
         )
      

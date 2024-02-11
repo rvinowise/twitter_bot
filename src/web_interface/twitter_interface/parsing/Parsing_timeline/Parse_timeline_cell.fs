@@ -24,7 +24,7 @@ module Parse_timeline_cell =
         (exc: Exception)
         (post_node: Html_node)
         =
-        Log.error $"""Exception: {exc.Message}
+        Log.error $"""Exception: {exc.GetType()} {exc.Message}
             stacktrase: {exc.StackTrace}
             when parsing twitter post with html:
             {post_node.OuterHtml}"""
@@ -40,7 +40,8 @@ module Parse_timeline_cell =
             |>Thread_context.Post
         with
         | :? Bad_post_exception
-        | :? ArgumentException as exc ->   
+        | :? ArgumentException
+        | :? FormatException as exc ->   
             report_error_when_parsing_post exc article_node
             Thread_context.Empty_context
  

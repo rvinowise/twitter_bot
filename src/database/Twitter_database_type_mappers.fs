@@ -16,17 +16,23 @@ type Timestamp_mapper() =
     inherit SqlMapper.TypeHandler<DateTime>()
     override this.SetValue(
             parameter:IDbDataParameter ,
-            value: DateTime
+            datetime_value: DateTime
         )
         =
-        (* this is already done by "set timezone to" *)
-        parameter.Value <- value
+        let utl_value =
+            if datetime_value.Kind = DateTimeKind.Utc then
+                datetime_value
+            else
+                let utc_offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow)
+                datetime_value.Add(-utc_offset)  
+                
+        parameter.Value <- utl_value
     
     override this.Parse(value: obj) =
         let retrieved_datetime =
             value :?> DateTime
         if retrieved_datetime.Kind = DateTimeKind.Utc then
-            let utc_offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now)
+            let utc_offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow)
             retrieved_datetime.Add(utc_offset)  
         else
             retrieved_datetime
@@ -150,7 +156,7 @@ type Option_string_mapper() =
 module Twitter_database_type_mappers =
     
     let set_twitter_type_handlers () =
-        SqlMapper.AddTypeHandler(Timestamp_mapper()) //sometimes it's needed, sometimes not
+        //SqlMapper.AddTypeHandler(Timestamp_mapper()) //sometimes it's needed, sometimes not
         SqlMapper.AddTypeHandler(User_handle_mapper())
         SqlMapper.AddTypeHandler(Email_mapper())
         SqlMapper.AddTypeHandler(Post_id_mapper())

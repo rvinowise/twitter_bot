@@ -98,7 +98,7 @@ module Merging_different_databases =
         
         let source =
             Database.open_connection
-                "Host=localhost:5432;Username=postgres;Password=' ';Database=twitter2"
+                "Host=localhost:5432;Username=postgres;Password=' ';Database=twitter4"
         
         let target =
             Database.open_connection

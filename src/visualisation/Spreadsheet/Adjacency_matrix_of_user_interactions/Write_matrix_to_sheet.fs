@@ -126,8 +126,8 @@ module Write_matrix_to_sheet =
             
     let attention_matrix_to_sheet()=
         
-        //let doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0" //live
-        let doc_id = "1HvxPIvcAiKlzLNqSO7aVJZBi9ClH6-5rxGYWW8QByCo" //test
+        //let doc_id = "1rm2ZzuUWDA2ZSSfv2CWFkOIfaRebSffN7JyuSqBvuJ0" 
+        let doc_id = "1IghY1FjqODJq5QpaDcCDl2GyerqEtRR79-IcP55aOxI" //philosophy members
         
         let central_db = Central_database.resiliently_open_connection()
         let local_db = Local_database.open_connection()
@@ -139,7 +139,7 @@ module Write_matrix_to_sheet =
         Adjacency_matrix_database.read_timeframes_of_matrix
             central_db
             local_db
-            Adjacency_matrix.Twitter_network
+            Adjacency_matrix.Philosophy_members
         |>List.last
         |> _.last_completion
         |>write_matrices_to_sheet
@@ -147,5 +147,5 @@ module Write_matrix_to_sheet =
             (Googlesheet.create_googlesheet_service())
             local_db
             doc_id
-            Adjacency_matrix.Twitter_network
+            Adjacency_matrix.Philosophy_members
         ()

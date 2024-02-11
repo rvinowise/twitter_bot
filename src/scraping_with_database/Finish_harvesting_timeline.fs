@@ -27,9 +27,9 @@ module Finish_harvesting_timeline =
         is_finished
         
     let finish_after_time time =
-        let start_time = DateTime.Now
+        let start_time = DateTime.UtcNow
         let is_finished = (fun _ _ _ ->
-             let current_time = DateTime.Now
+             let current_time = DateTime.UtcNow
              if (current_time - start_time > time) then
                  Log.debug $"scraping time elapsed at {current_time}"
                  true

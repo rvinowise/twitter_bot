@@ -179,7 +179,7 @@ module User_attention_from_posts =
             read_total_known_likes_of_matrix_members
                 (Local_database.open_connection())
                 Longevity_members
-                DateTime.Now
+                DateTime.UtcNow
         ()
         
     let read_reposts_by_user
@@ -298,7 +298,7 @@ module User_attention_from_posts =
             read_total_known_reposts_of_matrix_members
                 (Local_database.open_connection())
                 Adjacency_matrix.Longevity_members
-                DateTime.Now
+                DateTime.UtcNow
         ()
     
     let read_replies_by_user
@@ -423,13 +423,13 @@ module User_attention_from_posts =
             read_total_known_replies_of_matrix_members
                 (Local_database.open_connection())
                 Adjacency_matrix.Longevity_members
-                DateTime.Now
+                DateTime.UtcNow
         ()    
     let ``try read_replies_by_user``()=
         let result = 
             read_replies_by_user
                 (Local_database.open_connection())
-                DateTime.Now
+                DateTime.UtcNow
                 "kristenvbrown"
         ()
         

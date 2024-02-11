@@ -126,7 +126,7 @@ module Adjacency_matrix_database =
         |>ignore
         timeframes
         
-    let read_timeframes
+    let read_timeframes_of_scraping_jobs
         (database:NpgsqlConnection)
         (matrix_members: User_handle Set)
         =
@@ -179,9 +179,21 @@ module Adjacency_matrix_database =
                 matrix_title
             |>Set.ofSeq
             
-        read_timeframes
+        read_timeframes_of_scraping_jobs
             central_database
             matrix_members
+    
+    let read_last_timeframe_of_matrix
+        central_database
+        local_database
+        matrix_title
+        =
+        read_timeframes_of_matrix
+            central_database
+            local_database
+            matrix_title
+        |>List.last
+        |> _.last_completion
     
     let ``try read_timeframes_of_matrix``()=
         let frames =

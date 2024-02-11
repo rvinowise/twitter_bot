@@ -52,7 +52,7 @@ module Twitter_post_database =
             = (@replies, @likes, @reposts, @views, @bookmarks)",
             {|
                 post_id=post_id
-                datetime=DateTime.Now
+                datetime=DateTime.UtcNow
                 replies=stats.replies
                 likes=stats.likes
                 reposts=stats.reposts
@@ -787,7 +787,7 @@ module Twitter_post_database =
                 account=account
                 timeline=Timeline_tab.human_name timeline_tab
                 post=post
-                visited_at=DateTime.Now
+                visited_at=DateTime.UtcNow
             |}
         ) |> ignore
         

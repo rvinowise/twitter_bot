@@ -27,31 +27,6 @@ module Harvest_timelines_of_table_members =
     
    
         
-    
-    
-    let unify_results
-        (results: Harvesting_timeline_result seq)
-        =
-        let importance (result: Harvesting_timeline_result) =
-            match result with
-            |Success _-> 1
-            |Insufficient _-> 3
-            |Hidden_timeline reason ->
-                match reason with
-                |Protected -> 2
-                |Loading_denied -> 4
-            |Exception _-> 5
-        
-        results
-        |>Seq.fold(fun combined_result result ->
-            if
-                importance result > importance combined_result
-            then
-                result
-            else
-                combined_result
-        )
-            (Success 0)
         
     let harvest_timelines_from_jobs
         local_db
