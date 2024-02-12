@@ -133,7 +133,7 @@ module Harvest_timelines_of_table_members =
         
         Adjacency_matrix_database.read_members_of_matrix
             local_db
-            Adjacency_matrix.Philosophy_members
+            Adjacency_matrix.Transhumanist_members
         |>Distributing_jobs_database.write_users_for_scraping
             central_db
             

@@ -131,6 +131,7 @@
     
     <Compile Include="src\scraping_with_database\Harvest_user.fs" />
     <Compile Include="src\scraping_with_database\Harvest_list_members.fs" />
+    <Compile Include="src\scraping_with_database\Find_users_in_text.fs" />
     <Compile Include="src\scraping_with_database\Harvest_followers_network.fs" />
     <Compile Include="src\scraping_with_database\Finish_harvesting_timeline.fs" />
     <Compile Include="src\scraping_with_database\Harvest_posts_from_timeline.fs" />

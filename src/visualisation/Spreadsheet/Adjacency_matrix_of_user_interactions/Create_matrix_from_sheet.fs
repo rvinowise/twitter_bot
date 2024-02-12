@@ -25,14 +25,14 @@ module Create_matrix_from_sheet =
 
     let ``add_matrix_from_sheet``()=
         {
-            Google_spreadsheet.doc_id = "1IghY1FjqODJq5QpaDcCDl2GyerqEtRR79-IcP55aOxI"
+            Google_spreadsheet.doc_id = "1JLFoJEQiDzpn-FZ3_jsCIGfcN5IyzTW3QC7uu9uLYVw"
             page_name="Members"
         }
         |>users_from_spreadsheet
             (Googlesheet.create_googlesheet_service())
         |>Adjacency_matrix_database.write_members_of_matrix
             (Local_database.open_connection())
-            "Philosophy members"
+            Adjacency_matrix.Transhumanist_members
 
     let ``add_matrix_from_sheet (old)``()=
         Googlesheet_reading.read_range

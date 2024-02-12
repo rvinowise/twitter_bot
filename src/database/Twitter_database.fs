@@ -57,12 +57,14 @@ type Adjacency_matrix =
     |Longevity_members
     |Twitter_network
     |Philosophy_members
+    |Transhumanist_members
     with
     override this.ToString() =
         match this with
         |Longevity_members -> "Longevity members"
         |Philosophy_members -> "Philosophy members"
         |Twitter_network -> "Twitter network"
+        |Transhumanist_members -> "Transhumanist_members"
 
 type Attention_type =
     |Likes
