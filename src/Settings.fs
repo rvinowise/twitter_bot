@@ -32,6 +32,7 @@ type Browser_settings = {
     headless: bool
     profiles_root: string
     profiles: Email array
+    options: string array
 }
 
 module Settings = 
@@ -132,6 +133,8 @@ module Settings =
             profiles =
                 browser_section.GetSection("profiles").Get<string[]>()
                 |>Array.map Email
+            options =
+                browser_section.GetSection("options").Get<string[]>()
         }
     let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)
     

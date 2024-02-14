@@ -61,14 +61,19 @@ module Browser =
         =
         let options = ChromeOptions()
         options.BinaryLocation <- local_browser_path
-        options.AddArgument("disable-infobars")
         options.AddArgument($"--user-data-dir={browser_profile_path}")
+        options.AddArgument("--no-sandbox")
+        options.AddArgument("--disable-infobars")
         options.AddArgument("--suppress-message-center-popups")
         options.AddArgument("--disable-notifications")
         options.AddArgument("--ignore-certificate-errors")
         options.AddArgument("--ignore-ssl-errors")
-        options.AddArgument("--no-sandbox")
         options.AddArgument("--no-proxy-server")
+        options.AddArgument("--disable-3d-apis")
+        Settings.browser.options
+        |>Array.iter (fun argument_from_settings ->
+            options.AddArgument(argument_from_settings)
+        )
         let browser_version_as_agent =
             Settings.browser.webdriver_version
             |>fun version -> version.Split '.'
