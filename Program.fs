@@ -92,6 +92,8 @@ module Program =
                 announce_competition_successes()
             | "test"::rest ->
                 Write_matrix_to_sheet.attention_matrix_to_sheet()
+            | "harvest"::"lists"::rest ->
+                Harvest_list_members.``harvest lists``()
             | unknown_parameters ->
                 $"unknown parameters: {unknown_parameters}"
                 |>Log.error|>ignore

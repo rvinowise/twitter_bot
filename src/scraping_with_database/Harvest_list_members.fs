@@ -24,43 +24,71 @@ module Harvest_list_members =
     
     let lists =
         [
-            "https://twitter.com/i/lists/1451369115613114386"
-            "https://twitter.com/i/lists/1465878634519044099"
-            "https://twitter.com/i/lists/1316578688205426689"
-            "https://twitter.com/i/lists/1518438116943663104"
-            "https://twitter.com/i/lists/1460603765262856200"
-            "https://twitter.com/i/lists/1020756547213938700"
-            "https://twitter.com/i/lists/1332283856720949248"
-            "https://twitter.com/i/lists/1090107"
-            "https://twitter.com/i/lists/1479004920590311425"
-            "https://twitter.com/i/lists/940941894749745152"
-            "https://twitter.com/i/lists/1576073400132452352"
-            "https://twitter.com/i/lists/1346858133822562304"
-            "https://twitter.com/i/lists/1467230292205309958"
-            "https://twitter.com/i/lists/1498373473277812743"
-            "https://twitter.com/i/lists/1504430180537810948"
-            "https://twitter.com/i/lists/1281040400216514560"
-            "https://twitter.com/i/lists/1318543386715062272"
-            "https://twitter.com/i/lists/1298662177105215491"
-            "https://twitter.com/i/lists/1505135154167230468"
-            "https://twitter.com/i/lists/1123068084108058624"
-            "https://twitter.com/i/lists/1344597663422029824"
-            "https://twitter.com/i/lists/1510396523967778818"
-            "https://twitter.com/i/lists/1181894239313186816"
-            "https://twitter.com/i/lists/1546479016437321732"
-            "https://twitter.com/i/lists/807582499283103744"
-            "https://twitter.com/i/lists/823592271639695360"
-            "https://twitter.com/i/lists/1360780822169681920"
-            "https://twitter.com/i/lists/1420072649598795776"
-            "https://twitter.com/i/lists/1552795515200454663"
-            "https://twitter.com/i/lists/1676915596846596096"
-            "https://twitter.com/i/lists/120023753"
-            "https://twitter.com/i/lists/117262948"
-            "https://twitter.com/i/lists/818235212257755137"
-            "https://twitter.com/i/lists/1209211712571879425"
-            "https://twitter.com/i/lists/1315146423873175553"
-            "https://twitter.com/i/lists/1378398833848197122"
-            "https://twitter.com/i/lists/1397909085673099266"
+            "https://twitter.com/i/lists/1633391356939829250"
+            "https://twitter.com/i/lists/1635096901623111680"
+            "https://twitter.com/i/lists/1365421579937734662"
+            "https://twitter.com/i/lists/1600382333600686080"
+            "https://twitter.com/i/lists/1644265080027222017"
+            "https://twitter.com/i/lists/1314242486156623874"
+            "https://twitter.com/i/lists/1646244348713943045"
+            "https://twitter.com/i/lists/1644265080027222017"
+            "https://twitter.com/i/lists/1376876611455307778"
+            "https://twitter.com/i/lists/1071708221730115584"
+            "https://twitter.com/i/lists/1141102617097117697"
+            "https://twitter.com/i/lists/1376876611455307778"
+            "https://twitter.com/i/lists/1571318287417614337"
+            "https://twitter.com/i/lists/1639327880227479552"
+            "https://twitter.com/i/lists/1689222239244468429"
+            "https://twitter.com/i/lists/232581438"
+            "https://twitter.com/i/lists/811648891229609985"
+            "https://twitter.com/i/lists/829689034578460675"
+            "https://twitter.com/i/lists/868881902610128897"
+            "https://twitter.com/i/lists/909905273912926208"
+            "https://twitter.com/i/lists/1069698729236619264"
+            "https://twitter.com/i/lists/1180437185062944768"
+            "https://twitter.com/i/lists/1195611616307548160"
+            "https://twitter.com/i/lists/1288027217063182339"
+            "https://twitter.com/i/lists/1375472780490244103"
+            "https://twitter.com/i/lists/1608507347743264769"
+            "https://twitter.com/i/lists/1644000343032750082"
+            "https://twitter.com/i/lists/1654854186318610434"
+            "https://twitter.com/i/lists/1380936371586666497"
+            "https://twitter.com/i/lists/1400410074275889156"
+            "https://twitter.com/i/lists/1267967400647032833"
+            "https://twitter.com/i/lists/1593137802635534336"
+            "https://twitter.com/i/lists/1511758298709696517"
+            "https://twitter.com/i/lists/1653648790098771969"
+            "https://twitter.com/i/lists/1495504317377392643"
+            "https://twitter.com/i/lists/1633601941296099329"
+            "https://twitter.com/i/lists/1623617160613355528"
+            "https://twitter.com/i/lists/1367836484728979459"
+            "https://twitter.com/i/lists/784534271683809280"
+            "https://twitter.com/i/lists/996784124718407681"
+            "https://twitter.com/i/lists/1643630895033643008"
+            "https://twitter.com/i/lists/1458687473475678208"
+            "https://twitter.com/i/lists/1637450382543601664"
+            "https://twitter.com/i/lists/850475818241413121"
+            "https://twitter.com/i/lists/1412009411346944000"
+            "https://twitter.com/i/lists/1597814047688335360"
+            "https://twitter.com/i/lists/1303577789040394240"
+            "https://twitter.com/i/lists/1051247760920346624"
+            "https://twitter.com/i/lists/22875613"
+            "https://twitter.com/i/lists/1316935740882886660"
+            "https://twitter.com/i/lists/197344893"
+            "https://twitter.com/i/lists/225995747"
+            "https://twitter.com/i/lists/225487259"
+            "https://twitter.com/i/lists/22875613"
+            "https://twitter.com/i/lists/8793381"
+            "https://twitter.com/i/lists/75460849"
+            "https://twitter.com/i/lists/217079472"
+            "https://twitter.com/i/lists/756019607924867072"
+            "https://twitter.com/i/lists/826010580423176192"
+            "https://twitter.com/i/lists/816439924647989248"
+            "https://twitter.com/i/lists/963762977458589698"
+            "https://twitter.com/i/lists/1494808807372955648"
+            "https://twitter.com/i/lists/1623119951371403265"
+            "https://twitter.com/i/lists/1622389924757479432"
+            
         ]
         |>List.map(fun list_url ->
             list_url.Split "/"
@@ -180,13 +208,13 @@ module Harvest_list_members =
             }
     
 
-    let harvest_lacking_social_activity_of_members
+    let harvest_lacking_top_pages_of_members
         browser
         parsing_context
         database
         members
         =
-        let olders_accepted_date = DateTime.UtcNow - TimeSpan.FromDays(30)
+        let oldest_accepted_date = DateTime.UtcNow - TimeSpan.FromDays(30)
         let unscraped_members=
             members
             |>List.filter(fun account ->
@@ -194,9 +222,9 @@ module Harvest_list_members =
                     Harvest_user.last_date_of_known_social_activity
                         database
                         account
-                last_scraping_date < olders_accepted_date
+                last_scraping_date < oldest_accepted_date
             )
-        $"{unscraped_members.Length} members out of {members.Length} don't have scraped activity newer than {olders_accepted_date}, harvesting them"
+        $"{unscraped_members.Length} members out of {members.Length} don't have scraped activity newer than {oldest_accepted_date}, harvesting them"
         |>Log.info
             
         unscraped_members
@@ -205,7 +233,8 @@ module Harvest_list_members =
             parsing_context
             database
         
-        
+    
+    (* Matrix_template: https://docs.google.com/spreadsheets/d/1qUBXYvHj4bROzELbcgLy-P8li5cjSJR5FH3EK8_PQWU/edit#gid=0 *)        
     let ``harvest lists``() =
         let database = Local_database.open_connection() 
         let browser =
@@ -232,18 +261,18 @@ module Harvest_list_members =
             
         Log.important $"found {List.length members} distinct members in given lists"
         
-        // members
-        // |>List.map _.handle
-        // |>harvest_lacking_social_activity_of_members
-        //     browser
-        //     html_context
-        //     database
+        members
+        |>List.map _.handle
+        |>harvest_lacking_top_pages_of_members
+            browser
+            html_context
+            database
     
         export_members_to_spreadsheet
             database
             googlesheet_service
             {
-                Google_spreadsheet.doc_id = "1IghY1FjqODJq5QpaDcCDl2GyerqEtRR79-IcP55aOxI"
+                Google_spreadsheet.doc_id = "18iGlQOaSihzVhAhpbmilBTTUWk55hrVzdSM0FlbQhtQ"
                 page_name="Members"
             }
             members_with_lists_amount

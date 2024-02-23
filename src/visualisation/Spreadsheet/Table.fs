@@ -101,19 +101,27 @@ module Cell =
         style = Text_style.regular
     }
     
-    let from_url text url = {
-        Cell.color = Color.white
-        value =
-            Cell_value.Formula $"""=HYPERLINK("{url}", "{text}")"""
-        style = Text_style.regular
-    }
+    let escape_special_characters (text:string) =
+        text.Replace("\"","'")
     
-    let from_formula text url = {
-        Cell.color = Color.white
-        value =
-            Cell_value.Formula $"""=HYPERLINK("{url}", "{text}")"""
-        style = Text_style.regular
-    }
+    let from_url text url =
+        let escaped_text = escape_special_characters text    
+        {
+            Cell.color = Color.white
+            
+            value =
+                Cell_value.Formula $"""=HYPERLINK("{url}", "{escaped_text}")"""
+            style = Text_style.regular
+        }
+    
+    let from_formula text url =
+        let escaped_text = escape_special_characters text  
+        {
+            Cell.color = Color.white
+            value =
+                Cell_value.Formula $"""=HYPERLINK("{url}", "{escaped_text}")"""
+            style = Text_style.regular
+        }
         
     let from_table_with_colored_numbers
         (rows: (int*Color) list list)

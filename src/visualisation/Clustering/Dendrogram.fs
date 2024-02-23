@@ -183,7 +183,7 @@ module Dendrogram =
         let handle_to_name =
             Twitter_user_database.handle_to_username
                 database
-        let matrix = Adjacency_matrix.Philosophy_members
+        let matrix = Adjacency_matrix.Longevity_members
             
         Adjacency_matrix_database.read_last_timeframe_of_matrix
             (Central_database.resiliently_open_connection())

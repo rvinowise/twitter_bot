@@ -134,7 +134,12 @@ module Settings =
                 browser_section.GetSection("profiles").Get<string[]>()
                 |>Array.map Email
             options =
-                browser_section.GetSection("options").Get<string[]>()
+                let additional_parameters = browser_section.GetSection("options").Get<string[]>()
+                if isNull additional_parameters then
+                    [||]
+                else
+                    additional_parameters
+                    
         }
     let repeat_scrolling_timeline = configuration_root.GetValue<int>("repeat_scrolling_timeline",50)
     
