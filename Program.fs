@@ -82,6 +82,14 @@ module Program =
                 harvest_following rest
             | "interactions"::rest ->
                 announce_user_interactions()
+            | "prepare"::"tasks"::matrix_name::rest ->
+                Adjacency_matrix.try_matrix_from_string matrix_name
+                |>function
+                |Some matrix ->
+                    Harvest_timelines_of_table_members.write_tasks_to_scrape_next_matrix_timeframe matrix
+                |None ->
+                    $"error: no matrix titled '{matrix_name}'"
+                    |>Log.error|>ignore 
             | "tasks"::posts_amount::rest ->
                 posts_amount
                 |>int

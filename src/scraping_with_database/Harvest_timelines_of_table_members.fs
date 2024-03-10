@@ -123,7 +123,7 @@ module Harvest_timelines_of_table_members =
             (Googlesheet.create_googlesheet_service())
         |>Distributing_jobs_database.write_users_for_scraping central_db
     
-    let write_tasks_to_scrape_next_matrix_timeframe ()=
+    let write_tasks_to_scrape_next_matrix_timeframe matrix_title =
 
         let central_db =
             Central_database.resiliently_open_connection()
@@ -131,9 +131,11 @@ module Harvest_timelines_of_table_members =
         let local_db =
             Local_database.open_connection()
         
+        
+        
         Adjacency_matrix_database.read_members_of_matrix
             local_db
-            Adjacency_matrix.AI_members
+            matrix_title
         |>Distributing_jobs_database.write_users_for_scraping
             central_db
             

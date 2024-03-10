@@ -59,14 +59,36 @@ type Adjacency_matrix =
     |Philosophy_members
     |Transhumanist_members
     |AI_members
-    with
-    override this.ToString() =
-        match this with
-        |Twitter_network -> "Twitter network"
-        |Longevity_members -> "Longevity members"
-        |Philosophy_members -> "Philosophy members"
-        |Transhumanist_members -> "Transhumanist_members"
-        |AI_members -> "AI_members"
+    // with
+    // override this.ToString() =
+    //     match this with
+    //     |Twitter_network -> "Twitter network"
+    //     |Longevity_members -> "Longevity members"
+    //     |Philosophy_members -> "Philosophy members"
+    //     |Transhumanist_members -> "Transhumanist_members"
+    //     |AI_members -> "AI_members"
+
+
+module Adjacency_matrix =
+    
+    let matrix_to_name =
+        [
+            Twitter_network,"Twitter network"
+            Longevity_members,"Longevity members"
+            Philosophy_members,"Philosophy members"
+            Transhumanist_members,"Transhumanist_members"
+            AI_members,"AI_members"
+        ]
+        |>Map.ofSeq
+    
+    let name (matrix: Adjacency_matrix) =
+        matrix_to_name
+        |>Map.find matrix
+    
+    let try_matrix_from_string name =
+        matrix_to_name
+        |>Map.tryFindKey (fun _ title -> title=name)
+        
 
 type Attention_type =
     |Likes
