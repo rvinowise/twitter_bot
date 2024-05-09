@@ -26,14 +26,14 @@ module Create_matrix_from_sheet =
        
     let ``add_matrix_from_sheet``()=
         {
-            Google_spreadsheet.doc_id = "18iGlQOaSihzVhAhpbmilBTTUWk55hrVzdSM0FlbQhtQ"
+            Google_spreadsheet.doc_id = "1C9Lafu5PxMoPj5GpxRwFs1Senc5H-us5AvltSLFpszg"
             page_name="Members"
         }
         |>users_from_spreadsheet
             (Googlesheet.create_googlesheet_service())
         |>Adjacency_matrix_database.write_members_of_matrix
             (Local_database.open_connection())
-            Adjacency_matrix.AI_members
+            Adjacency_matrix.Antiislam_members
 
     
     

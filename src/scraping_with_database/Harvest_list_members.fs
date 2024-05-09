@@ -15,79 +15,27 @@ open Xunit
 module Harvest_list_members =
    
     (* 2024-02-11
+    
+    matrix: transhumanism_members
+    
     taken single users by query "transhumanism" "transhumanist" "immortalism" "immortalist"
     
     members by the query:
     "e/acc" (only first hundreds)
     
+    
+    2024-03-26
+    
+    matrix: anti-islam
+    my own list + list against radical islamism
+    
+    
     *)
     
     let lists =
         [
-            "https://twitter.com/i/lists/1633391356939829250"
-            "https://twitter.com/i/lists/1635096901623111680"
-            "https://twitter.com/i/lists/1365421579937734662"
-            "https://twitter.com/i/lists/1600382333600686080"
-            "https://twitter.com/i/lists/1644265080027222017"
-            "https://twitter.com/i/lists/1314242486156623874"
-            "https://twitter.com/i/lists/1646244348713943045"
-            "https://twitter.com/i/lists/1644265080027222017"
-            "https://twitter.com/i/lists/1376876611455307778"
-            "https://twitter.com/i/lists/1071708221730115584"
-            "https://twitter.com/i/lists/1141102617097117697"
-            "https://twitter.com/i/lists/1376876611455307778"
-            "https://twitter.com/i/lists/1571318287417614337"
-            "https://twitter.com/i/lists/1639327880227479552"
-            "https://twitter.com/i/lists/1689222239244468429"
-            "https://twitter.com/i/lists/232581438"
-            "https://twitter.com/i/lists/811648891229609985"
-            "https://twitter.com/i/lists/829689034578460675"
-            "https://twitter.com/i/lists/868881902610128897"
-            "https://twitter.com/i/lists/909905273912926208"
-            "https://twitter.com/i/lists/1069698729236619264"
-            "https://twitter.com/i/lists/1180437185062944768"
-            "https://twitter.com/i/lists/1195611616307548160"
-            "https://twitter.com/i/lists/1288027217063182339"
-            "https://twitter.com/i/lists/1375472780490244103"
-            "https://twitter.com/i/lists/1608507347743264769"
-            "https://twitter.com/i/lists/1644000343032750082"
-            "https://twitter.com/i/lists/1654854186318610434"
-            "https://twitter.com/i/lists/1380936371586666497"
-            "https://twitter.com/i/lists/1400410074275889156"
-            "https://twitter.com/i/lists/1267967400647032833"
-            "https://twitter.com/i/lists/1593137802635534336"
-            "https://twitter.com/i/lists/1511758298709696517"
-            "https://twitter.com/i/lists/1653648790098771969"
-            "https://twitter.com/i/lists/1495504317377392643"
-            "https://twitter.com/i/lists/1633601941296099329"
-            "https://twitter.com/i/lists/1623617160613355528"
-            "https://twitter.com/i/lists/1367836484728979459"
-            "https://twitter.com/i/lists/784534271683809280"
-            "https://twitter.com/i/lists/996784124718407681"
-            "https://twitter.com/i/lists/1643630895033643008"
-            "https://twitter.com/i/lists/1458687473475678208"
-            "https://twitter.com/i/lists/1637450382543601664"
-            "https://twitter.com/i/lists/850475818241413121"
-            "https://twitter.com/i/lists/1412009411346944000"
-            "https://twitter.com/i/lists/1597814047688335360"
-            "https://twitter.com/i/lists/1303577789040394240"
-            "https://twitter.com/i/lists/1051247760920346624"
-            "https://twitter.com/i/lists/22875613"
-            "https://twitter.com/i/lists/1316935740882886660"
-            "https://twitter.com/i/lists/197344893"
-            "https://twitter.com/i/lists/225995747"
-            "https://twitter.com/i/lists/225487259"
-            "https://twitter.com/i/lists/22875613"
-            "https://twitter.com/i/lists/8793381"
-            "https://twitter.com/i/lists/75460849"
-            "https://twitter.com/i/lists/217079472"
-            "https://twitter.com/i/lists/756019607924867072"
-            "https://twitter.com/i/lists/826010580423176192"
-            "https://twitter.com/i/lists/816439924647989248"
-            "https://twitter.com/i/lists/963762977458589698"
-            "https://twitter.com/i/lists/1494808807372955648"
-            "https://twitter.com/i/lists/1623119951371403265"
-            "https://twitter.com/i/lists/1622389924757479432"
+            "https://twitter.com/i/lists/1771012223311159411"
+            "https://twitter.com/i/lists/1558322281792913408"
             
         ]
         |>List.map(fun list_url ->
@@ -272,7 +220,7 @@ module Harvest_list_members =
             database
             googlesheet_service
             {
-                Google_spreadsheet.doc_id = "18iGlQOaSihzVhAhpbmilBTTUWk55hrVzdSM0FlbQhtQ"
+                Google_spreadsheet.doc_id = "1C9Lafu5PxMoPj5GpxRwFs1Senc5H-us5AvltSLFpszg"
                 page_name="Members"
             }
             members_with_lists_amount

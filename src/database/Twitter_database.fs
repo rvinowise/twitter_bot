@@ -59,6 +59,7 @@ type Adjacency_matrix =
     |Philosophy_members
     |Transhumanist_members
     |AI_members
+    |Antiislam_members
     // with
     // override this.ToString() =
     //     match this with
@@ -78,6 +79,7 @@ module Adjacency_matrix =
             Philosophy_members,"Philosophy members"
             Transhumanist_members,"Transhumanist_members"
             AI_members,"AI_members"
+            Antiislam_members,"Antiislam_members"
         ]
         |>Map.ofSeq
     
