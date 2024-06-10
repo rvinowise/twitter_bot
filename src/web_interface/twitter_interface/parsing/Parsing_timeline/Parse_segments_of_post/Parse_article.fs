@@ -24,15 +24,18 @@ module Parse_article =
             |>User_handle|>Some
         |None->None
     
+    // let is_pinned social_context_node =
+    //     social_context_node
+    //     |>Html_node.descendants_from_highest_level "span"
+    //     |>List.tryHead
+    //     |>Option.map Html_node.inner_text
+    //     |>Option.map ((=)"Pinned")
+    //     |>Option.defaultValue false
+    
     let is_pinned social_context_node =
         social_context_node
-        |>Html_node.descendants_from_highest_level "span"
-        |>List.tryHead
-        |>Option.map Html_node.inner_text
-        |>Option.map ((=)"Pinned")
-        |>Option.defaultValue false
-    
-    
+        |>Html_node.inner_text
+        |>(=) "Pinned"
     
     let parse_quotable_part_of_post
         html_node

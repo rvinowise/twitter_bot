@@ -17,7 +17,7 @@ module Scrape_dynamic_list =
         load_new_item_batch
         process_item_batch
         (previous_items: list<'Item>) // sorted 0=top
-        (previous_context: 'Context)
+        (previous_context: Thread_context)
         scrolling_repetitions
         repetitions_left
         =
@@ -28,7 +28,7 @@ module Scrape_dynamic_list =
         match new_skimmed_items with
         |[]->
             if repetitions_left = 0 then
-                None
+                Result_of_timeline_cell_processing.Should_stop Stopping_reason.No_more_posts_appeared
             else
                 scraping_list_iteration
                     load_new_item_batch
@@ -39,13 +39,13 @@ module Scrape_dynamic_list =
                     (repetitions_left-1)
         
         |new_skimmed_items ->
-            let next_context =
+            let result =
                 process_item_batch
                     previous_context
                     new_skimmed_items
                     
-            match next_context with
-            |Some next_context ->
+            match result with
+            |Result_of_timeline_cell_processing.Scraped_post next_context ->
                 scraping_list_iteration
                     load_new_item_batch
                     process_item_batch
@@ -53,8 +53,8 @@ module Scrape_dynamic_list =
                     next_context
                     scrolling_repetitions
                     scrolling_repetitions
-            |None->
-                None
+            |Result_of_timeline_cell_processing.Should_stop stopping_reason ->
+                Result_of_timeline_cell_processing.Should_stop stopping_reason
             
    
     let load_next_items browser =
@@ -93,7 +93,6 @@ module Scrape_dynamic_list =
             Thread_context.Empty_context
             scrolling_repetitions
             scrolling_repetitions
-        |>ignore
     
     
     let collect_all_html_items_of_dynamic_list
@@ -119,13 +118,13 @@ module Scrape_dynamic_list =
         let items = ResizeArray<Html_node>()
         let remember_item _ item =
             items.Add item
-            Some ()
+            Result_of_timeline_cell_processing.Scraped_post Empty_context
             
         scraping_list_iteration
             load_new_item_batch
             (Read_list_updates.process_item_batch_providing_previous_items remember_item)
             []
-            ()
+            Thread_context.Empty_context
             1
             1
         |>ignore

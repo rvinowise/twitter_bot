@@ -89,11 +89,11 @@ module Harvest_timelines_of_table_members =
         =
         let worker_id = This_worker.this_worker_id local_db
         
-        harvest_timelines_from_jobs
+        jobs_from_central_database worker_id
+        |>harvest_timelines_from_jobs
             local_db
             (Distributing_jobs_database.resiliently_write_final_result)
             article_amount
-            (jobs_from_central_database worker_id)
         |>ignore
         
         Assigning_browser_profiles.release_browser_profile
@@ -102,13 +102,13 @@ module Harvest_timelines_of_table_members =
             
     let ``try harvest_timelines``()=
         [
-            User_handle "AD74593974"
+            User_handle "0xtantin"
         ]
         |>harvest_timelines_from_jobs
               (Local_database.open_connection())
               (fun _ _ _ _ _-> ())
-              100
-        
+              200
+        |>ignore
 
 
     let ``prepare tasks for scraping``() =
@@ -122,7 +122,8 @@ module Harvest_timelines_of_table_members =
         |>Create_matrix_from_sheet.users_from_spreadsheet
             (Googlesheet.create_googlesheet_service())
         |>Distributing_jobs_database.write_users_for_scraping central_db
-    
+
+        
     let write_tasks_to_scrape_next_matrix_timeframe matrix_title =
 
         let central_db =
@@ -131,11 +132,24 @@ module Harvest_timelines_of_table_members =
         let local_db =
             Local_database.open_connection()
         
-        
-        
         Adjacency_matrix_database.read_members_of_matrix
             local_db
             matrix_title
         |>Distributing_jobs_database.write_users_for_scraping
             central_db
             
+    let write_tasks_to_scrape_next_timeframe_of_matrices matrices =
+
+        let central_db =
+            Central_database.resiliently_open_connection()
+        
+        let local_db =
+            Local_database.open_connection()
+        
+        matrices
+        |>Seq.collect (
+            Adjacency_matrix_database.read_members_of_matrix local_db
+        )
+        |>Set.ofSeq
+        |>Distributing_jobs_database.write_users_for_scraping
+            central_db

@@ -12,7 +12,7 @@ open rvinowise.twitter
 type Harvesting_timeline_result =
     |Success of int
     |Insufficient of int
-    |Hidden_timeline of Timeline_hiding_reason 
+    |Hidden_timeline of Timeline_not_opened_reason 
     |Exception of Exception 
 
 
@@ -21,7 +21,7 @@ module Harvesting_timeline_result =
         match result with
         |Success amount-> "Success"
         |Insufficient amount-> "Insufficient"
-        |Hidden_timeline reason -> Timeline_hiding_reason.db_value reason
+        |Hidden_timeline reason -> Timeline_not_opened_reason.db_value reason
         |Exception exc -> $"Exception: {exc.Message}"
 
     let articles_amount (result: Harvesting_timeline_result) =

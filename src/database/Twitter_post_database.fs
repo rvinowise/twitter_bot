@@ -721,7 +721,32 @@ module Twitter_post_database =
                 liker=liker
             |}
         ) |> ignore
-        
+    
+    
+    (*remember that it's an original published post by its author, and not one of these:
+    a liked post, a repost, a post to which the scraped user replied.
+    the purpose of storing this information is remembering the part of the timeline which has been scraped before,
+    to avoid repeating the work
+    *) 
+    let write_original_post_marker
+        (db_connection:NpgsqlConnection)
+        (post_id: Post_id)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.original} (
+                {tables.post.original.post},
+                {tables.post.original.when_scraped}
+            )
+            values (
+                @post,
+                now()
+            )
+            on conflict
+            do nothing",
+            {|
+                post=post_id
+            |}
+        ) |> ignore
             
             
     let write_main_post
@@ -747,8 +772,8 @@ module Twitter_post_database =
                 db_connection
                 reposter
                 main_post.id
-        |None -> ()
-                    
+        |None->()
+                            
         write_stats
             db_connection
             main_post.id
@@ -818,6 +843,41 @@ module Twitter_post_database =
                 (User_handle "MikhailBatin")
         ()
         
+        
+    let is_like_scraped
+        (db_connection:NpgsqlConnection)
+        (liker: User_handle)
+        (post_id: Post_id)
+        =
+        db_connection.Query<String>(
+            $"
+            select ''
+            from {tables.post.like}
+            where 
+                {tables.post.like.liker} = @liker
+                and {tables.post.like.post} = @post_id
+            ",
+            {|
+                liker = liker
+                post_id = post_id
+            |}
+        )|>Seq.length > 0
+    
+    let is_post_original_scraped
+        (db_connection:NpgsqlConnection)
+        (post_id: Post_id)
+        =
+        db_connection.Query<String>(
+            $"
+            select ''
+            from {tables.post.original}
+            where 
+                {tables.post.original.post} = @post_id
+            ",
+            {|
+                post_id = post_id
+            |}
+        )|>Seq.length > 0
         
     let ``delete all posts from a user's timeline``()=
         let user = User_handle "TheHarrisSultan"

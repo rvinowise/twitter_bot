@@ -66,6 +66,7 @@
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_dynamic_list\Scrape_list_members.fs" />
     
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Reveal_user_page.fs" />
+    
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_user_social_activity.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_user_briefing.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Timeline_types.fs" />
@@ -73,7 +74,9 @@
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_followers_network.fs" />
     <Compile Include="src\web_interface\twitter_interface\writing\post_on_twitter.fs" />
 
-
+    <!-- scraping test of real twitter feed    -->
+    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\user_page_test\Revealing_user_page_test.fs" />
+    
     <!-- google spread sheets interface   -->
     <Compile Include="src\visualisation\Spreadsheet\Color.fs" />
     <Compile Include="src\visualisation\Spreadsheet\Table.fs" />
@@ -140,11 +143,12 @@
     <Compile Include="src\scraping_with_database\Harvest_timelines_of_table_members.fs" />
     
     <Compile Include="src\scraping_with_database\Announce_competition_score.fs" />
-    <Compile Include="src\scraping_with_database\announce_user_interactions.fs" />
     
     <Folder Include="src\web_interface" />
     
     <Compile Include="src\visualisation\Twitter_network.fs" />
+    
+    <Compile Include="src\web_interface\twitter_interface\scraping\Scraping_twitter_posts_tests\broadcast_test.fs" />
     
     
     <Compile Include="Program.fs" />
@@ -179,6 +183,7 @@
     <PackageReference Include="Fparsec" Version="1.1.1" />
     <PackageReference Include="DeviceId" Version="6.6.0" />
     <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
+    <PackageReference Include="fsharpplus" Version="1.6.1" />
     
     <!-- web scraping   -->
     <PackageReference Include="canopy" Version="2.1.5" />

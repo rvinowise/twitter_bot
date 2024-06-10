@@ -26,7 +26,7 @@ module Adjacency_matrix_database =
     
     let read_members_of_matrix
         (database:NpgsqlConnection)
-        (matrix_title: Adjacency_matrix)
+        (matrix: Adjacency_matrix)
         =
         database.Query<User_handle>(
             $"select
@@ -34,9 +34,9 @@ module Adjacency_matrix_database =
             from
                 {account_of_matrix}
             where
-                {account_of_matrix.title} = @title",
+                {account_of_matrix.title} = @matrix_title",
             {|
-                title=(string matrix_title)
+                matrix_title=(Adjacency_matrix.name matrix)
             |}
         )
         |>List.ofSeq    

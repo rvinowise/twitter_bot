@@ -3,6 +3,7 @@ namespace rvinowise.twitter
 open System
 open System.Threading.Tasks
 open OpenQA.Selenium
+open FSharpPlus
 open rvinowise.html_parsing
 open rvinowise.web_scraping
 
@@ -61,17 +62,32 @@ module Program =
         | exc ->
             Log.error $"exception during importing referrals from googlesheet: {exc.Message}"|>ignore
     
-    let announce_user_interactions() =
-        try
-            Announce_user_interactions.scrape_and_announce_user_interactions
-                (Browser.open_browser())
-                (AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default)
-        with
-        | :? WebDriverException as exc ->
-            Log.error $"""can't announce interactions between users (as an adjacency matrix) : {exc.Message}"""|>ignore
-            ()
             
     
+    let prepare_tasks_for_scraping_matrices
+        (matrix_names: string list)
+        =
+        let existing_matrices,errors = 
+            matrix_names
+            |>List.map (fun matrix_name ->
+                Adjacency_matrix.try_matrix_from_string matrix_name
+                |>function
+                |Some matrix ->
+                    Ok matrix
+                |None ->
+                    Error $"no matrix titled '{matrix_name}'"
+            )
+            |>Result.partition
+            
+        
+        if Seq.length errors > 0 then
+            errors
+            |>String.concat "; "
+            |>Log.important 
+        else
+            existing_matrices
+            |>Harvest_timelines_of_table_members.write_tasks_to_scrape_next_timeframe_of_matrices
+        
     [<EntryPoint>]
     let main args =
         let args = args|>List.ofArray
@@ -80,28 +96,21 @@ module Program =
             | "following"::rest ->
                 //Scraping.set_canopy_configuration_directories()
                 harvest_following rest
-            | "interactions"::rest ->
-                announce_user_interactions()
-            | "prepare"::"tasks"::matrix_name::rest ->
-                Adjacency_matrix.try_matrix_from_string matrix_name
-                |>function
-                |Some matrix ->
-                    Harvest_timelines_of_table_members.write_tasks_to_scrape_next_matrix_timeframe matrix
-                |None ->
-                    $"error: no matrix titled '{matrix_name}'"
-                    |>Log.error|>ignore 
-            | "tasks"::posts_amount::rest ->
+            | "prepare"::"tasks"::matrices ->
+                prepare_tasks_for_scraping_matrices matrices
+            | "scrape"::"tasks"::posts_amount::_ ->
                 posts_amount
                 |>int
                 |>Harvest_timelines_of_table_members.harvest_timelines_from_central_database
                     (Local_database.open_connection())
                 |>ignore
-            | "competition"::rest ->
-                announce_competition_successes()
-            | "test"::rest ->
-                Write_matrix_to_sheet.attention_matrix_to_sheet()
-            | "harvest"::"lists"::rest ->
+            | "scrape"::"lists"::_ ->
                 Harvest_list_members.``harvest lists``()
+            | "competition"::_ ->
+                announce_competition_successes()
+            | "test"::_ ->
+                //Write_matrix_to_sheet.attention_matrix_to_sheet()
+                Harvest_timelines_of_table_members.``try harvest_timelines``()
             | unknown_parameters ->
                 $"unknown parameters: {unknown_parameters}"
                 |>Log.error|>ignore

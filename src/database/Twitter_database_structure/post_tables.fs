@@ -27,6 +27,11 @@ type Post_like_table() =
     member _.post = "post"
     member _.when_scraped = "when_scraped"
 
+type Post_original_table() =
+    override _.ToString() = "post_original"
+    member _.post = "post"
+    member _.when_scraped = "when_scraped"
+
 [<CLIMutable>]
 type Post_like_row = {
     liker: User_handle
@@ -258,6 +263,7 @@ type Post_tables() =
     member _.quotable_part_of_poll= Quotable_part_of_poll_table()
     member _.repost= Post_repost_table()
     member _.like= Post_like_table()
+    member _.original= Post_original_table()
 
 
 

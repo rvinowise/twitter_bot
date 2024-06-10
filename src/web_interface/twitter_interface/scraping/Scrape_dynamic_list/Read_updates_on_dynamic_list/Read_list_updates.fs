@@ -8,7 +8,15 @@ open rvinowise.web_scraping
 open FsUnit
 open Xunit
 
-
+type Stopping_reason =
+    |Enough_posts_scraped
+    |Familiar_posts_encountered
+    |No_more_posts_appeared
+    |Timeout
+    type Result_of_timeline_cell_processing =
+    |Should_stop of Stopping_reason
+    |Scraped_post of Thread_context
+    
 module Read_list_updates =
     
     
@@ -134,7 +142,8 @@ module Read_list_updates =
                     []
             else
                 visible_items
-     
+    
+    
         
     let process_item_batch_providing_previous_items
         process_item
@@ -147,15 +156,17 @@ module Read_list_updates =
             =
             match items with
             |next_item::rest_items ->
-                let new_context =
+                let scraping_result =
                     process_item thread_context next_item
-                match new_context with
-                |None->None
-                |Some thread_context ->
+                match scraping_result with
+                |Result_of_timeline_cell_processing.Scraped_post thread_context ->
                     iteration_of_batch_processing
                         thread_context
                         rest_items
-            |[]->Some thread_context
+                |Result_of_timeline_cell_processing.Should_stop stopping_reason ->
+                    Result_of_timeline_cell_processing.Should_stop stopping_reason
+                    
+            |[]->Result_of_timeline_cell_processing.Scraped_post thread_context
             
         
         iteration_of_batch_processing

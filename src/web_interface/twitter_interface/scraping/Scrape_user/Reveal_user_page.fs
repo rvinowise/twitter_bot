@@ -5,21 +5,23 @@ open rvinowise.html_parsing
 open rvinowise.web_scraping
 
 
-type Timeline_hiding_reason =
+type Timeline_not_opened_reason =
 |Loading_denied
 |Protected
 |No_login
+|Nonexisting_user
 
-module Timeline_hiding_reason =
-    let db_value (reason:Timeline_hiding_reason) =
+module Timeline_not_opened_reason =
+    let db_value (reason:Timeline_not_opened_reason) =
         match reason with
         |Loading_denied -> "Loading_denied"
         |Protected -> "Protected"
         |No_login -> "No_login"
+        |Nonexisting_user -> "Nonexisting_user"
         
 type Page_revealing_result =
 |Revealed
-|Failed of Timeline_hiding_reason
+|Failed of Timeline_not_opened_reason
 
 
 module Reveal_user_page =
@@ -69,6 +71,21 @@ module Reveal_user_page =
         |false->
             None
     
+    let is_nonexisting_user
+        browser
+        html_context
+        =
+        browser
+        |>Browser.elements "div[data-testid='empty_state_header_text']"
+        |>List.map (Html_node.from_scraped_node_and_context html_context)
+        |>List.exists(fun node ->
+            node
+            |>Html_node.inner_text = "This account doesn’t exist"
+        )|>function
+        |true->
+            Some Nonexisting_user
+        |false->
+            None
     
     let surpass_content_warning browser =
         "div[data-testid='empty_state_button_text']"
@@ -86,6 +103,7 @@ module Reveal_user_page =
     let timeline_visibility_testers = [
         is_timeline_failing_loading
         is_timeline_protected_from_strangers
+        is_nonexisting_user
     ]
     
     let reveal_timeline

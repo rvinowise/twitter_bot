@@ -10,8 +10,6 @@ open rvinowise.web_scraping
 
 
 
-
-
 module Harvest_posts_from_timeline =
     
     let write_liked_post
@@ -27,9 +25,32 @@ module Harvest_posts_from_timeline =
             liker
             post.id
     
+
+            
+    let write_published_post //"published" means from the timeline "posts_and_replies"
+        database
+        publisher
+        post
+        =
+        Twitter_post_database.write_main_post    
+            database
+            post
+        if
+            post
+            |>Main_post.header
+            |>Post_header.author
+            |>Twitter_user.handle
+            |>(=)publisher
+        then
+            Twitter_post_database.write_original_post_marker
+                database
+                post.id
+    
+    
+    
     let harvest_timeline_cell
         (write_post: Main_post -> unit)
-        (is_finished: Main_post -> bool) // is it the first ignored post?
+        (is_finished: Main_post -> Stopping_reason option) // is it the first ignored post?
         previous_cell
         html_cell
         =
@@ -40,15 +61,14 @@ module Harvest_posts_from_timeline =
         
         match thread_context with
         |Thread_context.Post post ->
-            if
-                is_finished post
-            then
-                None
-            else
+            match is_finished post with
+            |Some stopping_reason ->
+                Result_of_timeline_cell_processing.Should_stop stopping_reason
+            |None ->
                 write_post post
-                Some thread_context
+                Result_of_timeline_cell_processing.Scraped_post thread_context
         |Hidden_thread_replies _ |Empty_context ->
-            Some previous_cell
+            Result_of_timeline_cell_processing.Scraped_post previous_cell
         
 
             
@@ -99,7 +119,7 @@ module Harvest_posts_from_timeline =
         |>Browser.wait_till_disappearance browser 60 |>ignore
         
     let parse_timeline
-        (process_item: Thread_context -> Html_node -> Thread_context option)
+        (process_item: Thread_context -> Html_node -> Result_of_timeline_cell_processing)
         browser
         html_context
         scrolling_repetitions
@@ -116,7 +136,6 @@ module Harvest_posts_from_timeline =
         let load_new_item_batch =
             Scrape_dynamic_list.load_new_item_batch
                 (fun () -> wait_for_timeline_loading browser)
-                //(fun() -> ())
                 scrape_visible_items
                 Read_list_updates.cell_id_from_post_id
                 (fun () -> Scrape_dynamic_list.load_next_items browser)
@@ -132,71 +151,48 @@ module Harvest_posts_from_timeline =
             scrolling_repetitions
             
     
-    let harvest_timeline_tab_of_user
+    let parse_timeline_with_counting
         browser
         html_parsing_context
-        database
         is_finished
-        (tab: Timeline_tab)
-        user
+        parse_post
         =
         let mutable post_count = 0
-        let write_post post =
+        
+        let parse_post_with_counting post =
             post_count <- post_count + 1
-            match tab with
-            |Timeline_tab.Likes ->
-                write_liked_post user database post
-            |_ ->
-                Twitter_post_database.write_main_post    
-                    database post
+            parse_post post
         
         let mutable cell_count = 0
-        let harvest_cell_with_counter item =
+        let parse_cell_with_counting item =
             cell_count <- cell_count + 1
             harvest_timeline_cell
-                write_post
-                (is_finished tab user)
+                parse_post_with_counting
+                is_finished
                 item
         
-        parse_timeline
-            harvest_cell_with_counter
-            browser
-            html_parsing_context
-            Settings.repeat_scrolling_timeline
-            
+        let result =
+            parse_timeline
+                parse_cell_with_counting
+                browser
+                html_parsing_context
+                Settings.repeat_scrolling_timeline
+        
+        post_count,cell_count,result
+        
+        
+    
+    let all_posts_were_scraped
+        browser
+        tab
+        user
+        scraped_posts_amount
+        scraped_cells_amount
+        =
+        
         Log.info $"""
-        {post_count} posts from {cell_count} cells have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".
+        {scraped_posts_amount} posts from {scraped_cells_amount} cells have been harvested from tab "{Timeline_tab.human_name tab}" of user "{User_handle.value user}".
         """
-        post_count
-        
-    let write_newest_post_on_timeline
-        browser
-        html_parsing_context
-        database
-        tab
-        user
-        =
-        Log.info $"""Harvesting newest posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}"."""
-        parse_timeline
-            (harvest_timeline_cell_for_first_post database tab user)
-            browser
-            html_parsing_context
-            0
-        
-        
-        
-
-    
-    
-    
-        
-    
-    let is_scraping_sufficient
-        browser
-        tab
-        user
-        scraped_amount
-        =
         
         let minimum_posts_percentage =
             [
@@ -215,13 +211,13 @@ module Harvest_posts_from_timeline =
         |Some supposed_amount ->
             let scraped_percent =
                 if (supposed_amount>0) then
-                    (float scraped_amount)/(float supposed_amount) * 100.0
+                    (float scraped_posts_amount)/(float supposed_amount) * 100.0
                 else 100.0
             if
                 scraped_percent < minimum_posts_percentage[tab]
             then
                 $"""insufficient scraping of timeline {Timeline_tab.human_name tab} of user {User_handle.value user}:
-                twitter reports {supposed_amount} posts, but only {scraped_amount} posts were found,
+                twitter reports {supposed_amount} posts, but only {scraped_posts_amount} posts were found,
                 which is {int scraped_percent}%% and less than needed {minimum_posts_percentage[tab]} %%
                 """
                 |>Log.error|>ignore
@@ -233,49 +229,67 @@ module Harvest_posts_from_timeline =
             false
             
     
-    let harvest_updates_on_timeline_of_user
-        is_finished
-        browser
+    let write_post_to_db
         database
-        (tab: Timeline_tab)
+        timeline_tab
         user
+        post
         =
-        Log.info $"""started harvesting all new posts on timeline "{Timeline_tab.human_name tab}" of user "{User_handle.value user}" """
-        let html_parsing_context = AngleSharp.BrowsingContext.New AngleSharp.Configuration.Default
-        
-        Reveal_user_page.reveal_timeline
-            browser 
-            html_parsing_context
-            tab
-            user 
-        |>ignore
-        
-        write_newest_post_on_timeline
-            browser
-            html_parsing_context
-            database
-            tab
-            user
-        
-        harvest_timeline_tab_of_user
-            browser
-            html_parsing_context
-            database
-            is_finished
-            tab
-            user
-        |>is_scraping_sufficient browser tab user
-        
+        match timeline_tab with
+        |Timeline_tab.Likes ->
+            write_liked_post user database post
+        |Timeline_tab.Posts_and_replies ->
+            write_published_post database user post
+            
+        |unknown_tab ->
+            raise (Harvesting_exception($"unknown tab: {unknown_tab}"))
+    
+    
+    
     let reveal_and_harvest_timeline
         (browser:Browser)
         html_context
         database
-        needed_posts_amount
+        maximum_posts_amount
         timeline_tab
         user
         =
-        let when_to_stop  =
-            Finish_harvesting_timeline.finish_after_amount_of_invocations needed_posts_amount
+        let familiar_posts_streak = 5;
+        
+        let is_invoked_many_times =
+            Finish_harvesting_timeline.finish_after_amount_of_invocations maximum_posts_amount
+        
+        let has_encountered_a_streak_of_familiar_posts =
+            match timeline_tab with
+            |Timeline_tab.Likes ->
+                Finish_harvesting_timeline.finish_when_encountered_familiar_liked_posts
+                    database
+                    user
+                    familiar_posts_streak
+            |Timeline_tab.Posts_and_replies ->
+                Finish_harvesting_timeline.finish_when_encountered_familiar_published_posts
+                    database
+                    familiar_posts_streak
+            |_-> raise (Harvesting_exception("unknown timeline tab"))
+        
+        let finish_at_familiar_posts_or_too_many_posts
+            post
+            =
+            match is_invoked_many_times() with
+            |Some rason_to_stop ->
+                $"{maximum_posts_amount} posts were scraped forom timeline {timeline_tab} of user {user}, it's enough"
+                |>Log.info
+                Some rason_to_stop
+            |None ->
+                match
+                    has_encountered_a_streak_of_familiar_posts post
+                with
+                |Some reason ->
+                    $"{familiar_posts_streak} familiar posts in a row were scraped forom timeline {timeline_tab} of user {user}, it's enough"
+                    |>Log.info
+                    Some reason
+                |None ->
+                    None
         
         match
             Reveal_user_page.reveal_timeline
@@ -286,27 +300,30 @@ module Harvest_posts_from_timeline =
         with
         |Revealed ->
             
-            let amount =
-                harvest_timeline_tab_of_user
-                    browser
-                    html_context
-                    database
-                    when_to_stop
-                    timeline_tab
-                    user
+            let
+                posts_amount,
+                cells_amount,
+                result
+                    =
+                    parse_timeline_with_counting
+                        browser
+                        html_context
+                        finish_at_familiar_posts_or_too_many_posts
+                        (write_post_to_db database timeline_tab user)
             if
-                amount < needed_posts_amount
+                result = Result_of_timeline_cell_processing.Should_stop Stopping_reason.No_more_posts_appeared
                 &&
-                is_scraping_sufficient
+                all_posts_were_scraped
                     browser
                     timeline_tab
                     user
-                    amount
+                    posts_amount
+                    cells_amount
                 |>not
             then
-                Insufficient amount
+                Insufficient posts_amount
             else
-                Success amount
+                Success posts_amount
         |Page_revealing_result.Failed Protected ->
             Log.info $"Timelines of user {User_handle.value user} are protected from strangers."
             Harvesting_timeline_result.Hidden_timeline Protected
@@ -323,6 +340,9 @@ module Harvest_posts_from_timeline =
         timeline_tab
         user
         =
+        $"start harvesting timeline {timeline_tab} or user {user}"
+        |>Log.info
+        
         let result =
             try
                 reveal_and_harvest_timeline
@@ -350,9 +370,9 @@ module Harvest_posts_from_timeline =
             |>Log.error|>ignore
             
             Assigning_browser_profiles.switch_profile
-                    (Central_database.resiliently_open_connection())
-                    (This_worker.this_worker_id database)
-                    browser,
+                (Central_database.resiliently_open_connection())
+                (This_worker.this_worker_id database)
+                browser,
             result
             
         |Hidden_timeline failing_of_our_browser ->
@@ -392,64 +412,7 @@ module Harvest_posts_from_timeline =
             result
             
         
-    let rec resilient_step_of_harvesting_timelines
-        is_finished
-        (browser: Browser)
-        database
-        (timeline_tabs: (User_handle*Timeline_tab) list)
-        =
-        match timeline_tabs with
-        |[]->()
-        |(head_user, head_timeline)::rest_tabs ->
-        
-            let browser,rest_tabs =
-                try
-                    harvest_updates_on_timeline_of_user
-                        is_finished
-                        browser
-                        database
-                        head_timeline
-                        head_user
-                    |>ignore
-                        
-                    browser,rest_tabs
-                with
-                | :? WebDriverException as exc ->
-                    Log.error $"""
-                    can't harvest timeline {Timeline_tab.human_name head_timeline} of user {User_handle.value head_user}:
-                    {exc.Message}.
-                    Restarting scraping browser"""|>ignore
-                    browser|>Browser.restart,
-                    timeline_tabs
-        
-            match rest_tabs with
-            |[]->()
-            |timeline_tabs ->
-                resilient_step_of_harvesting_timelines
-                    is_finished
-                    browser
-                    database
-                    timeline_tabs
     
-    let harvest_all_last_actions_of_users
-        browser
-        database
-        users
-        =
-        users
-        |>List.collect(fun user->
-            [
-                user,Timeline_tab.Posts_and_replies
-                user,Timeline_tab.Likes
-            ]
-        )
-        |>resilient_step_of_harvesting_timelines
-            (Finish_harvesting_timeline.finish_when_last_newest_post_reached database)
-            browser
-            database
-    
-    
-
     let ``try harvest_all_last_actions_of_users (specific tabs)``()=
         
         resiliently_harvest_user_timeline
@@ -461,21 +424,3 @@ module Harvest_posts_from_timeline =
             (User_handle "KeithComito")            
         |>ignore
 
-    let ``try harvest_all_last_actions_of_users (both tabs)``()=
-        let user_timelines =
-            [
-                 "DrBrianKeating"
-            ]
-            |>List.map User_handle
-            |>List.collect (fun user ->
-                [
-                    user,Timeline_tab.Posts_and_replies;
-                    user,Timeline_tab.Likes
-                ]
-            )
-        
-        resilient_step_of_harvesting_timelines
-            Finish_harvesting_timeline.only_finish_when_no_posts_left
-            (Browser.open_browser())
-            (Local_database.open_connection())
-            user_timelines
