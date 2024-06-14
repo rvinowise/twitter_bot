@@ -43,7 +43,6 @@
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_footer_with_stats.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_segments_of_post\Parse_article.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_timeline_cell.fs" />
-    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parse_timeline.fs" />
     
     <!-- tests of parsing twitter posts-->
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\general_posts.fs" />
@@ -72,10 +71,11 @@
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Timeline_types.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Twitter_notifications.fs" />
     <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\Scrape_followers_network.fs" />
+    <Compile Include="src\web_interface\twitter_interface\scraping\Scrape_user\Scrape_timeline.fs" />
     <Compile Include="src\web_interface\twitter_interface\writing\post_on_twitter.fs" />
 
-    <!-- scraping test of real twitter feed    -->
-    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\user_page_test\Revealing_user_page_test.fs" />
+    
+    
     
     <!-- google spread sheets interface   -->
     <Compile Include="src\visualisation\Spreadsheet\Color.fs" />
@@ -105,7 +105,6 @@
     
     <Compile Include="src\database\Twitter_activity_database.fs" />
     <Compile Include="src\database\Twitter_post_database.fs" />
-    <Folder Include="src\database\Twitter_post_database" />
     <Compile Include="src\database\Twitter_following_database.fs" />
     
     <Compile Include="src\database\User_interactions\User_attention_from_posts.fs" />
@@ -131,25 +130,20 @@
     <Compile Include="src\visualisation\Clustering\Attention_test.fs" />
     
     
-    
     <Compile Include="src\scraping_with_database\Harvest_user.fs" />
     <Compile Include="src\scraping_with_database\Harvest_list_members.fs" />
     <Compile Include="src\scraping_with_database\Find_users_in_text.fs" />
     <Compile Include="src\scraping_with_database\Harvest_followers_network.fs" />
     <Compile Include="src\scraping_with_database\Finish_harvesting_timeline.fs" />
     <Compile Include="src\scraping_with_database\Harvest_posts_from_timeline.fs" />
-    
-    
     <Compile Include="src\scraping_with_database\Harvest_timelines_of_table_members.fs" />
-    
     <Compile Include="src\scraping_with_database\Announce_competition_score.fs" />
-    
-    <Folder Include="src\web_interface" />
-    
     <Compile Include="src\visualisation\Twitter_network.fs" />
-    
-    <Compile Include="src\web_interface\twitter_interface\scraping\Scraping_twitter_posts_tests\broadcast_test.fs" />
-    
+
+
+    <!-- scraping test of real twitter feed (integration tests) -->
+    <Compile Include="src\web_interface\twitter_interface\Scraping\Scrape_user\user_page_test\Revealing_user_page_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\scraping\Scraping_twitter_posts_tests\Scraping_twitter_posts_tests.fs" />
     
     <Compile Include="Program.fs" />
   </ItemGroup>

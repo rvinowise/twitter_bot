@@ -192,7 +192,7 @@ module Distributing_jobs_database =
         (user_task: User_handle)
         posts_amount
         likes_amount
-        (result:Harvesting_timeline_result)
+        (result:Parsing_timeline_result)
         =
         check_job_worker_is_same
             db_connection
@@ -227,7 +227,7 @@ module Distributing_jobs_database =
         (user: User_handle)
         posts_amount
         likes_amount
-        (last_result: Harvesting_timeline_result)
+        (last_result: Parsing_timeline_result)
         =
         let is_successful =
             try

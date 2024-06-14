@@ -30,9 +30,9 @@ module Browser =
     let ensure_webdriver_is_downloaded version =
         let webdriver_download_path =
             if Environment.OSVersion.Platform = PlatformID.Win32NT then
-                $"""https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{version}/win64/chromedriver-win64.zip"""
+                $"""https://storage.googleapis.com/chrome-for-testing-public/{version}/win64/chromedriver-win64.zip"""
             elif Environment.OSVersion.Platform = PlatformID.Unix then
-                $"""https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/{version}/linux64/chromedriver-linux64.zip"""
+                $"""https://storage.googleapis.com/chrome-for-testing-public/{version}/linux64/chromedriver-linux64.zip"""
             else
                 $"unknown platform {Environment.OSVersion.Platform}, it's not clear, which browser driver to install"
                 |>Log.error|>ignore
@@ -40,11 +40,6 @@ module Browser =
                 
         let local_webdriver_path =
             DirectoryInfo(Settings.browser.path).Parent.FullName
-            //$"""{AppDomain.CurrentDomain.BaseDirectory}webdriver\{version}\X64\"""
-            // Path.Combine [|
-            //     Settings.browser.path
-            //     $"""webdriver\{version}\X64\"""    
-            // |]
             
         WebDriverManager.DriverManager().SetUpDriver(
             webdriver_download_path,
