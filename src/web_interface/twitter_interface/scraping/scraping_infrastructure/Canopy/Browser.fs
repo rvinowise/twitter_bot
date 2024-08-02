@@ -10,6 +10,7 @@ open OpenQA.Selenium.Support.UI
 open SeleniumExtras.WaitHelpers
 
 open canopy.types
+open rvinowise.html_parsing
 open rvinowise.twitter
 
 
@@ -122,22 +123,15 @@ module Browser =
     
 
     let rec open_with_profile profile =
-        
-        //try
-            Log.info $"preparing a browser with profile {profile}"
-            {
-                Browser.webdriver =
-                    profile
-                    |>Settings.browser_profile_from_email
-                    |>run_webdriver
-                profile = profile
-            }
-        // with
-        // | :? InvalidOperationException as exc ->
-        //     $"""Exception when opening the browser: {exc.Message}
-        //     trying again"""
-        //     |>Log.error|>ignore
-        //     open_with_profile profile
+        Log.info $"preparing a browser with profile {profile}"
+        {
+            Browser.webdriver =
+                profile
+                |>Settings.browser_profile_from_email
+                |>run_webdriver
+            profile = profile
+        }
+
         
     let open_browser () =
         Settings.browser.profiles
@@ -196,7 +190,7 @@ module Browser =
             actions.SendKeys
         )
             (Actions(browser.webdriver))
-        |>(fun actions -> actions.Perform())
+        |>(_.Perform())
     
     let click_element (element:Web_element) (browser:Browser) =
         canopy.parallell.functions.click element browser.webdriver
@@ -206,8 +200,8 @@ module Browser =
         
     let wait_for_disappearance css seconds (browser:Browser) =
         WebDriverWait(browser.webdriver, TimeSpan.FromSeconds(seconds)).
-                    Until(ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector(css)))
-                |>ignore
+            Until(ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector(css)))
+        |>ignore
     
     let element
         css
@@ -219,13 +213,27 @@ module Browser =
         css
         (browser: Browser)
         =
-        // try
-        //     canopy.parallell.functions.elements css browser.webdriver
-        // with
-        // | :? CanopyElementNotFoundException as exc ->
-        //     []
         browser.webdriver.FindElements(By.CssSelector(css))
         |>Seq.toList
+    
+    let rec capture_elements_resiliently
+        html_context
+        css
+        (browser: Browser)
+        =
+        try
+            browser
+            |>elements css
+            |>List.map (Html_node.from_scraped_node_and_context html_context)
+        with
+        | :? StaleElementReferenceException as exc ->
+            $"capturing elements threw an exception: {exc.Message}; trying to capture the elements again"
+            |>Log.info
+            capture_elements_resiliently
+                html_context
+                css
+                browser
+            
         
     
     let try_element
@@ -234,13 +242,7 @@ module Browser =
         =
         browser.webdriver.FindElements(By.CssSelector(css_selector))
         |>Seq.tryHead
-//        try
-//            browser
-//            |>element css_selector
-//            |>Some
-//        with
-//        | :? CanopyElementNotFoundException as exc ->
-//            None
+
         
     let element_exists
         (browser:Browser)

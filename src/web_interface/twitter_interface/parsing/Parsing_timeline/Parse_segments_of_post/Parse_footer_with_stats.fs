@@ -76,10 +76,16 @@ module Parse_footer_with_stats =
         |>stats_from_explanation
     
     
-    
-    let parse_post_footer
-        footer
+    let get_article_footer
+        (article: Html_node)
         =
-        footer
-        |>Html_node.descendant "div[role='group']"
-        |>stats_from_hidden_explanation_of_footer
+        article
+        |>Html_node.descendant "[data-testid='reply']" //it was (can be?) a DIV, but then it become (also can be?) a BUTTON
+        |>Html_node.first_ancestor_with_css "div[role='group']"
+    
+    let parse_article_footer
+        (article: Html_node)
+        =
+        article
+        |>get_article_footer
+        |>stats_from_hidden_explanation_of_footer    

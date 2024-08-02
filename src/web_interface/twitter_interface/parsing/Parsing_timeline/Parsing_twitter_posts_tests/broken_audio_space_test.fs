@@ -8,13 +8,13 @@ open rvinowise.twitter
 
 
 
-module twitter_space =
+module broken_audio_space =
     
     
-    let ``parse a post which shares a twitter space (audio recording)`` post =
+    let ``parse a post with a broken audio space`` post =
         post
         |>Main_post.quotable_message
-        |>fun core->core.audio_space
+        |>_.audio_space
         |>function
         |Some space ->
             space.title
@@ -38,7 +38,7 @@ module twitter_space =
             |>Html_node.from_text
             |>general_posts.parse_single_main_twitter_post   
         
-        ``parse a post which shares a twitter space (audio recording)`` post
+        ``parse a post with a broken audio space`` post
     
     
     
@@ -68,7 +68,7 @@ module twitter_space =
         |>should be TopLevelOperators.Empty
     
     
-    let ``parse a post which quotes another post with a twitter space (audio recording)`` post =
+    let ``parse a post which quotes another post with a broken audio space`` post =
         post
         |>Main_post.external_source
         |>function
@@ -100,10 +100,10 @@ module twitter_space =
             |>Html_node.from_text
             |>general_posts.parse_single_main_twitter_post   
         
-        ``parse a post which quotes another post with a twitter space (audio recording)`` post
+        ``parse a post which quotes another post with a broken audio space`` post
         
         
-    let ``parse a post with a twitter-audio-space and a quoted post which has images`` post =    
+    let ``parse a post with a broken audio-space and a quoted post which has images`` post =    
         post
         |>Main_post.audio_space
         |>function
@@ -127,11 +127,11 @@ module twitter_space =
             quotation.media_load
             |>should equal [
                 Media_item.Image {
-                    url="https://pbs.twimg.com/media/F61myJuWkAArDgv?format=webp&name=tiny"
+                    url="https://pbs.twimg.com/media/F61myJuWkAArDgv"
                     description = "Image" 
                 }
                 Media_item.Image {
-                    url="https://pbs.twimg.com/media/F61mz2MWsAAN5CY?format=webp&name=tiny"
+                    url="https://pbs.twimg.com/media/F61mz2MWsAAN5CY"
                     description = "Image" 
                 }
             ]
@@ -148,4 +148,4 @@ module twitter_space =
             |>Html_node.from_text
             |>general_posts.parse_single_main_twitter_post   
         
-        ``parse a post with a twitter-audio-space and a quoted post which has images`` post
+        ``parse a post with a broken audio-space and a quoted post which has images`` post

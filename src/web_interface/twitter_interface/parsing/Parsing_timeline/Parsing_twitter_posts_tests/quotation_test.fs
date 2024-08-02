@@ -36,7 +36,7 @@ module quotation_test =
         |>Main_post.media_load
         |>should equal [
             Media_item.Image{
-                Posted_image.url="https://pbs.twimg.com/media/F6grJf8XYAAvmS-?format=jpg&name=900x900"
+                Posted_image.url="https://pbs.twimg.com/media/F6grJf8XYAAvmS-"
                 description = "Image"
             }
         ]
@@ -64,10 +64,10 @@ It’s so empowering to see more and more courageous women finding the freedom t
             
             quoted_post.media_load
             |>should equal [
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948929/pu/img/oRus-51SqWsSwSNH?format=jpg&name=240x240"
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599675465729/pu/img/_AlaRyOnmno3YwzU?format=jpg&name=240x240"
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599478325248/pu/img/B39MLxbER9pQyx9z?format=jpg&name=240x240"
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948928/pu/img/yT-saemhQM1qb6iP?format=jpg&name=240x240"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948929/pu/img/oRus-51SqWsSwSNH"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599675465729/pu/img/_AlaRyOnmno3YwzU"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599478325248/pu/img/B39MLxbER9pQyx9z"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948928/pu/img/yT-saemhQM1qb6iP"
             ]
         
         post
@@ -122,11 +122,11 @@ It’s so empowering to see more and more courageous women finding the freedom t
         |>Main_post.media_load
         |>should equal [
             Media_item.Image {
-                url="https://pbs.twimg.com/media/F62VphrWYAEJofB?format=jpg&name=small"
+                url="https://pbs.twimg.com/media/F62VphrWYAEJofB"
                 description="Image"
             }
             Media_item.Image {
-                url="https://pbs.twimg.com/media/F62VrsAWcAAxUor?format=jpg&name=small"
+                url="https://pbs.twimg.com/media/F62VrsAWcAAxUor"
                 description="Image"
             }
         ]
@@ -143,11 +143,11 @@ It’s so empowering to see more and more courageous women finding the freedom t
             quoted_post.media_load
             |>should equal [
                 Media_item.Image {
-                    url="https://pbs.twimg.com/media/F61myJuWkAArDgv?format=jpg&name=360x360"
+                    url="https://pbs.twimg.com/media/F61myJuWkAArDgv"
                     description="Image"
                 }
                 Media_item.Image {
-                    url="https://pbs.twimg.com/media/F61mz2MWsAAN5CY?format=jpg&name=360x360"
+                    url="https://pbs.twimg.com/media/F61mz2MWsAAN5CY"
                     description="Image"
                 }
             ]
@@ -189,7 +189,7 @@ It’s so empowering to see more and more courageous women finding the freedom t
                 match quotation.media_load with
                 |[Video_poster url] ->
                     url
-                    |>should equal "https://pbs.twimg.com/tweet_video_thumb/GBa9JKSXIAARlpj?format=webp&name=tiny"
+                    |>should equal "https://pbs.twimg.com/tweet_video_thumb/GBa9JKSXIAARlpj"
                 |_ -> raise <| Bad_post_exception("the quoted post should have one video (gif)")
             | _ -> raise <| Bad_post_exception("this main post should have a quoted post")
         |Poll _ -> raise <| Bad_post_exception("this main post should be without a poll")    
@@ -259,7 +259,7 @@ I was about to start work on this commission, when in came an email from Twitte
             |>should equal [
                 Media_item.Image {
                     description="Image"
-                    url="https://pbs.twimg.com/media/F4JU7WBXwAAsGkO?format=jpg&name=small"
+                    url="https://pbs.twimg.com/media/F4JU7WBXwAAsGkO"
                 }
             ]
         
@@ -339,10 +339,10 @@ It’s so empowering to see more and more courageous women finding the freedom t
             
             quoted_post.media_load
             |>should equal [
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948929/pu/img/oRus-51SqWsSwSNH?format=webp&name=tiny"
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599675465729/pu/img/_AlaRyOnmno3YwzU?format=webp&name=tiny"
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599478325248/pu/img/B39MLxbER9pQyx9z?format=webp&name=tiny"
-                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948928/pu/img/yT-saemhQM1qb6iP?format=webp&name=tiny"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948929/pu/img/oRus-51SqWsSwSNH"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599675465729/pu/img/_AlaRyOnmno3YwzU"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599478325248/pu/img/B39MLxbER9pQyx9z"
+                Media_item.Video_poster "https://pbs.twimg.com/ext_tw_video_thumb/1637403599469948928/pu/img/yT-saemhQM1qb6iP"
             ]
         
         post

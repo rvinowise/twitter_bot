@@ -35,17 +35,17 @@ module Parse_twitter_audio_space =
                 |>Parsing_twitter_datatypes.parse_abbreviated_number
                 
             {
-                Twitter_audio_space.host = host
+                Valid_audio_space.host = host
                 title=title;
                 audience_amount=audience_amount
             }
         | _ ->raise (Bad_post_exception("wrong segments of a twitter audio space"))
     
     let try_find_twitter_audio_space_node
-        post_node
+        article_node
         =
         let placement_tracking_node =
-            post_node
+            article_node
             |>Html_node.try_descendant "div[data-testid='placementTracking']"
         
         match placement_tracking_node with
@@ -62,12 +62,32 @@ module Parse_twitter_audio_space =
             |true ->
                 Some placement_tracking_node
         |None -> None
+    
+    let try_find_broken_audio_space_node
+        article_node
+        =
+        let placement_tracking_node =
+            article_node
+            |>Html_node.try_descendant "div[data-testid='placementTracking']"
+        
+        match placement_tracking_node with
+        |Some placement_tracking_node ->
+            placement_tracking_node
+            |>Html_node.descendants "span"
+            |>List.exists(fun span_node ->
+                Html_node.inner_text span_node = "Details not available"
+            )
+            |>function
+            |false -> None
+            |true ->
+                Some placement_tracking_node
+        |None -> None
         
     let try_parse_twitter_audio_space
-        post_node
+        article_node
         =
         match
-            try_find_twitter_audio_space_node post_node
+            try_find_twitter_audio_space_node article_node
         with
         |Some audio_space_node ->
             parse_twitter_audio_space audio_space_node
@@ -76,11 +96,11 @@ module Parse_twitter_audio_space =
     
     
     let detach_and_parse_twitter_audio_space
-        post_node
+        article_node
         =
         let audio_space_node =
             try_find_twitter_audio_space_node
-                post_node
+                article_node
         
         audio_space_node
         |>Option.map Html_node.detach_from_parent

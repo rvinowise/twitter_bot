@@ -44,8 +44,7 @@ module Reveal_user_page =
         html_context
         =
         browser
-        |>Browser.elements "span"
-        |>List.map (Html_node.from_scraped_node_and_context html_context)
+        |>Browser.capture_elements_resiliently html_context "span"
         |>List.exists(fun span_node ->
             span_node
             |>Html_node.direct_text = "Something went wrong. Try reloading."
@@ -60,8 +59,7 @@ module Reveal_user_page =
         html_context
         =
         browser
-        |>Browser.elements "span"
-        |>List.map (Html_node.from_scraped_node_and_context html_context)
+        |>Browser.capture_elements_resiliently html_context "span"
         |>List.exists(fun span_node ->
             span_node
             |>Html_node.direct_text = "These posts are protected"
@@ -76,8 +74,7 @@ module Reveal_user_page =
         html_context
         =
         browser
-        |>Browser.elements "div[data-testid='empty_state_header_text']"
-        |>List.map (Html_node.from_scraped_node_and_context html_context)
+        |>Browser.capture_elements_resiliently html_context "div[data-testid='empty_state_header_text']"
         |>List.exists(fun node ->
             node
             |>Html_node.inner_text = "This account doesn’t exist"

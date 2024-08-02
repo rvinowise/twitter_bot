@@ -143,7 +143,7 @@ module Parse_article =
         
         //at this point the article node doesn't have its external source
         
-        let twitter_audio_space =
+        let audio_space =
             Parse_twitter_audio_space.detach_and_parse_twitter_audio_space
                 article_node
         
@@ -166,7 +166,7 @@ module Parse_article =
                 Quotable_message.header = header
                 message = main_message
                 media_load = media_items
-                audio_space = twitter_audio_space
+                audio_space = audio_space
             }
             ,
             external_source
@@ -227,20 +227,19 @@ module Parse_article =
         let reposting_user, is_pinned =
             parse_very_top_header_of_social_context article_node
         
-        let segment_nodes =
-            Find_segments_of_post.top_level_segments_of_main_post article_node
-        
         let header,post_id =
             parse_main_post_header
                 article_node
                 previous_cell
                 reposting_user
                 is_pinned
+
+        if post_id = (Post_id 1733433581484064964L) then
+            Log.debug "test"
         
         let post_stats =
-            segment_nodes
-            |>List.last
-            |>Parse_footer_with_stats.parse_post_footer
+            article_node
+            |>Parse_footer_with_stats.parse_article_footer
         
         let post_body =
             parse_article_as_either_poll_or_not_poll

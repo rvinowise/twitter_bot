@@ -46,7 +46,8 @@
     
     <!-- tests of parsing twitter posts-->
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\general_posts.fs" />
-    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\twitter_space_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\broken_audio_space_test.fs" />
+    <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\audio_space_test.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\quotation_test.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\poll_test.fs" />
     <Compile Include="src\web_interface\twitter_interface\parsing\Parsing_timeline\Parsing_twitter_posts_tests\broadcast_test.fs" />
@@ -154,57 +155,58 @@
   
   <ItemGroup>
     <!--database access-->
-    <PackageReference Include="Dapper" Version="2.0.143" />
-    <PackageReference Include="Dapper.FSharp" Version="4.6.1" />
-    <PackageReference Include="Faithlife.Utility.Dapper" Version="1.1.0" />
-    <PackageReference Include="Npgsql" Version="7.0.4" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Dapper.FSharp" Version="4.8.0" />
+    <PackageReference Include="Faithlife.Utility.Dapper" Version="2.0.0" />
+    <PackageReference Include="Npgsql" Version="8.0.3" />
 
 
     <!--unit testing  -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="octokit" Version="7.1.0" />
-    <PackageReference Include="xunit" Version="2.6.6" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="octokit" Version="13.0.1" />
+    <PackageReference Include="xunit" Version="2.9.0" />
     <PackageReference Include="fsunit" Version="6.0.0" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
     
     <!-- Logging -->
-    <PackageReference Include="Serilog" Version="3.0.1" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0" />
-    <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Serilog" Version="4.0.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
 
     <!--app  -->
+<!--    <PackageReference Include="FSharp.Core" Version="8.0.300" />-->
     <PackageReference Include="Fparsec" Version="1.1.1" />
-    <PackageReference Include="DeviceId" Version="6.6.0" />
+    <PackageReference Include="DeviceId" Version="6.7.0" />
     <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
     <PackageReference Include="fsharpplus" Version="1.6.1" />
     
     <!-- web scraping   -->
     <PackageReference Include="canopy" Version="2.1.5" />
     
-    <PackageReference Include="Selenium.Support" Version="4.11.0" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.11.0" />
-    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="115.0.5790.17000" />
-    <PackageReference Include="Selenium.WebDriver.GeckoDriver" Version="0.33.0" />
+    <PackageReference Include="Selenium.Support" Version="4.22.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.22.0" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="126.0.6478.12600" />
+    <PackageReference Include="Selenium.WebDriver.GeckoDriver" Version="0.34.0" />
     <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
-    <PackageReference Include="WebDriverManager" Version="2.17.1" />
+    <PackageReference Include="WebDriverManager" Version="2.17.4" />
 
 
     <!-- html parsing -->
-    <PackageReference Include="AngleSharp" Version="1.0.4" />
-    <PackageReference Include="FSharp.Data" Version="6.2.0" />
+    <PackageReference Include="AngleSharp" Version="1.1.2" />
+    <PackageReference Include="FSharp.Data" Version="6.4.0" />
 
     <!--configuration  -->
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
     <PackageReference Include="FSharp.Configuration" Version="2.0.0" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
 
     <!--visualisation-->
-    <PackageReference Include="Plotly.NET" Version="4.2.0" />
-    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.61.0.3141" />
-    <PackageReference Include="Rubjerg.Graphviz" Version="2.0.1" />
+    <PackageReference Include="Plotly.NET" Version="5.0.0" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.68.0.3476" />
+    <PackageReference Include="Rubjerg.Graphviz" Version="2.0.2" />
 
     <!-- data analysis -->
     <PackageReference Include="FSharp.Stats" Version="0.5.0" />

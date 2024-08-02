@@ -25,7 +25,7 @@ module video =
             match quotable_message.media_load with
             |[Video_poster url] ->
                 url
-                |>should equal "https://pbs.twimg.com/amplify_video_thumb/1730322633139302400/img/C2KB3UuQ8WRKLSb-?format=webp&name=tiny"
+                |>should equal "https://pbs.twimg.com/amplify_video_thumb/1730322633139302400/img/C2KB3UuQ8WRKLSb-"
             |_ -> raise <| Bad_post_exception()
         |Poll _ -> raise <| Bad_post_exception()
     
@@ -44,7 +44,7 @@ module video =
             match quotable_message.media_load with
             |[Video_poster url] ->
                 url
-                |>should equal "https://pbs.twimg.com/amplify_video_thumb/1313534108631552000/img/mh_vvyVTwH2RDq8_?format=webp&name=tiny"
+                |>should equal "https://pbs.twimg.com/amplify_video_thumb/1313534108631552000/img/mh_vvyVTwH2RDq8_"
             |_ -> raise <| Bad_post_exception()
         |Poll _ -> raise <| Bad_post_exception()
         

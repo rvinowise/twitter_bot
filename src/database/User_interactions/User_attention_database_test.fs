@@ -55,7 +55,7 @@ module User_attention_database_test =
         cached_attention
         |>should equal calculated_attention
     
-    [<Fact>]
+    [<Fact(Skip="integration")>]
     let ``cached user-to-user attention gives the same result as newly calculated attention``()=
         let database = Testing_database.open_connection()
         let before_datetime = DateTime.UtcNow
@@ -72,7 +72,7 @@ module User_attention_database_test =
             before_datetime
             User_attention_database.read_cached_or_calculated_attention_in_matrix
             
-    [<Fact>]
+    [<Fact(Skip="integration")>]
     let ``cached total attention gives the same result as newly calculated attention``()=
         let database = Testing_database.open_connection()
         let before_datetime = DateTime.UtcNow
@@ -88,7 +88,7 @@ module User_attention_database_test =
             before_datetime
             User_attention_database.read_cached_or_calculated_total_attention
         
-    [<Fact>]
+    [<Fact(Skip="integration")>]
     let ``cached attention should be created after first calculation``()=
         let database = Testing_database.open_connection()
         User_attention_database.delete_all_cached_attention

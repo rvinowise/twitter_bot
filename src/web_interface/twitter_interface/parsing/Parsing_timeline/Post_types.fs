@@ -14,7 +14,7 @@ Media-items (images, videos and Gifs):
     (in both, Main posts and Quoted posts) 
     but:
         both, Main post and its Quoted post, can have 4 media-items each;
-        Main post can have a Space, even if its quoted post has media-items
+        Main post can have a Space, even if its quoted post has media-items (not on 2024-07-19)
         
 
 External_websites:
@@ -31,7 +31,7 @@ Broadcasts:
 
 External_websites, Events, Spaces and Broadcasts can't coexist with each other within one Article
     
-Quoted_post
+Quoted_posts
     scramble External_websites and Events in the Main post, and can't have either themselves
     can have Spaces, unless its Main post has media-items
     
@@ -166,17 +166,21 @@ type Post_header = {
     reply: Reply option
 }
 
-type Twitter_audio_space = {
+type Valid_audio_space = {
     host: string
     title: string
     audience_amount: int
 }
 
+type Audio_space =
+    |Valid_audio_space of Valid_audio_space
+    |Broken_audio_space
+
 type Quotable_message = {
     header: Post_header
     message: Post_message
     media_load: Media_item list
-    audio_space: Twitter_audio_space option
+    audio_space: Audio_space option
 }
 
 type Quotable_poll = {
@@ -220,7 +224,7 @@ type External_source_node =
     |Quoted_poll of Html_node
     |External_website of Html_node*Html_node//card.wrapper and card.layoutSmall nodes
     |Carousel of Html_node * (Html_node list) //carousel root and card.wrappers
-    |Twitter_event of Html_node * Event_id
+    |Twitter_event of Html_node * Event_id //card.wrapper node
     
 module External_source_node =
     let root_html_node (node:External_source_node) =
@@ -235,7 +239,7 @@ module External_source_node =
 type External_source =
     |External_websites of External_website list
     (*sometimes the quoted message ID can be determined from the timeline, e.g.:
-    if the replying message has images of showMore button;*)
+    if the replying message has images or showMore button;*)
     |Quoted_message of Quotable_message
     |Quoted_poll of Quotable_poll
     |Twitter_event of Twitter_event

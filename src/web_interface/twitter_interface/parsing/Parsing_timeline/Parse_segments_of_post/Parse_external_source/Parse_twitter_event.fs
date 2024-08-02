@@ -44,30 +44,6 @@ module Parse_twitter_event =
         |None ->
             Twitter_event_presenter.Company name
     
-    let parse_twitter_event card_node event_id =
-        card_node
-        |>Html_node.descendant "div[data-testid='card.layoutSmall.detail']"
-        |>Html_node.direct_children
-        |>function
-        |presenter_node::[ title_node ] ->
-            
-            let presenter =
-                parse_event_presenter
-                    presenter_node
-            
-            let title =
-                title_node
-                |>Html_node.descendants "span"
-                |>List.head
-                |>Html_parsing.readable_text_from_html_segments
-            
-            External_source.Twitter_event {
-                id=event_id
-                presenter=presenter
-                title=title
-            }
-        |wrong_nodes->
-            raise (Bad_post_exception($"the Card node of a twitter event should have User and Title, but there was {wrong_nodes}"))
     
     let try_twitter_event_node article_node =
         let card_wrapper_node =
@@ -100,3 +76,47 @@ module Parse_twitter_event =
                 | _ -> None
             |_ -> None
         |None->None
+    
+    (*
+    starting the browser with argument --user-agent=Chrome/119.0.0.0 causes twitter to show big layouts, instead of small,
+    which is the default for "data-saving" option.
+    this function works with both: small and large layouts
+    *)
+    let parse_twitter_event_detail detail_node event_id =
+        detail_node
+        |>Html_node.direct_children
+        |>function
+        |presenter_node::[ title_node ] ->
+            
+            let presenter =
+                parse_event_presenter
+                    presenter_node
+            
+            let title =
+                title_node
+                |>Html_node.descendants "span"
+                |>List.head
+                |>Html_parsing.readable_text_from_html_segments
+            
+            External_source.Twitter_event {
+                id=event_id
+                presenter=presenter
+                title=title
+            }
+        |wrong_nodes->
+            raise (Bad_post_exception($"the Card node of a twitter event should have User and Title, but there was {wrong_nodes}"))
+    
+    
+           
+    
+    let parse_twitter_event card_node event_id =
+        card_node
+        |>Html_node.try_descendant "div[data-testid='card.layoutLarge.detail']"
+        |>Option.orElse (Html_node.try_descendant "div[data-testid='card.layoutSmall.detail']" card_node)
+        |>function
+        |Some detail_node ->
+            parse_twitter_event_detail detail_node event_id
+        |None ->
+            $"no detail node in event {event_id}"
+            |>Bad_post_exception
+            |>raise 

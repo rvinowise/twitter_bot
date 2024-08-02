@@ -30,6 +30,17 @@ module Html_node =
         |null->raise (NullReferenceException $"node {node} doesn't have an attribute {attribute}") 
         |value -> value
     
+    let remove_url_parameters (input:string) =
+        let index = input.IndexOf("?");
+        if (index >= 0) then
+           input.Substring(0, index)
+        else input
+    
+    let pure_url_from_attribute attribute (node:Html_node) =
+        node
+        |>attribute_value attribute
+        |>remove_url_parameters
+        
     let try_attribute_value attribute (node:Html_node) =
         match node.GetAttribute(attribute) with
         |null->None

@@ -63,7 +63,7 @@ module Parse_quoted_post =
             reply=reply
         }
         
-        let twitter_space =
+        let audio_space =
             Parse_twitter_audio_space.detach_and_parse_twitter_audio_space
                 quotation_node
             
@@ -96,7 +96,7 @@ module Parse_quoted_post =
                 header=header
                 message = message
                 media_load = media_items
-                audio_space = twitter_space 
+                audio_space = audio_space 
             }
         
 

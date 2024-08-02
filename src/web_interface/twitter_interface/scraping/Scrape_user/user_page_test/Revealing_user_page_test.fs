@@ -12,7 +12,7 @@ open rvinowise.web_scraping
 module revealing_user_page =
     
     
-    [<Fact>]
+    [<Fact(Skip="integration")>]
     let ``nonexisting user``() =
         //https://twitter.com/0xPolygonLabs
         let nonexisting_user = User_handle "0xPolygonLabs"

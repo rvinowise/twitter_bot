@@ -6,6 +6,7 @@ open Npgsql
 open Xunit
 open rvinowise.twitter
 open rvinowise.twitter.database_schema
+open rvinowise.twitter.test
 open rvinowise.web_scraping
 
 
@@ -263,9 +264,40 @@ module Twitter_post_database =
                 main_post_id
         |None->()
     
-    let write_twitter_space
+    let write_broken_twitter_space
         (db_connection:NpgsqlConnection)
-        (twitter_space: Twitter_audio_space)
+        (main_post_id:Post_id)
+        (is_quotation:bool)
+        =
+        db_connection.Query(
+            $"insert into {tables.post.twitter_space} (
+                {tables.post.twitter_space.main_post_id},
+                {tables.post.twitter_space.is_quotation},
+                {tables.post.twitter_space.host},
+                {tables.post.twitter_space.title},
+                {tables.post.twitter_space.audience_amount}
+            )
+            values (
+                @main_post_id,
+                @is_quotation,
+                @host,
+                @title,
+                @audience_amount
+            )
+            on conflict do nothing
+            ",
+            {|
+                main_post_id=main_post_id
+                is_quotation=is_quotation
+                host=null
+                title=null
+                audience_amount=null
+            |}
+        ) |> ignore
+    
+    let write_valid_twitter_space
+        (db_connection:NpgsqlConnection)
+        (twitter_space: Valid_audio_space)
         (main_post_id:Post_id)
         (is_quotation:bool)
         =
@@ -303,6 +335,25 @@ module Twitter_post_database =
                 audience_amount=twitter_space.audience_amount
             |}
         ) |> ignore
+    
+    let write_twitter_space
+        (db_connection:NpgsqlConnection)
+        (audio_space: Audio_space)
+        (main_post_id:Post_id)
+        (is_quotation:bool)
+        =
+        match audio_space with
+        |Valid_audio_space space ->
+            write_valid_twitter_space
+                db_connection
+                space
+                main_post_id
+                is_quotation
+        |broken_audio_space ->
+            write_broken_twitter_space
+                db_connection
+                main_post_id
+                is_quotation
     
     let write_twitter_event
         (db_connection:NpgsqlConnection)

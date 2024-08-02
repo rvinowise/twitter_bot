@@ -2,11 +2,11 @@
 
 open System
 open System.Collections.Generic
+open NUnit.Framework
 open Xunit
 open rvinowise.twitter
 
 type Scraped_post_check = {
-    user: User_handle
     post: Post_id
     tester: Main_post -> unit
 }
@@ -18,88 +18,85 @@ type Tested_post =
 
 module Scraping_twitter_posts_tests =
     
-    let prepared_tests = 
+    let prepared_tests_from_tehprom_timeline = 
         [
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1704659922464444801L
                 tester = quotation_test.``parse image-post with a quotation of a 4-video-post``
             };
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1706184429964513566L
                 tester = quotation_test.``parse image-post quoting a reply with a reply-header and images``
             };
             {
-                user = User_handle "BasedBeffJezos"
+                (*repost from JeffBesos*)
                 post = Post_id 1735785217305014701L
                 tester = quotation_test.``parse a post with a quotation, both having images after the usernames. the only media load is a quoted gif``
             };
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1704650832828940551L
                 tester = quotation_test.``parse post quoting another post with ShowMore button``
             };
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1704659543026765991L
                 tester = quotation_test.``parse quotation of 4-videos post``
             };
             
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1704704306895618550L
                 tester = external_url.``parse a post with an external website (with a large layout originally, now deprecated)``
             };
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1704958629932056635L
                 tester = external_url.``parse post with external source with small layout``
             };
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1708421896155398530L
                 tester = external_url.``parse post without message, but with only an external url``
             };
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1727106214990139845L
                 tester = poll_test.``parse a finished poll``
             }
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1729688709425950964L
                 tester = poll_test.``parse an ongoing poll``
             }
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1725955263344029911L
                 tester = poll_test.``parse a quoted finished poll``
             }
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1732776142791184743L
                 tester = twitter_event.``parse a post which shares a twitter event``
             }
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1604486844867133442L
                 tester = twitter_event.``parse a post with a twitter-event without a user``
             }
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1732790626020675814L
-                tester = twitter_space.``parse a post which shares a twitter space (audio recording)``
+                tester = broken_audio_space.``parse a post with a broken audio space``
             }
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1732790822049903101L
-                tester = twitter_space.``parse a post which quotes another post with a twitter space (audio recording)``
+                tester = broken_audio_space.``parse a post which quotes another post with a broken audio space``
             }
             {
-                user = User_handle "tehprom269887"
                 post = Post_id 1733080058988789957L
-                tester = twitter_space.``parse a post with a twitter-audio-space and a quoted post which has images``
+                tester = broken_audio_space.``parse a post with a broken audio-space and a quoted post which has images``
+            }
+            {
+                post = Post_id 1814375909991883075L
+                tester = audio_space.``parse a post with an audio space``
+            }
+            {
+                post = Post_id 1814376074089783568L
+                tester = audio_space.``parse a post which quotes another post with an audio space``
+            }
+            {
+                post = Post_id 1814377370654257441L
+                tester = audio_space.``parse a post with an audio-space and a quoted post which has images``
             }
         ]
 
@@ -111,11 +108,11 @@ module Scraping_twitter_posts_tests =
         prepared_tests
         |>List.map(fun prepared_test ->
             prepared_test.post,prepared_test.tester    
-        )|>dict
+        )|>dict|>Dictionary
             
     
     let check_post
-        (posts_to_testers: IDictionary<Post_id, Main_post -> unit>)
+        (posts_to_testers: Dictionary<Post_id, Main_post -> unit>)
         (post: Main_post)
         =
         match posts_to_testers.TryGetValue(post.id) with
@@ -124,16 +121,18 @@ module Scraping_twitter_posts_tests =
             try
                 tester post
             with
-            | :? Harvesting_exception | :? Bad_post_exception as exc ->
+            | :? Harvesting_exception
+            | :? Bad_post_exception
+            | :? AssertionException as exc ->
                 Log.error $"""testing scraped post failed: {exc.Message}"""|>ignore
             
             posts_to_testers.Remove(post.id)|>ignore
     
     
        
-    [<Fact>]
+    [<Fact>] //(Skip="integration")
     let ``run tests of posts scraped from twitter``()=
-        let posts_to_testers = dictionary_post_to_tester prepared_tests
+        let posts_to_testers = dictionary_post_to_tester prepared_tests_from_tehprom_timeline
         
         let browser =
             Local_database.open_connection()

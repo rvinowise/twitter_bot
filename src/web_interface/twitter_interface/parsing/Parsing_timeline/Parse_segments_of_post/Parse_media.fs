@@ -9,6 +9,8 @@ open rvinowise.twitter
 
 module Parse_media =
     
+    
+    
     let parse_media_from_stripped_node
         (*without quotation, user-avatar and message (all places with images which are not media-load) *)
         post_node
@@ -22,15 +24,15 @@ module Parse_media =
             |>function
             |Some "Embedded video" ->
                 image_node
-                |>Html_node.attribute_value "src"
+                |>Html_node.pure_url_from_attribute "src"
                 |>Media_item.Video_poster
             |_ ->
                 Media_item.Image {
                     url=
                         image_node
-                        |>Html_node.attribute_value "src"
+                        |>Html_node.pure_url_from_attribute "src"
                     description=
                         image_node
-                        |>Html_node.attribute_value "alt"
+                        |>Html_node.pure_url_from_attribute "alt"
                 }
         )
