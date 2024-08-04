@@ -124,7 +124,7 @@ module Scraping_twitter_posts_tests =
             | :? Harvesting_exception
             | :? Bad_post_exception
             | :? AssertionException as exc ->
-                Log.error $"""testing scraped post failed: {exc.Message}"""|>ignore
+                Log.error $"""testing a scraped post {Post_id.value post.id} failed: {exc.Message}"""|>ignore
             
             posts_to_testers.Remove(post.id)|>ignore
     
@@ -147,10 +147,18 @@ module Scraping_twitter_posts_tests =
                 Some Stopping_reason.Enough_posts_scraped
             else None
         
-        Scrape_timeline.reveal_and_parse_timeline
-            browser
-            html_context
-            Timeline_tab.Posts_and_replies
-            (User_handle "tehprom269887")
-            (check_post posts_to_testers)
-            (no_left_posts_to_test posts_to_testers) 
+        match
+            Scrape_timeline.reveal_and_parse_timeline
+                browser
+                html_context
+                Timeline_tab.Posts_and_replies
+                (User_handle "tehprom269887")
+                (check_post posts_to_testers)
+                (no_left_posts_to_test posts_to_testers)
+        with
+        |Success amount ->
+            Log.info $"{amount} posts have been tested in timeline"
+        |problem ->
+            $"a problem with revealing and parsing timeline: {problem}"
+            |>Harvesting_exception
+            |>raise

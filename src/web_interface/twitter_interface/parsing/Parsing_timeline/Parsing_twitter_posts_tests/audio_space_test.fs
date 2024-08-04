@@ -18,7 +18,7 @@ module audio_space =
         |>Main_post.quotable_message
         |>_.audio_space
         |>function
-        |Some space ->
+        |Some (Valid_audio_space space) ->
             space.title
             |>should equal "🚨@XSPACES Q & A FEEDBACK W/ 𝕏 LEAD MEDIA ENGINEER @marmars"
             space.host
@@ -53,13 +53,14 @@ module audio_space =
             
             quotation.audio_space
             |>function
-            |Some space ->
+            |Some (Valid_audio_space space) ->
                 space.title
                 |>should equal "🚨@XSPACES Q & A FEEDBACK W/ 𝕏 LEAD MEDIA ENGINEER @marmars"
                 space.host
                 |>should equal "Diligent Denizen"
                 space.audience_amount
-                |>should equal 2700
+                |>should equal 21600
+            |Some Broken_audio_space->raise (Bad_post_exception("twitter audio space in quotation in broken, but should be valid"))
             |None->raise (Bad_post_exception("no twitter audio space in quotation"))
         
             quotation.media_load
@@ -84,13 +85,14 @@ module audio_space =
         post
         |>Main_post.audio_space
         |>function
-        |Some space ->
+        |Some (Valid_audio_space space) ->
             space.title
             |>should equal "🚨@XSPACES Q & A FEEDBACK W/ 𝕏 LEAD MEDIA ENGINEER @marmars"
             space.host
             |>should equal "Diligent Denizen"
             space.audience_amount
-            |>should equal 2700
+            |>should equal 21600
+        |Some Broken_audio_space->raise (Bad_post_exception("audio space in the main post should be valid, but it's broken"))
         |None->raise (Bad_post_exception("no audio space in the main post"))
         
         post

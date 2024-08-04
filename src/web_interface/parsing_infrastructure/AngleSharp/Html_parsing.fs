@@ -78,11 +78,14 @@ module Html_node =
     let direct_text (node:Html_node) =
         node.ChildNodes
         |>Seq.filter (fun child->child.NodeType = NodeType.Text)
-        |>Seq.map (fun text -> text.TextContent)
+        |>Seq.map (_.TextContent)
         |>String.concat ""      
     
+    (* a button inside a button will be considered a sibling (not a child), because it's invalid HTML, but it exists on twitter *)
     let direct_children (node:Html_node) =
         List.ofSeq node.Children
+        // node.QuerySelectorAll(":scope > *")
+        // |>List.ofSeq
     
     let direct_children_with_css css (node:Html_node) =
         node.Children
@@ -247,17 +250,34 @@ module Html_node =
             |>Seq.contains child
         )
     
-    
-     
-    let descend levels_amount (node:Html_node) =
-        [1..levels_amount]
-        |>List.fold (fun node _ ->
+
+    let travel_down
+        (child_positions: int list)
+        (node:Html_node)
+        =
+        [0..(Seq.length child_positions)-1]
+        |>List.fold (fun node child_level ->
+            let child_index_on_this_level =
+                (List.item child_level child_positions) - 1
             node
             |>direct_children
-            |>should_be_single
+            |>List.item child_index_on_this_level
         )
             node
-
+    
+    let descend levels_amount (node:Html_node) =
+        node
+        |>travel_down (List.init levels_amount (fun _ -> 1))
+    
+    // let descend levels_amount (node:Html_node) =
+    //     [1..levels_amount]
+    //     |>List.fold (fun node _ ->
+    //         node
+    //         |>direct_children
+    //         |>should_be_single
+    //     )
+    //         node
+    
     let from_text_and_context
         (context: IBrowsingContext)
         (html_text:string)
