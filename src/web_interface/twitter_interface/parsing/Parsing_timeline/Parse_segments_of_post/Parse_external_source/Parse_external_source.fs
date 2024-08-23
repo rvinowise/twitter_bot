@@ -152,8 +152,7 @@ module Parse_external_source =
         (external_source_node: External_source_node)
         =
         match external_source_node with
-        |External_source_node.Quoted_message node ->
-            Parse_quoted_post.parse_quoted_post node
+        |External_source_node.Quoted_message node
         |External_source_node.Quoted_poll node ->
             Parse_quoted_post.parse_quoted_post node
         |External_source_node.External_website

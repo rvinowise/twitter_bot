@@ -65,7 +65,7 @@ type Post_message =
     | Full of string
 
 module Post_message =
-    let from_html_node (node:Html_node) = //"tweetText"
+    let from_html_node (node:Html_node) = //parent of "tweetText"
         let show_more_css = "[data-testid='tweet-text-show-more-link']"
         let show_more_node =
             node
@@ -73,6 +73,7 @@ module Post_message =
         
         let message =
             node
+            |>Html_node.descendant "div[data-testid='tweetText']"
             |>Html_node.direct_children
             |>List.filter (Html_node.matches show_more_css >> not)
             |>List.map Html_parsing.segment_of_composed_text_as_text

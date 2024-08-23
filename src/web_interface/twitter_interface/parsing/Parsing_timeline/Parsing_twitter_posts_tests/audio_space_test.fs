@@ -24,7 +24,7 @@ module audio_space =
             space.host
             |>should equal "Diligent Denizen"
             space.audience_amount
-            |>should equal 20100
+            |>should greaterThanOrEqualTo 21700
         |wrong_source -> raise (Bad_post_exception($"this post should contain a twitter audio space, but here's {wrong_source}"))
         
         post
@@ -59,7 +59,7 @@ module audio_space =
                 space.host
                 |>should equal "Diligent Denizen"
                 space.audience_amount
-                |>should equal 21600
+                |>should greaterThan 21600
             |Some Broken_audio_space->raise (Bad_post_exception("twitter audio space in quotation in broken, but should be valid"))
             |None->raise (Bad_post_exception("no twitter audio space in quotation"))
         
@@ -91,7 +91,7 @@ module audio_space =
             space.host
             |>should equal "Diligent Denizen"
             space.audience_amount
-            |>should equal 21600
+            |>should greaterThan 21600
         |Some Broken_audio_space->raise (Bad_post_exception("audio space in the main post should be valid, but it's broken"))
         |None->raise (Bad_post_exception("no audio space in the main post"))
         

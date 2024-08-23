@@ -34,7 +34,7 @@ module Scraping_twitter_posts_tests =
                 tester = quotation_test.``parse a post with a quotation, both having images after the usernames. the only media load is a quoted gif``
             };
             {
-                post = Post_id 1704650832828940551L
+                post = Post_id 1704650832828940551L //Sep 21, 2023
                 tester = quotation_test.``parse post quoting another post with ShowMore button``
             };
             {

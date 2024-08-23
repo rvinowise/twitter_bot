@@ -38,11 +38,9 @@ module Parse_quoted_post =
     let detach_message_node
         article_node
         =
-        let message_node =
-            article_node
-            |>Html_node.try_descendant "div[data-testid='tweetText']"
-        
-        message_node //can have images which are emojis
+        article_node
+        |>Html_node.try_descendant "div[data-testid='tweetText']"
+        |>Option.map Html_node.parent //this parent holds the message and the potential showMore button
         |>Option.map Html_node.detach_from_parent
             
     let parse_quoted_post

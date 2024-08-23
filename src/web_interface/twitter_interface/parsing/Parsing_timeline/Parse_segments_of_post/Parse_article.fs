@@ -64,31 +64,10 @@ module Parse_article =
         |None -> None,false
     
     
-    let parse_messages_of_article article_node =
-        article_node
-        |>Html_node.descendants "div[data-testid='tweetText']"
-        |>function
-        |main_message_node::[quotation_message_node] ->
-            Post_message.from_html_node main_message_node,
-            Post_message.from_html_node quotation_message_node
-        |[message_node] ->
-            message_node
-            |>Html_node.ancestors "div[role='link']"
-            |>function
-            |[]->
-                Post_message.from_html_node message_node,
-                Post_message.empty
-            |quotation_mark ->
-                Post_message.empty,
-                Post_message.from_html_node message_node
-        |[] -> Post_message.empty,Post_message.empty
-        |wrong_messages ->
-            raise (Bad_post_exception($"an article can have 2 message nodes maximum, but it had {wrong_messages}"))
-    
-    
     let parse_message node =
         node
         |>Html_node.try_descendant "div[data-testid='tweetText']"
+        |>Option.map Html_node.parent
         |>function
         |Some message_node ->
             Post_message.from_html_node message_node
@@ -234,7 +213,7 @@ module Parse_article =
                 reposting_user
                 is_pinned
 
-        if post_id = (Post_id 1704650832828940551L) then
+        if post_id = (Post_id 1814377370654257441L) then
             Log.debug "test"
         
         let post_stats =
